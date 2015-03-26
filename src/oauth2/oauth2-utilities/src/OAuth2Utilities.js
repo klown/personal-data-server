@@ -24,7 +24,7 @@ gpii.oauth2.walkMiddleware = function (middleware, i, req, res, next) {
         return next();
     } else {
         return middleware[i](req, res, function () {
-            return gpii.oauth2.walkMiddleware(middleware, i+1, req, res, next);
+            return gpii.oauth2.walkMiddleware(middleware, i + 1, req, res, next);
         });
     }
 };

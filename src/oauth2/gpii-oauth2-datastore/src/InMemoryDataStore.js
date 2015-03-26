@@ -107,7 +107,7 @@ gpii.oauth2.dataStore.findUserById = function (users, id) {
 };
 
 gpii.oauth2.dataStore.findUserByUsername = function (users, username) {
-    return fluid.find_if(users, function (user) { return user.username === username; } );
+    return fluid.find_if(users, function (user) { return user.username === username; });
 };
 
 // Clients

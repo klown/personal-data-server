@@ -71,7 +71,7 @@ var gpii = gpii || {};
                 args: ["{arguments}.0", "{that}.options.availablePrefs"]
             },
             toServerModel: {
-                funcName:"gpii.oauth2.selectionTree.toServerModel",
+                funcName: "gpii.oauth2.selectionTree.toServerModel",
                 args: ["{that}.model.selections"]
             },
             // TODO: Currently the Security UI's are a mixture of

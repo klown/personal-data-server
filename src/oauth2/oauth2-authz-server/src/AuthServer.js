@@ -92,7 +92,7 @@ gpii.oauth2.passport.listenPassport = function (passport, userService, clientSer
         return done(null, user.id);
     });
 
-    passport.deserializeUser(function(id, done) {
+    passport.deserializeUser(function (id, done) {
         return done(null, userService.getUserById(id));
     });
 
@@ -240,7 +240,7 @@ fluid.defaults("gpii.oauth2.authServer.standalone", {
  */
 gpii.oauth2.authServer.loginRouting = function (passport, options) {
     return function (req, res, next) {
-        passport.authenticate("local", function(err, user) {
+        passport.authenticate("local", function (err, user) {
             if (err) {
                 return next(err);
             }
@@ -250,7 +250,7 @@ gpii.oauth2.authServer.loginRouting = function (passport, options) {
                 return res.redirect(options.failureRedirect);
             }
 
-            req.logIn(user, function(err) {
+            req.logIn(user, function (err) {
                 var url = options.successReturnToOrRedirect;
                 if (err) {
                     return next(err);
@@ -283,7 +283,7 @@ gpii.oauth2.authServer.contributeMiddleware = function (app) {
             // Web Development with Node and Express by Ethan Brown (O'Reilly).
             // Copyright 2014 Ethan Brown, 978-1-491-94930-6
             section: function (name, options) {
-                if(!this._sections) {
+                if (!this._sections) {
                     this._sections = {};
                 }
                 this._sections[name] = options.fn(this);
@@ -322,7 +322,7 @@ gpii.oauth2.authServer.contributeRouteHandlers = function (that, oauth2orizeServ
     that.expressApp.get("/login",
         that.sessionMiddleware,
         that.passportMiddleware,
-        function(req, res) {
+        function (req, res) {
             var loginFailed = req.session.loginFailed || false;
             delete req.session.loginFailed;
             res.render("login", {loginFailed: loginFailed});
