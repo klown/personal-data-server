@@ -19,6 +19,7 @@
         "node": ">=10.15.0"
     },
     "devDependencies": {
-        "fluid-grunt-lint-all": "^1.0.8"
+        "fluid-grunt-lint-all": "^1.0.8",
+        "grunt": "^1.3.0"
     }
 }
