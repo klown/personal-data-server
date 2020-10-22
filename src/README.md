@@ -1,1 +1,1 @@
-# Preferences4All Source Code
+# Preferences Server Source Code
