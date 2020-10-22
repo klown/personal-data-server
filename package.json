@@ -1,0 +1,24 @@
+{
+    "name": "preferencesServer",
+    "description": "Provides an API for accessing user preferences",
+    "version": "0.1.0",
+    "author": "Fluid Project",
+    "bugs": "https://github.com/fluid-project/preferencesServer/issues",
+    "homepage": "https://github.com/fluid-project/preferencesServer",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "preferences",
+        "settings",
+        "infusion"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/fluid-project/preferencesServer"
+    },
+    "engines": {
+        "node": ">=10.15.0"
+    },
+    "devDependencies": {
+        "fluid-grunt-lint-all": "^1.0.8"
+    }
+}
