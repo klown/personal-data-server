@@ -20,6 +20,7 @@
     },
     "devDependencies": {
         "fluid-grunt-lint-all": "^1.0.8",
-        "grunt": "^1.3.0"
+        "grunt": "^1.3.0",
+        "node-jqunit": "^1.1.8"
     }
 }
