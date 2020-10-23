@@ -5,8 +5,8 @@ This data model was implemented using CouchDB and was planned to migrate to Post
 
 Diagrams below are drawn using [Entity Relationship Model](https://en.wikipedia.org/wiki/Entity–relationship_model).
 Arrows are used to express cardinality where a single line indicates "one single", and the crow's foot indicates "one
-or more". For example, a `Prefs Safe` has one or more `GPII Keys`, or in other words, one or more keys can reference
-the same preferences safe.
+or more". For example, one `Prefs Safe` could have one or more `GPII Keys`, or in other words, one or more keys can
+reference to the same preferences safe.
 
 ## Initial Data Model
 
@@ -15,7 +15,8 @@ the same preferences safe.
 ## Final Data Model
 
 This is the final data model that was used in the production when the GPII project ended. It added 4 new fields, the
-red highlighted, in the `Client Credentials` document type to the requirement for NOVA college.
+red highlighted, in the `Client Credentials` document type to accommodate the requirement for adding NOVA college as
+a new client.
 
 ![Initial data model](images/dataModelFinal.png)
 
