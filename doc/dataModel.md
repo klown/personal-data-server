@@ -275,9 +275,8 @@ This list will continue to expand.
 
 * Remove ontologies
 * Remove/replace all occurrences of `gpii` and `GPII`.
-  * Change the name of `GPII Keys` document
-  * Change the type value `gpiiKey` in `GPII Keys` document
-  * Change `GPII App Installation Client` to `App Installation Client`,
+  * Change the name of `GPII Keys` document and the type value `gpiiKey` in it or, if it is no longer a use case, remove it entirely
+  * Change `GPII App Installation Client` to `App Installation Client`
   * Change its `type` from `gpiiAppInstallationClient` to `appInstallationClient`
   * Change `GPII App  Installation Authorization` to `App Installation Authorization`
   * Change its `type` `gpiiAppInstallationAuthorization` to `appInstallationAuthorization`
