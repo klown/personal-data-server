@@ -1,7 +1,7 @@
 # Data Model
 
-This documentation describes the evolving of the data model used in the [GPII project](https://wiki.gpii.net/w/Main_Page).
-This data model was implemented using CouchDB and was planned to migrate to Postgres.
+This documentation describes the evolution of the data model used in the [GPII project](https://wiki.gpii.net/w/Main_Page).
+This data model was implemented using CouchDB but the plan is to migrate to Postgres.
 
 Diagrams below are drawn using [Entity Relationship Model](https://en.wikipedia.org/wiki/Entity–relationship_model).
 Arrows are used to express cardinality where a single line indicates "one single", and the crow's foot indicates "one
@@ -52,8 +52,8 @@ implemented using [fluid-express-user](https://github.com/fluid-project/fluid-ex
 | type | String | Required | The document type for storing preferences safes. | The value must be "prefsSafe". |
 | schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
 | prefsSafeType | enum of ["snapset", "user"] | Required | Indicates whether this preferences safe is allowed to be modified: the ones with "snapset" type are unmodifiable while the ones with "user" type are modifiable. | "user" |
-| name | String | Optional | The user defined name for this preferences safe. A “preference-safe-name and password” pair can potentially be used as a key. | null |
-| password | String | Optional | The user defined password for this preferences safe. A “preference-safe-name and password” pair can potentially be used as a key. | null |
+| name | String | Optional | The user defined name for the corresponding preferences safe. A pair of “preference-safe-name and password” can potentially be used as a key. | null |
+| password | String | Optional | The user defined password for this preferences safe. A “preference-safe-name and password” pair can potentially be used as a key. In the future data model, this field is moved to the "Users" document that holds login information for the user management. | null |
 | email | String | Optional | The user email. | null |
 | preferences | Object | Required | The user preferences. Refer to the "More Document Field Examples and Explanations" section for an example of this field. | null |
 | timestampCreated | Date | Required | The timestamp when the token is created. | now() |
@@ -105,10 +105,38 @@ implemented using [fluid-express-user](https://github.com/fluid-project/fluid-ex
 | timestampRevoked | Date | Optional | The timestamp when the token is revoked. | null |
 | timestampExpires | Date | Required | The timestamp when this authorization expires. | None |
 
+### GPII Cloud Safe Credentials
+
+This document only exists in the future data model. It contains the mapping data that shows which user login can access which preferences safe.
+
+| Name | Type | Required or Optional | Description | Default |
+| --- | --- | --- | --- | --- |
+| id | String | Required | The ID of the safe credential record. | None |
+| type | String | Required | The document type for storing GPII cloud safe credentials. | The value must be "gpiiCloudSafeCredentials". |
+| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
+| prefsSafeId | String | Required | The ID of the preferences safe that is allowed to be accessed by the corresponding user login. | None |
+| gpiiExpressUserId | String | Required | The user ID that is authorized to access the corresponding preferences safe. | None |
+
 ### Users
 
-Refers to [fluid-express-user](https://github.com/fluid-project/fluid-express-user/blob/master/tests/data/users.json) for
-samples of user records.
+This document only exists in the future data model. It contains all user login information.
+
+| Name | Type | Required or Optional | Description | Default |
+| --- | --- | --- | --- | --- |
+| id | String | Required | The ID of the user record. | None |
+| type | String | Required | The document type for storing users. | The value must be "user". |
+| name | String | Required | The name of the user. | None |
+| username | String | Required | The user name for login. | None |
+| derived_key | String | Required | The encrypted version of the password for login. | None |
+| verification_code | String | Required | The code sent to a user for verifying the email address. | None |
+| salt | String | Required | The securely-generated random bytes that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. | None |
+| iterations | String | Required | The count of iterations that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. | None |
+| email | String | Required | The email provided by the user at signing up a new account. | None |
+| roles | Array | Required | The user roles. Each user can have more than one role. For now, [fluid-express-user](https://github.com/fluid-project/fluid-express-user) only supports the role of "user". | None |
+| verified | Boolean | Required | Whether the user has verified its email address. | false |
+
+Refer to [fluid-express-user](https://github.com/fluid-project/fluid-express-user/blob/master/tests/data/users.json) for
+samples of user records in most up-to-date document structure.
 
 ## Field Examples and Explanations
 
@@ -240,3 +268,18 @@ This table contains all OAuth2 client credentials assigned to all OAuth clients,
     "timestampRevoked": null
 }
 ```
+
+## TODO list
+
+This list will continue to expand.
+
+* Remove ontologies
+* Remove/replace all occurrences of `gpii` and `GPII`.
+  * Change the name of `GPII Keys` document
+  * Change the type value `gpiiKey` in `GPII Keys` document
+  * Change `GPII App Installation Client` to `App Installation Client`,
+  * Change its `type` from `gpiiAppInstallationClient` to `appInstallationClient`
+  * Change `GPII App  Installation Authorization` to `App Installation Authorization`
+  * Change its `type` `gpiiAppInstallationAuthorization` to `appInstallationAuthorization`
+  * Change the `type` `gpiiExpressUserId` to `expressUserId`, or just `userId`.  How important is it that it is an express user?
+* Change `contexts`, the top level within an ontology, to `prefsSets`, representing a container of named sets of preferences.
