@@ -129,14 +129,14 @@ This document only exists in the future data model. It contains all user login i
 | username | String | Required | The user name for login. | None |
 | derived_key | String | Required | The encrypted version of the password for login. | None |
 | verification_code | String | Required | The code sent to a user for verifying the email address. | None |
-| salt | String | Required | The securely-generated random bytes that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. | None |
+| salt | String | Required | The securely-generated random bytes that are supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) when producing the derived key. | None |
 | iterations | String | Required | The count of iterations that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. | None |
-| email | String | Required | The email provided by the user at signing up a new account. | None |
+| email | String | Required | The email provided by the user when signing up a new account. | None |
 | roles | Array | Required | The user roles. Each user can have more than one role. For now, [fluid-express-user](https://github.com/fluid-project/fluid-express-user) only supports the role of "user". | None |
-| verified | Boolean | Required | Whether the user has verified its email address. | false |
+| verified | Boolean | Required | Whether the user has verified their email address. | false |
 
 Refer to [fluid-express-user](https://github.com/fluid-project/fluid-express-user/blob/master/tests/data/users.json) for
-samples of user records in most up-to-date document structure.
+samples of user records in the most up-to-date document structure.
 
 ## Field Examples and Explanations
 
