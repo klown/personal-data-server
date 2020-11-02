@@ -16,3 +16,4 @@ reports
 .idea/
 browserify
 
+.DS_Store
