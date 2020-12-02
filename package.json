@@ -18,9 +18,21 @@
     "engines": {
         "node": ">=10.15.0"
     },
+    "dependencies": {
+        "infusion": "3.0.0-dev.20200326T173810Z.24ddb2718",
+        "json5": "^2.1.3",
+        "pg": "^8.5.1",
+        "sequelize": "^6.3.5"
+    },
     "devDependencies": {
         "fluid-grunt-lint-all": "^1.0.8",
         "grunt": "^1.3.0",
-        "node-jqunit": "^1.1.8"
+        "node-jqunit": "^1.1.8",
+        "nyc": "15.1.0"
+    },
+    "scripts": {
+        "test": "npm run startTestServer && node node_modules/nyc/bin/nyc.js node tests/all-tests.js && npm run dropTestDatabase",
+        "startTestServer": "(export PGDATABASE=prefs_testdb; ./src/database/scripts/startDockerPostgres.sh)",
+        "dropTestDatabase": "./src/database/scripts/dropDockerTestDatabase.sh"
     }
 }
