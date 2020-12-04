@@ -75,7 +75,11 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
         request: {
             type: "fluid.postgresdb.request",
             options: {
-                databaseName: "prefs_testdb"
+                databaseName: "prefs_testdb",
+                host: "localhost",
+                port: 5432,
+                user: "admin",
+                password: "asecretpassword"
             }
         }
     }

@@ -20,6 +20,10 @@ fluid.registerNamespace("fluid.tests.postgresdb");
 fluid.defaults("fluid.tests.postgresdb.request", {
     gradeNames: ["fluid.postgresdb.request"],
     databaseName: "prefs_testdb",
+    host: "localhost",
+    port: 5432,
+    user: "admin",
+    password: "asecretpassword",
     allDatabasesQuery: "SELECT datname FROM pg_database;",
     members: {
         queryResult: null,  // Set in the test (a Sequelize Promise)

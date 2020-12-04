@@ -14,11 +14,13 @@ fluid.registerNamespace("fluid.postgresdb");
 
 fluid.defaults("fluid.postgresdb.request", {
     gradeNames: ["fluid.component"],
-    databaseName:   "fluid_prefsdb",
-    host:           "localhost",
-    port:           5432,
-    user:           "admin",
-    password:       "asecretpassword",
+
+    // The following are set by integrators that use this component (null here)
+    databaseName:   null,   // e.g., "fluid_prefsdb"
+    host:           null,   // e.g., "localhost"
+    port:           null,   // e.g., 5432
+    user:           null,   // e.g., "admin"
+    password:       null,
     members: {
         // Reference to a sequelize instance that will handle the Postgres
         // requests, initialized onCreate.  Note that the database can be
@@ -94,13 +96,13 @@ fluid.defaults("fluid.postgresdb.operations", {
             funcName: "fluid.postgresdb.operations.selectRows",
             args: ["{that}", "{arguments}.0", "{arguments}.1"]
                              // table name    // row contraints
-        }, 
+        },
         retrieveValue: {
             funcName: "fluid.postgresdb.operations.retrieveValue",
             args: ["{that}", "{arguments}.0", "{arguments}.1"]
                              // table name    // constraints
         },
-        insertRecord: {      
+        insertRecord: {
             funcName: "fluid.postgresdb.operations.insertRecord",
             args: ["{that}", "{arguments}.0", "{arguments}.1"]
                              // table name    // record
@@ -152,7 +154,7 @@ fluid.postgresdb.operations.createTables = function (that, tableDefs, deleteExis
  * table.
  *
  * @param {Object} that - Operations component instance.
- * @param {Object} that.tables - The resulting table is added to this list. 
+ * @param {Object} that.tables - The resulting table is added to this list.
  * @param {Object} that.request - An instance of fluid.postgresdb.operations.request
  * @param {Object} tableDef - The table definition.
  * @param {Object} tableDef.options - Table columns.
@@ -173,7 +175,7 @@ fluid.postgresdb.operations.createOneTable = function (that, tableDef, deleteExi
             that.tables[createdTable.name] = createdTable;
         },
         function (error) {
-            fluid.log("Failed to create table '", theTable.name, "' ", error);        
+            fluid.log("Failed to create table '", theTable.modelName, "' ", error.message);
         }
     );
     return createPromise;
@@ -268,7 +270,7 @@ fluid.postgresdb.operations.selectRows = function (that, tableName, rowInfo) {
 
 /*
  * Retrieve the value at a given row/column in the given table.
- * SELECT <constraints.attributes> FROM <tableName> WHERE <valueSpec.where> 
+ * SELECT <constraints.attributes> FROM <tableName> WHERE <valueSpec.where>
  *
  * @param {Object} that - Operations component instance.
  * @param {Object} that.tables - The known tables.
@@ -285,7 +287,7 @@ fluid.postgresdb.operations.retrieveValue = function (that, tableName, constrain
     } else {
         return fluid.promise().resolve([]);
     }
-    // SELECT <constraints.attributes> FROM <tableName> WHERE <constraints.where> 
+    // SELECT <constraints.attributes> FROM <tableName> WHERE <constraints.where>
 };
 
 /*
@@ -310,7 +312,7 @@ fluid.postgresdb.operations.insertRecord = function (that, tableName, record) {
  * Examples of the 'primaryKey' parameter:
  * - { "id": "F553B211-5BCD-41EA-9911-50646AE19D74"}
  * - { "name": "default"}
- * 
+ *
  * @param {Object} that - Operations component instance.
  * @param {Object} that.tables - The known tables.
  * @param {Object} tableName - The table from which the record is deleted.
@@ -364,7 +366,7 @@ fluid.postgresdb.operations.updateFields = function (that, tableName, fieldData)
  * @param {Object} that - Operations component instance.
  * @param {Object} that.modelDefinitions - List to populate with the table models.
  * @param {String} tabelModelsFilePath - Path to models definitions file.
- */ 
+ */
 fluid.postgresdb.operations.loadTableModels = function (that, tabelModelsFilePath) {
     that.modelDefinitions = fluid.require(tabelModelsFilePath, require);
 };
