@@ -10,7 +10,8 @@
 var fluid = require("infusion");
 var allTests = [
     "./testPostgresRequest.js",
-    "./testPostgresOperations.js"
+    "./testPostgresOperations.js",
+    "./testTableModelDefinitions.js"
 ];
 
 fluid.each(allTests, function (aTest) {
