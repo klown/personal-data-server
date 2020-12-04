@@ -107,7 +107,8 @@ implemented using [fluid-express-user](https://github.com/fluid-project/fluid-ex
 
 ### GPII Cloud Safe Credentials
 
-This document only exists in the future data model. It contains the mapping data that shows which user login can access which preferences safe.
+This document only exists in the future data model. It contains the mapping data that shows which user login can access
+which preferences safe.
 
 | Name | Type | Required or Optional | Description | Default |
 | --- | --- | --- | --- | --- |
@@ -144,12 +145,13 @@ samples of user records in the most up-to-date document structure.
 
 Object. Required.
 
-* Each preferences set in a preferences safe is keyed by an internally generated id. The default preferences set is keyed by a fixed string "gpii-default".
+* Each preferences set in a preferences safe is keyed by an internally generated id. The default preferences set is
+keyed by a fixed string "gpii-default".
 * Each preferences set contains a field called "name" that is to save the user defined name for this preferences set.
 
 Example:
 
-```
+``` .json
 {
     "flat": {
         "contexts": {
@@ -236,9 +238,10 @@ This table contains all OAuth2 client credentials assigned to all OAuth clients,
 2. Privileged prefs creator clients; 3. Web prefs consumer clients.
 
 * At any time, each client should only have one active un-revoked client credential in this document.
-* TODO: there's an ongoing discussion on whether to stop support privileged prefs creator clients and web prefs consumer clients.
+* TODO: there's an ongoing discussion on whether to stop support privileged prefs creator clients and web prefs
+consumer clients.
 
-```
+``` .json
 {
     "_id": "clientCredential-1",
     "type": "clientCredential",
@@ -275,10 +278,13 @@ This list will continue to expand.
 
 * Remove ontologies
 * Remove/replace all occurrences of `gpii` and `GPII`.
-  * Change the name of `GPII Keys` document and the type value `gpiiKey` in it or, if it is no longer a use case, remove it entirely
+  * Change the name of `GPII Keys` document and the type value `gpiiKey` in it
+  or, if it is no longer a use case, remove it entirely
   * Change `GPII App Installation Client` to `App Installation Client`
   * Change its `type` from `gpiiAppInstallationClient` to `appInstallationClient`
   * Change `GPII App  Installation Authorization` to `App Installation Authorization`
   * Change its `type` `gpiiAppInstallationAuthorization` to `appInstallationAuthorization`
-  * Change the `type` `gpiiExpressUserId` to `expressUserId`, or just `userId`.  How important is it that it is an express user?
+  * Change the `type` `gpiiExpressUserId` to `expressUserId`, or just `userId`. How important is it that it is an
+  express user? See the [fluid-express-user project](https://github.com/fluid-project/fluid-express-user#fluid-express-user)
+  Note that `fluid-express-user` uses CouchDB for its database.
 * Change `contexts`, the top level within an ontology, to `prefsSets`, representing a container of named sets of preferences.

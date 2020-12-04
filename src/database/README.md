@@ -37,7 +37,7 @@ If you wish to change, for example, the Postgres TCP port
 `POSTGRESDB_LISTEN_PORT`, execute the script as follows:
 
 ```console
-export POSTGRESDB_LISTEN_PORT=5433; startDockerPostgres.sh
+export PGPORT=5433; startDockerPostgres.sh
 ```
 
 ## Shut Down
@@ -54,4 +54,4 @@ container name, `POSTGRES_MAIN_CONTAINER`.
 ## Database API
 
 Documentation on database operations can be found in the
-[`docs`](docs/Operations.md) folder.
+[`docs`](../../docs/Operations.md) folder.
