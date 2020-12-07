@@ -7,7 +7,7 @@
  */
 /* eslint-env node */
 
-// This tests the "real" tables for the data model documented at:
+// This tests the tables for the data model documented at:
 // https://github.com/fluid-project/preferencesServer/blob/main/doc/dataModel.md
 
 "use strict";

@@ -11,7 +11,8 @@ var fluid = require("infusion");
 var DataTypes = require("sequelize");   // Postgres data types
 
 fluid.each(
-    // Array of table/model definitions
+    // Array of table/model definitions, based on the data models documentation:
+    // https://github.com/fluid-project/preferencesServer/blob/main/doc/dataModel.md
     [{
         modelName: "users",
         fields: {
