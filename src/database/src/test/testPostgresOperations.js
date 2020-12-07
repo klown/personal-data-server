@@ -21,9 +21,7 @@ fluid.registerNamespace("fluid.tests.postgresdb");
 
 fluid.tests.postgresdb.anotherUserToInsert =  {
     "id": "another.user:nonadmin",
-    "rev": "4-b363c37b06fab359471bec4c12c8c36e",
-    "password_scheme": "pbkdf2",
-    "iterations": 10,
+    "iterations": 0,
     "username": "carla",
     "type": "user",
     "name": "carla",
@@ -31,11 +29,9 @@ fluid.tests.postgresdb.anotherUserToInsert =  {
     "roles": [
         "user"
     ],
-    "signupTimestamp": new Date("2014-01-03T17:59:23.634Z"),
-    "failedLoginAttempts": 0,
     "derived_key": "9ff4bc1c1846181d303971b08b65122a45174d04",
     "salt": "2653c80aabd3889c3dfd6e198d3dca93",
-    "emailVerificationTimestamp": new Date("2014-01-03T18:00:30.787Z"),
+    "verification_code": "carlaIsVerified",
     "verified": true
 };
 
@@ -164,7 +160,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 task: "{pgTestOps}.loadOneTable",
                 args: ["noSuchTable", "{pgTestOps}.tableData"],
                 resolve: "fluid.tests.postgresdb.operations.testNoSuchTable",
-                resolveArgs: ["{arguments}.0", "No table defined for 'noSuchTable'"]
+                resolveArgs: ["{arguments}.0", "Load table: No table defined for 'noSuchTable'"]
             }, {
                 task: "{pgTestOps}.loadTables",
                 args: ["{pgTestOps}.tableData"],

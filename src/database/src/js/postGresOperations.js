@@ -220,12 +220,12 @@ fluid.postgresdb.operations.loadOneTable = function (that, tableName, records) {
                 fluid.log("Loaded ", results.length, " records into table '", tableName, "'");
             },
             function (error) {
-                fluid.log("Failed to load data into table '", tableName, "'", error);
+                fluid.log("Failed to load data into table '", tableName, "' ", error.message);
             }
         );
         return loadPromise;
     } else {
-        return fluid.promise().resolve("No table defined for '" + tableName + "'");
+        return fluid.promise().resolve("Load table: No table defined for '" + tableName + "'");
     }
 };
 

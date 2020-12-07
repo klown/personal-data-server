@@ -25,7 +25,7 @@ fluid.each(
         "fields": {
             "name": { "type": DataTypes.STRING(64), "primaryKey": true },
             "description": { "type": DataTypes.STRING(64) },
-            "prefs_json": { "type": DataTypes.JSONB }                
+            "prefs_json": { "type": DataTypes.JSONB }
         }
     },
     {
@@ -37,21 +37,24 @@ fluid.each(
     {
         modelName: "users",
         fields: {
-            "id": { "type": DataTypes.STRING(64), "primaryKey": true },
-            "rev": { "type": DataTypes.STRING(64) },
-            "password_scheme": { "type": DataTypes.STRING(64) },
-            "iterations": { "type": DataTypes.INTEGER },
-            "username": { "type": DataTypes.STRING(64) },
-            "type": { "type": DataTypes.STRING(16) },
-            "name": { "type": DataTypes.STRING(16) },
-            "email": { "type": DataTypes.STRING(32) },
-            "roles": { "type": DataTypes.ARRAY(DataTypes.STRING(16)) },
-            "signupTimestamp": { "type": DataTypes.DATE },
-            "failedLoginAttempts": { "type": DataTypes.INTEGER },
-            "derived_key": { "type": DataTypes.STRING },
-            "salt": { "type": DataTypes.STRING },
-            "emailVerificationTimestamp": { "type": DataTypes.DATE },
-            "verified": { "type": DataTypes.BOOLEAN }
+            "id": { "type": DataTypes.STRING(64), "allowNull": false, "primaryKey": true },
+            "type": {
+                "validate": {
+                    "equals": "user"
+                },
+                "type": DataTypes.STRING(16),
+                "allowNull": false,
+                "defaultValue": "user"
+            },
+            "name": { "type": DataTypes.STRING(64), "allowNull": false },
+            "username": { "type": DataTypes.STRING(64), "allowNull": false },
+            "derived_key": { "type": DataTypes.STRING, "allowNull": false },
+            "verification_code": { "type": DataTypes.STRING, "allowNull": false },
+            "salt": { "type": DataTypes.STRING, "allowNull": false },
+            "iterations": { "type": DataTypes.INTEGER, "allowNull": false },
+            "email": { "type": DataTypes.STRING(32), "allowNull": false },
+            "roles": { "type": DataTypes.ARRAY(DataTypes.STRING(16)), "allowNull": false },
+            "verified": { "type": DataTypes.BOOLEAN, "allowNull": false, "defaultValue": false }
         }
     },
     {
