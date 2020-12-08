@@ -127,6 +127,25 @@ fluid.each(
             "prefsSafeId": { "type": DataTypes.STRING(36), "allowNull": false },
             "userId": { "type": DataTypes.STRING(64), "allowNull": false }
         }
+    }, {
+        modelName: "user_keys",  // based on old "GPII Keys"
+        fields: {
+            "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
+            "type": {
+                "validate": {
+                    "equals": "userKey"
+                },
+                "type": DataTypes.STRING(16),
+                "allowNull": false,
+                "defaultValue": "userKey"
+            },
+            "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
+            "prefsSafeId": { "type": DataTypes.STRING(36) },
+            "prefsSetId": { "type": DataTypes.STRING(36) },
+            "revoked": { "type": DataTypes.BOOLEAN, "allowNull": false, "defaultValue": false },
+            "revokedReason": { "type": DataTypes.STRING },
+            "timeStampRevoked": { "type": DataTypes.DATE }
+        }
     }],
     // For each model definition (above), export a function that defines the
     // the sequelize table model.
