@@ -2,7 +2,7 @@
 
 The authorization grant finder provides API that allows users to use access tokens to retrieve their corresponding
 authorization information. The access tokens can be requested via [Resource Owner GPII key
-Grant](https://wiki.gpii.net/w/GPII_OAuth_2_Guide#Resource_Owner_GPII_Key_Grant).
+Grant](OAuth2Guide.md#resource-owner-gpii-keygrant).
 
 ## getGrantForAccessToken(accessToken)
 

@@ -2,7 +2,7 @@
 
 The authorization service provides API that allows to add and retrieve authorization data for GPII App installations.
 GPII App Installations are authorized using [Resource Owner GPII key
-Grant](https://wiki.gpii.net/w/GPII_OAuth_2_Guide#Resource_Owner_GPII_Key_Grant).
+Grant](OAuth2Guide.md#resource-owner-gpii-keygrant).
 
 * [getInfoByAccessToken(accessToken)](#getinfobyaccesstokenaccesstoken)
 * [grantGpiiAppInstallationAuthorization(gpiiKey, clientId,
@@ -16,6 +16,7 @@ Grant](https://wiki.gpii.net/w/GPII_OAuth_2_Guide#Resource_Owner_GPII_Key_Grant)
 * **return: (one of the below)**
   * An object. For GPII app installation clients, the object contains: the access token that matches the given
     parameter, the client and authorization data. An example:
+
     ```json
     {
         "accessToken": "gpii-app-installation-accessToken-1",
@@ -50,6 +51,7 @@ Grant](https://wiki.gpii.net/w/GPII_OAuth_2_Guide#Resource_Owner_GPII_Key_Grant)
         }
     }
     ```
+
     * `undefined`. `undefined` is returned in any of these cases:
       * The authorization that matches the given access token is not found;
       * The authorization has been revoked.

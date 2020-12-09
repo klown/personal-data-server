@@ -1,8 +1,8 @@
 # Authorization Server:
 
 The authorization server adds access control to the cloud-based flow manger to secure access to user preferences. We are
-implementing the authorization server using the [OAuth 2.0 Authorization Framework](http://oauth.net/2/). See [GPII
-OAuth 2 Guide](https://wiki.gpii.net/w/GPII_OAuth_2_Guide) for the implementation of GPII supported OAuth 2.0 grant
+implementing the authorization server using the [OAuth 2.0 Authorization Framework](http://oauth.net/2/).
+See [OAuth 2 Guide](OAuth2Guide.md) for the implementation of GPII supported OAuth 2.0 grant
 types.
 
 ## Supported GPII Clients
@@ -10,7 +10,7 @@ types.
 The authorization server authorizes **GPII App installations**
 
 * **Custom OAuth2 grant**: [Resource Owner GPII Key
-  Grant](https://wiki.gpii.net/w/GPII_OAuth_2_Guide#Resource_Owner_GPII_Key_Grant).
+  Grant](OAuth2Guide#resource-owner-gpii-keygrant).
 * **Capabilities**: GPII App installations can retrieve untrusted settings from GPII Cloud.
 * Local Flow Manger within the GPII App installation interacts with GPII Cloud-Based Flow Manager to:
   * Retrieve user settings
