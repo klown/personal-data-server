@@ -4,13 +4,16 @@
     Licensed under the BSD-3-Clause license.
 */
 
+/* eslint-env node */
 "use strict";
-
 module.exports = function (grunt) {
-    grunt.config.init({
+    grunt.initConfig({
         lintAll: {
             sources: {
-                js:    ["./src/js/**/*.js", "tests/js/**/*.js", "./*.js", "!./src/lib/**/*.js"]
+                md:    ["./*.md", "./doc/*.md", "./src/**/*.md"],
+                js:    ["./src/**/*.js", "./tests/**/*.js", "./*.js"],
+                json:  ["./src/**/*.json", "./tests/**/*.json", "./*.json"],
+                json5: ["./src/**/*.json5", "./tests/**/*.json5", "./*.json5"]
             }
         }
     });

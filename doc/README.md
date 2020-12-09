@@ -4,6 +4,11 @@ This folder contains documentation for the preferences service including
 documentation of the service as a whole as well as the specific subcomponents
 that it is made from.
 
+## Database
+
+- [Data Model for Preferences](dataModel.md)
+- [Database Operations](DatabaseOperations.md)
+
 ## OAuth2
 
 - [OAuth2 Guide](OAuth2Guide.md)
