@@ -33,13 +33,16 @@ providing a means to make requests of it.
 
 #### Component options
 
+These options are all set to `null` in the base grade.  Integrators need to set
+these as appropriate to their situation.
+
 | Option            | Type       | Description | Default |
 | ----------------- | ---------- | ----------- | ------- |
-| `databaseName`    | String     | Optional. Name of the database containing the tables | `"fluid_prefsdb"` |
-| `host`            | String     | Optional. The host for the requests | `localhost` |
-| `port`            | Integer    | Optional. The port for the requests | `5432` |
-| `user`            | String     | Optional. User administrator's name | `"postgres"` |
-| `password`        | String     | Optional (required for secure implemenations). User administrator's password | `"asecretpassword"` |
+| `databaseName`    | String     | Required. Name of the database containing the tables, e.g., `"fluid_prefsdb"` | `null` |
+| `host`            | String     | Required. The host for the requests, e.g., `"localhost"` | `null` |
+| `port`            | Integer    | Required. The port for the requests, e.g., `5432` | `null` |
+| `user`            | String     | Required. User administrator's name, e.g., `"admin"`| `null` |
+| `password`        | String     | Required for secure implemenations. User administrator's password | `null` |
 
 #### Component members
 
@@ -172,7 +175,7 @@ This executes
 `SELECT id, password_scheme, username FROM <tableName> WHERE iterations=10;`
 
 An example of the return value is, assuming there are only two users in the
-table that have iterations of 10:
+table with 10 iterations:
 
 ``` .js
 [
