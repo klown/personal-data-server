@@ -2,7 +2,7 @@
 
     Copyright 2016-2017 OCAD university
     Copyright 2019 Raising the Floor International
-    Copyright 2019 OCAD University
+    Copyright 2019-2020 OCAD University
 
     Licensed under the New BSD license. You may not use this file except in
     compliance with this License.
@@ -11,7 +11,7 @@
     Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
     You may obtain a copy of the License at
-    https://github.com/GPII/universal/blob/master/LICENSE.txt
+    https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 
 */
 "use strict";
@@ -26,7 +26,7 @@ gpii.loadTestingSupport();
 require("./authTestFixtures");
 
 fluid.defaults("gpii.tests.oauth2.authorizationService", {
-    gradeNames: ["gpii.oauth2.authorizationService"],
+    gradeNames: ["fluid.oauth2.authorizationService"],
     invokers: {
         getCurrentDate: {
             funcName: "fluid.identity",
@@ -41,7 +41,7 @@ fluid.defaults("gpii.tests.oauth2.authorizationService", {
 });
 
 fluid.defaults("gpii.tests.oauth2.authGrantFinder", {
-    gradeNames: ["gpii.oauth2.authGrantFinder"],
+    gradeNames: ["fluid.oauth2.authGrantFinder"],
     components: {
         authorizationService: {
             type: "gpii.tests.oauth2.authorizationService"

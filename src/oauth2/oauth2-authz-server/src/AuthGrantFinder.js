@@ -1,5 +1,5 @@
 /*!
-Copyright 2016-2019 OCAD university
+Copyright 2016-2020 OCAD university
 
 Licensed under the New BSD license. You may not use this file except in
 compliance with this License.
@@ -8,7 +8,7 @@ The research leading to these results has received funding from the European Uni
 Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
 You may obtain a copy of the License at
-https://github.com/GPII/universal/blob/master/LICENSE.txt
+https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 */
 
 /* eslint-env browser */
@@ -20,18 +20,16 @@ var fluid = fluid || require("infusion");
 
     "use strict";
 
-    var gpii = fluid.registerNamespace("gpii");
-
-    fluid.defaults("gpii.oauth2.authGrantFinder", {
+    fluid.defaults("fluid.oauth2.authGrantFinder", {
         gradeNames: ["fluid.component"],
         components: {
             authorizationService: {
-                type: "gpii.oauth2.authorizationService"
+                type: "fluid.oauth2.authorizationService"
             }
         },
         invokers: {
             getGrantForAccessToken: {
-                funcName: "gpii.oauth2.authGrantFinder.getGrantForAccessToken",
+                funcName: "fluid.oauth2.authGrantFinder.getGrantForAccessToken",
                 args: ["{that}.authorizationService", "{arguments}.0"]
                                                       // accessToken
             }
@@ -39,8 +37,8 @@ var fluid = fluid || require("infusion");
     });
 
     // Return a promise object that contains the granted privilege for the access token.
-    // This function looks up access tokens granted for GPII app installations to find the match.
-    gpii.oauth2.authGrantFinder.getGrantForAccessToken = function (authorizationService, accessToken) {
+    // This function looks up access tokens granted for App Installations to find the match.
+    fluid.oauth2.authGrantFinder.getGrantForAccessToken = function (authorizationService, accessToken) {
         var promiseTogo = fluid.promise();
         var authorizationPromise = authorizationService.getInfoByAccessToken(accessToken);
         var grant;
@@ -48,7 +46,7 @@ var fluid = fluid || require("infusion");
         authorizationPromise.then(function (authRecord) {
             if (authRecord) {
                 if (authRecord.authorization.type === gpii.dbOperation.docTypes.gpiiAppInstallationAuthorization &&
-                    gpii.oauth2.getExpiresIn(authorizationService.getCurrentDate(), authRecord.authorization.timestampExpires) > 0) {
+                    fluid.oauth2.getExpiresIn(authorizationService.getCurrentDate(), authRecord.authorization.timestampExpires) > 0) {
                     grant = {
                         accessToken: accessToken,
                         gpiiKey: authRecord.authorization.gpiiKey,

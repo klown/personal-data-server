@@ -22,7 +22,11 @@
         "infusion": "3.0.0-dev.20200326T173810Z.24ddb2718",
         "json5": "^2.1.3",
         "pg": "^8.5.1",
-        "sequelize": "^6.3.5"
+        "sequelize": "^6.3.5",
+        "express": "4.16.4",
+        "oauth2orize": "1.11.0",
+        "passport": "0.4.0",
+        "passport-oauth2-client-password": "0.1.2"
     },
     "devDependencies": {
         "fluid-grunt-lint-all": "^1.0.8",

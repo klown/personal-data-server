@@ -1,7 +1,5 @@
 /*!
-Copyright 2014 OCAD university
-Copyright 2017 OCAD university
-Copyright 2019 OCAD university
+Copyright 2014-2020 OCAD university
 
 Licensed under the New BSD license. You may not use this file except in
 compliance with this License.
@@ -10,17 +8,16 @@ The research leading to these results has received funding from the European Uni
 Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
 You may obtain a copy of the License at
-https://github.com/GPII/universal/blob/master/LICENSE.txt
+https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 */
 
 "use strict";
 
 var fluid = require("infusion");
 
-var gpii = fluid.registerNamespace("gpii");
-fluid.registerNamespace("gpii.oauth2");
+fluid.registerNamespace("fluid.oauth2");
 
-fluid.defaults("gpii.oauth2.clientService", {
+fluid.defaults("fluid.oauth2.clientService", {
     gradeNames: ["fluid.component"],
     components: {
         dataStore: {
@@ -29,7 +26,7 @@ fluid.defaults("gpii.oauth2.clientService", {
     },
     invokers: {
         authenticateClient: {
-            funcName: "gpii.oauth2.clientService.authenticateClient",
+            funcName: "fluid.oauth2.clientService.authenticateClient",
             args: ["{dataStore}", "{arguments}.0", "{arguments}.1"]
                                   // oauth2ClientId, expectedOauth2ClientSecret
         },
@@ -46,7 +43,7 @@ fluid.defaults("gpii.oauth2.clientService", {
 // @expectedOauth2ClientSecret (String) - The expected OAuth2 client secret
 //
 // @return (Promise) - A promise object that contains either a client record or an error
-gpii.oauth2.clientService.authenticateClient = function (dataStore, oauth2ClientId, expectedOauth2ClientSecret) {
+fluid.oauth2.clientService.authenticateClient = function (dataStore, oauth2ClientId, expectedOauth2ClientSecret) {
     var promiseTogo = fluid.promise();
     var clientPromise = dataStore.findClientByOauth2ClientId(oauth2ClientId);
 

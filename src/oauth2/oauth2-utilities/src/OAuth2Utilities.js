@@ -1,5 +1,5 @@
 /*!
-Copyright 2014-2017 OCAD university
+Copyright 2014-2020 OCAD university
 
 Licensed under the New BSD license. You may not use this file except in
 compliance with this License.
@@ -8,7 +8,8 @@ The research leading to these results has received funding from the European Uni
 Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
 You may obtain a copy of the License at
-https://github.com/GPII/universal/blob/master/LICENSE.txt
+https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
+
 */
 "use strict";
 
@@ -17,9 +18,9 @@ var fluid = fluid || require("infusion");
 var gpii = fluid.registerNamespace("gpii");
 var ipaddr = require("ipaddr.js");
 
-fluid.registerNamespace("gpii.oauth2");
+fluid.registerNamespace("fluid.oauth2");
 
-gpii.oauth2.parseAccessTokenFromRequest = function (req) {
+fluid.oauth2.parseAccessTokenFromRequest = function (req) {
     if (req.headers && req.headers.authorization) {
         var parts = req.headers.authorization.split(/\s+/);
         if (parts.length === 2 && parts[0].toLowerCase() === "bearer") {
@@ -29,7 +30,7 @@ gpii.oauth2.parseAccessTokenFromRequest = function (req) {
     return undefined;
 };
 
-gpii.oauth2.getAuthorization = function (accessToken, authGrantFinder) {
+fluid.oauth2.getAuthorization = function (accessToken, authGrantFinder) {
     var promiseTogo = fluid.promise();
 
     if (!accessToken) {
@@ -40,7 +41,7 @@ gpii.oauth2.getAuthorization = function (accessToken, authGrantFinder) {
     return promiseTogo;
 };
 
-gpii.oauth2.walkMiddleware = function (middleware, i, req, res, next) {
+fluid.oauth2.walkMiddleware = function (middleware, i, req, res, next) {
     // TODO best way to check if middleware is a single function?
     if (typeof middleware === "function") {
         return middleware(req, res, next);
@@ -49,12 +50,12 @@ gpii.oauth2.walkMiddleware = function (middleware, i, req, res, next) {
         return next();
     } else {
         return middleware[i](req, res, function () {
-            return gpii.oauth2.walkMiddleware(middleware, i + 1, req, res, next);
+            return fluid.oauth2.walkMiddleware(middleware, i + 1, req, res, next);
         });
     }
 };
 
-gpii.oauth2.mapPromiseToResponse = function (promise, response) {
+fluid.oauth2.mapPromiseToResponse = function (promise, response) {
     promise.then(function () {
         response.sendStatus(200);
     }, function (err) {
@@ -68,7 +69,7 @@ gpii.oauth2.mapPromiseToResponse = function (promise, response) {
  * @param {Number} expiresIn - The number of seconds that the expiration will occur.
  * @return {String} A date in simpilified ISO string format.
  */
-gpii.oauth2.getTimestampExpires = function (timestampStarts, expiresIn) {
+fluid.oauth2.getTimestampExpires = function (timestampStarts, expiresIn) {
     if (!timestampStarts) {
         return undefined;
     }
@@ -81,7 +82,7 @@ gpii.oauth2.getTimestampExpires = function (timestampStarts, expiresIn) {
  * @param {String} timestampExpires - A string in the format returned by Date().toISOString().
  * @return {Number} The number of seconds that the expiration will occur. Return 0 if the given timestampExpires < the current timestamp.
  */
-gpii.oauth2.getExpiresIn = function (timestampStarts, timestampExpires) {
+fluid.oauth2.getExpiresIn = function (timestampStarts, timestampExpires) {
     if (!timestampStarts || !timestampExpires) {
         return undefined;
     }
@@ -97,7 +98,7 @@ gpii.oauth2.getExpiresIn = function (timestampStarts, timestampExpires) {
  * @param {Array} allowedIPBlocks - An array of allowed IP blocks.
  * @return {Boolean} Return true if the IP is within the range. Otherwise, return false.
  */
-gpii.oauth2.isIPINRange = function (ipAddress, allowedIPBlocks) {
+fluid.oauth2.isIPINRange = function (ipAddress, allowedIPBlocks) {
     allowedIPBlocks = fluid.makeArray(allowedIPBlocks);
     var addr = ipaddr.process(ipAddress);
 

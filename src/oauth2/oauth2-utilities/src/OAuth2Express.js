@@ -1,5 +1,5 @@
 /*!
-Copyright 2014 OCAD university
+Copyright 2014-2020 OCAD university
 
 Licensed under the New BSD license. You may not use this file except in
 compliance with this License.
@@ -8,7 +8,7 @@ The research leading to these results has received funding from the European Uni
 Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
 You may obtain a copy of the License at
-https://github.com/GPII/universal/blob/master/LICENSE.txt
+https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 */
 "use strict";
 
@@ -16,13 +16,12 @@ var express = require("express");
 
 var fluid = require("infusion");
 
-var gpii = fluid.registerNamespace("gpii");
-fluid.registerNamespace("gpii.oauth2");
+fluid.registerNamespace("fluid.oauth2");
 
-gpii.oauth2.createExpressApp = function () {
+fluid.oauth2.createExpressApp = function () {
     return express();
 };
 
-gpii.oauth2.expressStatic = function (root) {
+fluid.oauth2.expressStatic = function (root) {
     return express["static"](root);
 };

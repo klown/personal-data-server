@@ -10,15 +10,13 @@
     Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
     You may obtain a copy of the License at
-    https://github.com/GPII/universal/blob/master/LICENSE.txt
+    https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 
 */
 "use strict";
 var fluid = require("infusion");
-var gpii  = fluid.registerNamespace("gpii");
 
 require("node-jqunit");
-
 
 require("./authTestFixtures");
 
@@ -50,7 +48,7 @@ fluid.defaults("gpii.tests.oauth2.authorizationService.caseHolder", {
     }],
     components: {
         authorizationService: {
-            type: "gpii.oauth2.authorizationService",
+            type: "fluid.oauth2.authorizationService",
             //createOnEvent: "onFixturesConstructed",
             options: {
                 gradeNames: ["gpii.tests.dbOperation.dbDataStore.base"],

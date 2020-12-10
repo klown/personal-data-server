@@ -8,7 +8,7 @@ The research leading to these results has received funding from the European Uni
 Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
 You may obtain a copy of the License at
-https://github.com/GPII/universal/blob/master/LICENSE.txt
+https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 */
 
 /* eslint-env browser */
@@ -20,28 +20,26 @@ var fluid = fluid || require("infusion");
 
     "use strict";
 
-    var gpii = fluid.registerNamespace("gpii");
-
-    fluid.registerNamespace("gpii.oauth2.authorizationService");
+    fluid.registerNamespace("fluid.oauth2.authorizationService");
 
     // Small function to return the current date.  Used in part to ensure that we can compare canned dates in tests.
-    gpii.oauth2.authorizationService.getCurrentDate = function () {
+    fluid.oauth2.authorizationService.getCurrentDate = function () {
         return new Date();
     };
 
-    fluid.defaults("gpii.oauth2.authorizationService", {
+    fluid.defaults("fluid.oauth2.authorizationService", {
         gradeNames: ["fluid.component"],
         components: {
             dataStore: {
                 type: "gpii.dbOperation.dataStore"
             },
             codeGenerator: {
-                type: "gpii.oauth2.codeGenerator"
+                type: "fluid.oauth2.codeGenerator"
             }
         },
         invokers: {
             grantGpiiAppInstallationAuthorization: {
-                funcName: "gpii.oauth2.authorizationService.grantGpiiAppInstallationAuthorization",
+                funcName: "fluid.oauth2.authorizationService.grantGpiiAppInstallationAuthorization",
                 args: ["{dataStore}", "{codeGenerator}", "{arguments}.0", "{arguments}.1", "{arguments}.2"]
                                                          // gpiiKey, clientId, clientCredentialId
             },
@@ -50,23 +48,23 @@ var fluid = fluid || require("infusion");
                     // accessToken
             },
             getCurrentDate: {
-                funcName: "gpii.oauth2.authorizationService.getCurrentDate"
+                funcName: "fluid.oauth2.authorizationService.getCurrentDate"
             }
         }
     });
 
-    // APIs for GPII App Installation clients
+    // APIs for App Installation clients
 
     /**
-     * Grant an authorization for the give GPII app installation. The gpii key will be verified before the access token is returned.
+     * Grant an authorization for the given App Installation. The gpii key will be verified before the access token is returned.
      * @param {Component} dataStore - An instance of gpii.dbOperation.dbDataStore.
-     * @param {Component} codeGenerator - An instance of gpii.oauth2.codeGenerator.
+     * @param {Component} codeGenerator - An instance of fluid.oauth2.codeGenerator.
      * @param {String} gpiiKey - A GPII key.
      * @param {String} clientId - A client id.
      * @param {String} clientCredentialId - A client credential id.
      * @return {Promise} A promise object whose resolved value is the access token. An error will be returned if the GPII key is not found.
      */
-    gpii.oauth2.authorizationService.grantGpiiAppInstallationAuthorization = function (dataStore, codeGenerator, gpiiKey, clientId, clientCredentialId) {
+    fluid.oauth2.authorizationService.grantGpiiAppInstallationAuthorization = function (dataStore, codeGenerator, gpiiKey, clientId, clientCredentialId) {
         var promiseTogo = fluid.promise();
 
         if (!gpiiKey || !clientId || !clientCredentialId) {
@@ -102,7 +100,7 @@ var fluid = fluid || require("infusion");
                     // Re-issue a new access token every time. In the case that multiple requests were made for the same "client credential + GPII key"
                     // combination, the access token would be different for each request in the audit log. In the case that one request was detected to
                     // be from an attacker, invoking the associating access token would not affect other access tokens or the real user.
-                    gpii.oauth2.authorizationService.createGpiiAppInstallationAuthorization(promiseTogo, dataStore, codeGenerator, gpiiKey, clientId, clientCredentialId, gpii.oauth2.defaultTokenLifeTimeInSeconds);
+                    fluid.oauth2.authorizationService.createGpiiAppInstallationAuthorization(promiseTogo, dataStore, codeGenerator, gpiiKey, clientId, clientCredentialId, fluid.oauth2.defaultTokenLifeTimeInSeconds);
                 }
             });
         }
@@ -113,7 +111,7 @@ var fluid = fluid || require("infusion");
     /**
      * @param {Promise} promiseTogo - Modified by the function with objects to be resolved or to fail.
      * @param {Component} dataStore - An instance of gpii.dbOperation.dbDataStore.
-     * @param {Component} codeGenerator - An instance of gpii.oauth2.codeGenerator.
+     * @param {Component} codeGenerator - An instance of fluid.oauth2.codeGenerator.
      * @param {String} gpiiKey - A GPII key.
      * @param {String} clientId - An unique client id.
      * @param {String} clientCredentialId - An unique client credential id.
@@ -121,7 +119,7 @@ var fluid = fluid || require("infusion");
      *
      * If promiseTogo is fired, the first argument will be the returned values.
      */
-    gpii.oauth2.authorizationService.createGpiiAppInstallationAuthorization = function (promiseTogo, dataStore, codeGenerator, gpiiKey, clientId, clientCredentialId, expiresIn) {
+    fluid.oauth2.authorizationService.createGpiiAppInstallationAuthorization = function (promiseTogo, dataStore, codeGenerator, gpiiKey, clientId, clientCredentialId, expiresIn) {
         var accessToken = codeGenerator.generateAccessToken();
 
         var addGpiiAppInstallationAuthorizationPromise = dataStore.addAuthorization({
@@ -129,7 +127,7 @@ var fluid = fluid || require("infusion");
             gpiiKey: gpiiKey,
             clientCredentialId: clientCredentialId,
             accessToken: accessToken,
-            timestampExpires: gpii.oauth2.getTimestampExpires(new Date(), expiresIn)
+            timestampExpires: fluid.oauth2.getTimestampExpires(new Date(), expiresIn)
         });
 
         var mapper = function () {

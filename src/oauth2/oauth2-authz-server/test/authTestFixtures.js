@@ -6,36 +6,36 @@
 "use strict";
 var fluid = require("infusion");
 
-fluid.registerNamespace("gpii.tests.oauth2");
+fluid.registerNamespace("fluid.tests.oauth2");
 
 
-fluid.defaults("gpii.tests.oauth2.caseHolder", {
+fluid.defaults("fluid.tests.oauth2.caseHolder", {
     gradeNames: ["fluid.test.testCaseHolder"],
     events: {
         createService: null
     }
 });
 
-fluid.defaults("gpii.tests.oauth2.createService", {
+fluid.defaults("fluid.tests.oauth2.createService", {
     gradeNames: ["fluid.test.sequenceElement"],
     sequence: [{
         func: "{caseHolder}.events.createService.fire"
     }]
 });
 
-fluid.defaults("gpii.tests.oauth2.sequenceGrade", {
+fluid.defaults("fluid.tests.oauth2.sequenceGrade", {
     gradeNames: ["fluid.test.sequence"],
     sequenceElements: {
         startCouch: {
-            gradeNames: "gpii.test.startCouchSequence",
+            gradeNames: "fluid.tests.startCouchSequence",
             priority: "before:sequence"
         },
         createPreferencesService: {
-            gradeNames: "gpii.tests.oauth2.createService",
+            gradeNames: "fluid.tests.oauth2.createService",
             priority: "after:startCouch"
         },
         stopCouch: {
-            gradeNames: "gpii.test.stopCouchSequence",
+            gradeNames: "fluid.tests.stopCouchSequence",
             priority: "after:sequence"
         }
     }
@@ -43,11 +43,11 @@ fluid.defaults("gpii.tests.oauth2.sequenceGrade", {
 
 
 // We use the same base grade as the main harness, but avoid merging with that to avoid picking up the wrong test data.
-fluid.defaults("gpii.tests.oauth2.baseEnvironment", {
-    gradeNames: ["gpii.test.couchdb.environment.base"],
+fluid.defaults("fluid.tests.oauth2.baseEnvironment", {
+    gradeNames: ["fluid.tests.couchdb.environment.base"],
     components: {
         caseHolder: {
-            type: "gpii.tests.oauth2.caseHolder"
+            type: "fluid.tests.oauth2.caseHolder"
         }
     }
 });
