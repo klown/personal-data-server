@@ -16,13 +16,11 @@ https://github.com/fluid-project/preferencesServer/blob/main/LICENSE.txt
 var fluid = require("infusion");
 var crypto = require("crypto");
 
-var gpii = fluid.registerNamespace("gpii");
-
 // The fluid.oauth2.codeGenerator component is responsible for generating OAuth 2 access tokens.
 // The codes and access tokens generated must be unguessable.
 //
 // The implementation uses the Node.js crypto module and was originally part of the
-// fluid.oauth2.authorizationService component.
+// gpii.oauth2.authorizationService component.
 // The code generation functionality was moved to its own component to
 // remove dependencies on Node.js from the authorizationService, so
 // that the authorzationService could be unit tested with

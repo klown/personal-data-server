@@ -20,8 +20,8 @@ var gpii = fluid.registerNamespace("gpii");
 
 require("node-jqunit");
 
-fluid.require("%gpii-universal");
-gpii.loadTestingSupport();
+fluid.require("infusion");
+//gpii.loadTestingSupport();
 
 require("./authTestFixtures");
 

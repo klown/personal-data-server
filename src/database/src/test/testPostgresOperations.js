@@ -174,7 +174,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData.rgb"]
                               // array of rows
             }, {
-                // Select from non-existant table
+                // Select from non-existent table
                 task: "{pgTestOps}.selectRows",
                 args: ["noSuchTable", { color: "green" }],
                 resolve: "fluid.tests.postgresdb.operations.testSelectRows",

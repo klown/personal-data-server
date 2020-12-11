@@ -1,7 +1,7 @@
 [
     {
-        "_id": "alice_gpii_key",
-        "type": "gpiiKey",
+        "id": "alice_gpii_key",
+        "type": "prefsSafesKey",
         "schemaVersion": "0.2",
         "prefsSafeId": "prefsSafe-1",
         "prefsSetId": "gpii-default",
@@ -11,8 +11,8 @@
         "timestampUpdated": null
     },
     {
-        "_id": "gpiiAppInstallationClient-1",
-        "type": "gpiiAppInstallationClient",
+        "id": "appInstallationClient-1",
+        "type": "appInstallationClient",
         "schemaVersion": "0.2",
         "name": "AJC1",
         "computerType": "public",
@@ -20,10 +20,10 @@
         "timestampUpdated": null
     },
     {
-        "_id": "clientCredential-1",
+        "id": "clientCredential-1",
         "type": "clientCredential",
         "schemaVersion": "0.2",
-        "clientId": "gpiiAppInstallationClient-1",
+        "clientId": "appInstallationClient-1",
         "oauth2ClientId": "client_id_AJC1",
         "oauth2ClientSecret": "client_secret_AJC1",
         "revoked": false,
@@ -32,7 +32,7 @@
         "timestampRevoked": null
     },
     {
-        "_id": "gpiiAppInstallationClient-2",
+        "id": "appInstallationClient-2",
         "type": "unknownClient",
         "schemaVersion": "0.2",
         "name": "test",
@@ -41,10 +41,10 @@
         "timestampUpdated": null
     },
     {
-        "_id": "clientCredential-2",
+        "id": "clientCredential-2",
         "type": "clientCredential",
         "schemaVersion": "0.2",
-        "clientId": "gpiiAppInstallationClient-2",
+        "clientId": "appInstallationClient-2",
         "oauth2ClientId": "client_id_test",
         "oauth2ClientSecret": "client_secret_test",
         "revoked": false,
@@ -53,10 +53,10 @@
         "timestampRevoked": null
     },
     {
-        "_id": "clientCredential-3",
+        "id": "clientCredential-3",
         "type": "unknownClientCredential",
         "schemaVersion": "0.2",
-        "clientId": "gpiiAppInstallationClient-2",
+        "clientId": "appInstallationClient-2",
         "oauth2ClientId": "client_id_test-3",
         "oauth2ClientSecret": "client_secret_test-3",
         "revoked": false,

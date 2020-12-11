@@ -10,6 +10,8 @@
 var fluid = require("infusion");
 var DataTypes = require("sequelize");   // Postgres data types
 
+fluid.require("%preferencesServer/src/database/src/js/databaseConstants.js");
+
 fluid.each(
     // Array of table/model definitions, based on the data models documentation:
     // https://github.com/fluid-project/preferencesServer/blob/main/doc/dataModel.md
@@ -19,11 +21,11 @@ fluid.each(
             "id": { "type": DataTypes.STRING(64), "allowNull": false, "primaryKey": true },
             "type": {
                 "validate": {
-                    "equals": "user"
+                    "equals": fluid.postgresdb.dataModelTypes.user
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "user"
+                "defaultValue": fluid.postgresdb.dataModelTypes.user
             },
             "name": { "type": DataTypes.STRING(64), "allowNull": false },
             "username": { "type": DataTypes.STRING(64), "allowNull": false },
@@ -41,11 +43,11 @@ fluid.each(
             "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
             "type": {
                 "validate": {
-                    "equals": "prefsSafe"
+                    "equals": fluid.postgresdb.dataModelTypes.prefsSafe
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "prefsSafe"
+                "defaultValue": fluid.postgresdb.dataModelTypes.prefsSafe
             },
             "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
             "prefsSafeType": { "type": DataTypes.ENUM("snapset", "user"), "allowNull": false },
@@ -59,16 +61,20 @@ fluid.each(
             "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
             "type": {
                 "validate": {
-                    "equals": "clientCredentials"
+                    "equals": fluid.postgresdb.dataModelTypes.clientCredentials
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "clientCredentials"
+                "defaultValue": fluid.postgresdb.dataModelTypes.clientCredentials
             },
             "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
             "clientId": { "type": DataTypes.STRING(36), "allowNull": false },
             "oath2ClientId": { "type": DataTypes.STRING(64), "allowNull": false },
             "oath2ClientSecret": { "type": DataTypes.STRING(64), "allowNull": false },
+            "allowedIPBlocks": { "type": DataTypes.ARRAY(DataTypes.STRING(64) },       // ? in models doc's graphic, but not in description table
+            "allowedPrefsToWrite": { "type": DataTypes.ARRAY(DataTypes.STRING(64) },   // ? in models doc's graphic, but not in description table
+            "isCreatePrefsSafesKeyAllowed": { "type": DataTypes.BOOLEAN },             // ? in models doc's graphic, but not in description table
+            "isCreatePrefsSafeAllowed": { "type": DataTypes.BOOLEAN },                 // ? in models doc's graphic, but not in description table
             "revoked": { "type": DataTypes.BOOLEAN, "allowNull": false, "defaultValue": false },
             "revokedReason": { "type": DataTypes.STRING },
             "timeStampRevoked": { "type": DataTypes.DATE }
@@ -79,11 +85,11 @@ fluid.each(
             "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
             "type": {
                 "validate": {
-                    "equals": "appInstallationClient"
+                    "equals": fluid.postgresdb.dataModelTypes.appInstallationClient
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "appInstallationClient"
+                "defaultValue": fluid.postgresdb.dataModelTypes.appInstallationClient
             },
             "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
             "name": { "type": DataTypes.STRING(36), "allowNull": false },
@@ -96,11 +102,11 @@ fluid.each(
             "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
             "type": {
                 "validate": {
-                    "equals": "appInstallationAuthorizations"
+                    "equals": fluid.postgresdb.dataModelTypes.appInstallationAuthorizations
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "appInstallationAuthorizations"
+                "defaultValue": fluid.postgresdb.dataModelTypes.appInstallationAuthorizations
             },
             "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
             "clientId": { "type": DataTypes.STRING(36), "allowNull": false },
@@ -117,27 +123,27 @@ fluid.each(
             "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
             "type": {
                 "validate": {
-                    "equals": "cloudSafeCredentials"
+                    "equals": fluid.postgresdb.dataModelTypes.cloudSafeCredentials
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "cloudSafeCredentials"
+                "defaultValue": fluid.postgresdb.dataModelTypes.cloudSafeCredentials
             },
             "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
             "prefsSafeId": { "type": DataTypes.STRING(36), "allowNull": false },
             "userId": { "type": DataTypes.STRING(64), "allowNull": false }
         }
     }, {
-        modelName: "user_keys",  // based on old "GPII Keys"
+        modelName: "prefs_safes_key",  // based on old "GPII Keys"
         fields: {
             "id": { "type": DataTypes.STRING(36), "primaryKey": true, "allowNull": false },
             "type": {
                 "validate": {
-                    "equals": "userKey"
+                    "equals": fluid.postgresdb.dataModelTypes.cloudSafeCredentials.prefsSafeKey
                 },
                 "type": DataTypes.STRING(16),
                 "allowNull": false,
-                "defaultValue": "userKey"
+                "defaultValue": fluid.postgresdb.dataModelTypes.cloudSafeCredentials.prefsSafeKey
             },
             "schemaVersion": { "type": DataTypes.STRING(36), "allowNull": false },
             "prefsSafeId": { "type": DataTypes.STRING(36) },
@@ -148,7 +154,7 @@ fluid.each(
         }
     }],
     // For each model definition (above), export a function that defines the
-    // the sequelize table model.
+    // sequelize table model.
     function (aModelDef) {
         module.exports[aModelDef.modelName+"TableModel"] = function (sequelize) {
             var tableModel = {};
