@@ -4,6 +4,9 @@
  *
  * Licensed under the New BSD license. You may not use this file except in
  * compliance with this License.
+ *
+ * You may obtain a copy of the License at
+ * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
  */
 /* eslint-env node */
 
@@ -13,6 +16,7 @@ var fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
 require("../js/postgresOperations.js");
+require("./testUtilities.js");
 require("./data/testTableData.js");
 
 jqUnit.module("PostgresDB operations unit tests.");
@@ -141,7 +145,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
             }, {
                 task: "{pgTestOps}.loadOneTable",
                 args: ["rgb", "{pgTestOps}.tableData.rgb"],
-                resolve: "fluid.tests.postgresdb.operations.testLoadOneTable",
+                resolve: "fluid.tests.postgresdb.utils.testLoadOneTable",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData.rgb"]
             }, {
                 task: "{pgTestOps}.deleteTableData",
@@ -164,7 +168,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
             }, {
                 task: "{pgTestOps}.loadTables",
                 args: ["{pgTestOps}.tableData"],
-                resolve: "fluid.tests.postgresdb.operations.testLoadTables",
+                resolve: "fluid.tests.postgresdb.utils.testLoadTables",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData"]
             }, {
                 // Select from existing table
@@ -316,28 +320,9 @@ fluid.tests.postgresdb.operations.testCreateTables = function (result, tables) {
     });
 };
 
-fluid.tests.postgresdb.operations.testLoadOneTable = function (result, tableData) {
-    jqUnit.assertNotNull("Check for null result", result);
-    fluid.each(result, function (aResult, index) {
-        var fields = tableData[index];
-        var fieldKeys = fluid.keys(fields);
-        fluid.tests.postgresdb.operations.checkKeyValuePairs(
-            fieldKeys, aResult.get({plain: true}), fields,
-            "Check column value matches given data"
-        );
-    })
-};
-
 fluid.tests.postgresdb.operations.testDeleteTableData = function (result, dataBaseOps, tableName) {
     var tableData = dataBaseOps.tableData[tableName];
     jqUnit.assertEquals("Check for number of rows deleted", tableData.length, result);
-};
-
-fluid.tests.postgresdb.operations.testLoadTables = function (result, tableData) {
-    jqUnit.assertNotNull("Check for null result", result);
-    fluid.each(result, function (aResult) {
-        fluid.tests.postgresdb.operations.testLoadOneTable(aResult, tableData);
-    });
 };
 
 fluid.tests.postgresdb.operations.testSelectRows = function (results, expected) {

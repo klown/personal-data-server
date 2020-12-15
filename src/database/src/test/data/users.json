@@ -35,7 +35,6 @@
         "username": "unverified",
         "email": "unverified@localhost",
         "roles": [],
-        "data": {},
         "type": "user",
         "derived_key": "80a49cde29016df5daf977937027a574c8ba5f89",
         "salt": "04fe38b871928a6e057b8fe2acd64180",
