@@ -13,7 +13,7 @@
 var fluid = require("infusion"),
     DataTypes = require("sequelize");   // Postgres data types
 
-require("../src/js/DataBaseConstants.js");
+require("../src/js/dataBaseConstants.js");
 
 fluid.each(
     // Array of table/model definitions, based on the data models documentation:
