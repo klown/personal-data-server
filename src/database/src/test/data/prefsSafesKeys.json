@@ -1,0 +1,24 @@
+[
+    {
+        "id": "chrome_high_contrast",
+        "type": "prefsSafeKey",
+        "schemaVersion": "0.2",
+        "prefsSafeId": "prefsSafe-1",
+        "prefsSetId": "gpii-default",
+        "revoked": false,
+        "revokedReason": null,
+        "createdAt": "2017-11-21T18:11:22.101Z",
+        "updatedAt": "2017-12-02T18:11:22.101Z"
+    },
+    {
+        "id": "chrome_high_contrast_dark",
+        "type": "prefsSafeKey",
+        "schemaVersion": "0.2",
+        "prefsSafeId": null,
+        "prefsSetId": null,
+        "revoked": false,
+        "revokedReason": null,
+        "createdAt": "2017-11-21T18:11:22.101Z",
+        "updatedAt": "2020-03-15T18:11:22.101Z"
+    }
+]

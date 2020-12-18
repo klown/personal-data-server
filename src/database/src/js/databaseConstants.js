@@ -16,15 +16,25 @@ fluid.registerNamespace("fluid.postgresdb");
 
 // Data model types -- the "type" field in the different models as documented at
 // https://github.com/fluid-project/preferencesServer/blob/main/doc/dataModel.md#future-data-model
-
 fluid.postgresdb.dataModelTypes = fluid.freezeRecursive({
     user: "user",
     prefsSafe: "prefsSafe",
-    clientCredentials: "clientCredentials",
-    appInstallationClients: "appInstallationClient",
+    clientCredential: "clientCredential",
+    appInstallationClient: "appInstallationClient",
     appInstallationAuthorizations: "appInstallationAuthorizations",
     cloudSafeCredentials: "cloudSafeCredentials",
     prefsSafesKey: "prefsSafesKey"
+});
+
+fluid.postgresdb.tableNames = fluid.freezeRecursive({
+    users: "users",
+    prefsSafes: "prefsSafes",
+    clientCredentials: "clientCredentials",
+    appInstallationClients: "appInstallationClients",
+    appInstallationAuthorizations: "appInstallationAuthorizations",
+    cloudSafeCredentials: "cloudSafeCredentials",
+    prefsSafesKeys: "prefsSafesKeys"
+
 });
 
 // Error details that the database reports.
