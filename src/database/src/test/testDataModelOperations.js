@@ -203,8 +203,7 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
                 // General findRecordByFieldValue
                 task: "{dbTestOps}.findRecordByFieldValue",
                 args: [
-                    "userId",
-                    "{dbTestOps}.options.knownUserId",
+                    {"userId": "{dbTestOps}.options.knownUserId"},
                     fluid.postgresdb.tableNames.cloudSafeCredentials
                 ],
                 resolve: "fluid.tests.dataModel.operations.testFindSuccess",
@@ -216,8 +215,7 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
             }, {
                 task: "{dbTestOps}.findRecordByFieldValue",
                 args: [
-                    "userId",
-                    "{dbTestOps}.options.unknownUserId",
+                    {"userId": "{dbTestOps}.options.unknownUserId"},
                     fluid.postgresdb.tableNames.cloudSafeCredentials
                 ],
                 resolve: "fluid.tests.dataModel.operations.testFindNone",
@@ -307,7 +305,7 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
             }, {
                 // Find cloud safe credentials given vis its userId value
                 task: "{dbTestOps}.findCloudCredentialsByUserId",
-                args: ["{dbTestOps}.options.knownUserId"],
+                args: [{"userId": "{dbTestOps}.options.knownUserId"}],
                 resolve: "fluid.tests.dataModel.operations.testFindSuccess",
                 resolveArgs: [
                     "{arguments}.0",
@@ -316,7 +314,7 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
                 ]
             }, {
                 task: "{dbTestOps}.findCloudCredentialsByUserId",
-                args: ["{dbTestOps}.options.unknownUserId"],
+                args: [{"userId": "{dbTestOps}.options.unknownUserId"}],
                 resolve: "fluid.tests.dataModel.operations.testFindNone",
                 resolveArgs: [
                     "{arguments}.0",
@@ -325,7 +323,9 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
             }, {
                 // Find client credentials given its oauth2ClientId
                 task: "{dbTestOps}.findClientByOauth2ClientId",
-                args: ["{dbTestOps}.options.knownOAuth2ClientId"],
+                args: [
+                    {"oauth2ClientId": "{dbTestOps}.options.knownOAuth2ClientId"}
+                ],
                 resolve: "fluid.tests.dataModel.operations.testFindSuccess",
                 resolveArgs: [
                     "{arguments}.0",
@@ -334,7 +334,9 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
                 ]
             }, {
                 task: "{dbTestOps}.findClientByOauth2ClientId",
-                args: ["{dbTestOps}.options.unknownOAuth2ClientId"],
+                args: [
+                    {"oauth2ClientId": "{dbTestOps}.options.unknownOAuth2ClientId"}
+                ],
                 resolve: "fluid.tests.dataModel.operations.testFindNone",
                 resolveArgs: [
                     "{arguments}.0",
@@ -343,7 +345,9 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
             }, {
                 // Find client credentials given its oauth2ClientId
                 task: "{dbTestOps}.findAuthorizationByAccessToken",
-                args: ["{dbTestOps}.options.knownAccessToken"],
+                args: [
+                    {"accessToken": "{dbTestOps}.options.knownAccessToken"}
+                ],
                 resolve: "fluid.tests.dataModel.operations.testFindSuccess",
                 resolveArgs: [
                     "{arguments}.0",
@@ -352,12 +356,35 @@ fluid.defaults("fluid.tests.dataModel.operations.testCaseHolder", {
                 ]
             }, {
                 task: "{dbTestOps}.findAuthorizationByAccessToken",
-                args: ["{dbTestOps}.options.unknownAccessToken"],
+                args: [
+                    {"accessToken": "{dbTestOps}.options.unknownAccessToken"}
+                ],
                 resolve: "fluid.tests.dataModel.operations.testFindNone",
                 resolveArgs: [
                     "{arguments}.0",
                     "{dbTestOps}.options.unknownAccessToken"
                 ]
+            }, {
+                // Create a structure of access token, authorization, and
+                // credentials based on an accessToken.
+                task: "{dbTestOps}.getAuthAndCredentialsByAccessToken",
+                args:[
+                    {"accessToken": "{dbTestOps}.options.knownAccessToken"}
+                ],
+                resolve: "fluid.tests.dataModel.operations.testAccessStructure",
+                resolveArgs: [
+                    "{arguments}.0",
+                    "{dbTestOps}.options.knownAccessToken",
+                    "{dbTestOps}.expectedCloudSafeCredentials",
+                    "{dbTestOps}.expectedAppInstallationAuthorization"
+                 ]
+            }, {
+                task: "{dbTestOps}.getAuthAndCredentialsByAccessToken",
+                args: [
+                    {"accessToken": "{dbTestOps}.options.unknownAccessToken"}
+                ],
+                resolve: "fluid.tests.dataModel.operations.testAccessStructure",
+                resolveArgs: ["{arguments}.0", undefined, {}, {}]
             }, {
                 // Find prefsSafe given a prefsSafesKey (formerly GPII Key)
                 task: "{dbTestOps}.findPrefsSafeByPrefsSafeKey",
@@ -404,12 +431,31 @@ fluid.tests.dataModel.operations.testFindSuccess = function (results, expected, 
         fluid.keys(expected),
         results[0].get({plain: true}),
         expected,
-        "Check found record: " + msg);
+        "Check found record: " + msg
+    );
 };
 
 fluid.tests.dataModel.operations.testFindNone = function (results, msg) {
     jqUnit.assertNotNull("Check find results", results);
     jqUnit.assertEquals("Check find no results for " + msg, 0, results.length);
+};
+
+fluid.tests.dataModel.operations.testAccessStructure = function (result, accessToken, credentials, authorization) {
+    jqUnit.assertNotNull("Check access token structure", result);
+    jqUnit.assertEquals("Check access token in access token structure", accessToken, result.accessToken);
+
+    fluid.tests.postgresdb.utils.checkKeyValuePairs(
+        fluid.keys(credentials),
+        result.credentials,
+        credentials,
+        "Check credentials in access token structure: " + accessToken
+    );
+    fluid.tests.postgresdb.utils.checkKeyValuePairs(
+        fluid.keys(authorization),
+        result.authorization,
+        authorization,
+        "Check authorization in access token structure: " + accessToken
+    );
 };
 
 fluid.test.runTests("fluid.tests.dataModel.operations.environment");

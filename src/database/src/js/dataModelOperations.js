@@ -28,8 +28,8 @@ fluid.defaults("fluid.postgresdb.dataModelOps", {
         },
         findRecordByFieldValue: {
             funcName: "fluid.postgresdb.dataModelOps.findRecordByFieldValue",
-            args: ["{that}", "{arguments}.0", "{arguments}.1", "{arguments}.2"]
-                             // field name     // field value   // table name
+            args: ["{that}", "{arguments}.0",   "{arguments}.1"]
+                             // name/value pair // table name
         },
         findPrefsSafeById: {
             func: "{that}.findRecordById",
@@ -53,8 +53,8 @@ fluid.defaults("fluid.postgresdb.dataModelOps", {
         },
         findCloudCredentialsByUserId: {
             func: "{that}.findRecordByFieldValue",
-            args: ["userId", "{arguments}.0", fluid.postgresdb.tableNames.cloudSafeCredentials]
-                             // user id
+            args: ["{arguments}.0", fluid.postgresdb.tableNames.cloudSafeCredentials]
+                    // user id name/value pair
         },
         findClientById: {
             func: "{that}.findRecordById",
@@ -62,14 +62,19 @@ fluid.defaults("fluid.postgresdb.dataModelOps", {
                    // appInstallationClient id
         },
         findClientByOauth2ClientId: {
-             func: "{that}.findRecordByFieldValue",
-             args: ["oauth2ClientId", "{arguments}.0", fluid.postgresdb.tableNames.clientCredentials]
-                                      // oauth2ClientId value
+            func: "{that}.findRecordByFieldValue",
+            args: ["{arguments}.0", fluid.postgresdb.tableNames.clientCredentials]
+                   // oauth2ClientId name/value pair
         },
         findAuthorizationByAccessToken: {
-             func: "{that}.findRecordByFieldValue",
-             args: ["accessToken", "{arguments}.0", fluid.postgresdb.tableNames.appInstallationAuthorizations]
-                                    // accessToken value
+            func: "{that}.findRecordByFieldValue",
+            args: ["{arguments}.0", fluid.postgresdb.tableNames.appInstallationAuthorizations]
+                   // accessToken name/value pair
+        },
+        getAuthAndCredentialsByAccessToken: {
+            funcName: "fluid.postgresdb.dataModelOps.getAuthAndCredentialsByAccessToken",
+            args: ["{that}", "{arguments}.0"]
+                             // accessToken value
         },
         findPrefsSafeByPrefsSafeKey: {
              funcName: "fluid.postgresdb.dataModelOps.findPrefsSafeByPrefsSafeKey",
@@ -96,16 +101,14 @@ fluid.postgresdb.dataModelOps.findRecordById = function (that, identifier, table
  * Find a record in the named table with the given field/column value.
  *
  * @param {Object} that - Data Model operations instance.
- * @param {String} field - Name of the field/column to search.
- * @param {String} value - Value to search for.
+ * @param {Object} nameValue - Structure containing a field name and its value,
+ *                             e.g. {"userId": "fred"}.
  * @param {String} tableName - Name of database table to search.
  * @return {Promise} Promise whose value is an array containing the record sought,
  *                   or an empty array if no record was found.
  */
- fluid.postgresdb.dataModelOps.findRecordByFieldValue = function (that, fieldName, value, tableName) {
-    var constraints = {};
-    constraints[fieldName] = value;
-    return that.selectRows(tableName, constraints);
+ fluid.postgresdb.dataModelOps.findRecordByFieldValue = function (that, nameValue, tableName) {
+    return that.selectRows(tableName, nameValue);
  };
 
 /**
@@ -134,7 +137,7 @@ fluid.postgresdb.dataModelOps.findPrefsSafeByUserRecord = function (that, userRe
  */
 fluid.postgresdb.dataModelOps.findPrefsSafeByUserId = function (that, userId) {
     var togo = fluid.promise();
-    var promise = that.findCloudCredentialsByUserId(userId);
+    var promise = that.findCloudCredentialsByUserId({"userId": userId});
     promise.then(function (success) {
         // Result is one or none
         if (success.length === 0) {
@@ -176,24 +179,46 @@ fluid.postgresdb.dataModelOps.findPrefsSafeByPrefsSafeKey = function (that, pref
 };
 
 /**
- * Common handler for success, but when there are no records in the result.
+ * Find the appAuthorizationInstallation record for the given accessToken, and
+ * then the cloudSafeCredentials based on the authorization's "userId".  Return
+ * a structure consisting of the accessToken, the credentials, and the
+ * authorization:
+ * {
+ *    accessToken: access token value passed in.
+ *    authorization: authorization record associated with the access token.
+ *    credentials: credentials referenced by userId value in the authorization
+ * }
  *
- * @param {Object} success - Data Model operations instance.
  * @param {Object} that - Data Model operations instance.
- * @param {String} message - The PrefsSafesKey to use as the search.
- * @return {Promise} Promise whose value is an array with one entry, the
- *                   PrefsSafe, or an empty array.
+ * @param {String} accessToken - Access token value to base the search on.
+ * @return {Promise} Promise whose value is the access token, credentials, and
+ *                   authorization structure described above, or an empty object
+ *                   if nothing is found.
  */
-// fluid.postgresdb.dataModelOps.addSuccessHandler = function (inPromise, outPromise, options) {
-//     inPromise.then(function (success) {
-//         // Result is only one or none
-//         if (success.length === 0) {
-//             fluid.log(options.message, options.key, "in ", options.tableName);
-//             outPromise.resolve(success);
-//         } else {
-//             var result = success[0].get({plain: true});
-//             var next = that.selectRows(options.tableName, options.rowInfo);
-//             fluid.promise.follow(next, outPromise);
-//         }
-//     };
-// };
+fluid.postgresdb.dataModelOps.getAuthAndCredentialsByAccessToken = function (that, accessToken) {
+    var togo = fluid.promise();
+    var authPromise = that.findAuthorizationByAccessToken(accessToken);
+    authPromise.then(function (authResults) {
+        if (authResults.length === 0) {
+            fluid.log("No authorization for token : '", accessToken, "'");
+            togo.resolve({});
+        } else {
+            var authorization = authResults[0].get({plain: true});
+            var credPromise = that.findCloudCredentialsByUserId({"userId": authorization.userId});
+            credPromise.then(function (credResults) {
+                if (credResults.length === 0) {
+                    fluid.log("No credentials for token : '", accessToken, "'");
+                    togo.resolve({});
+                } else {
+                    var credentials = credResults[0].get({plain: true});
+                    togo.resolve({
+                        "accessToken": accessToken.accessToken,
+                        "authorization": authorization,
+                        "credentials": credentials
+                    });
+                }
+            });
+        }
+    });
+    return togo;
+};
