@@ -18,7 +18,7 @@ fluid.registerNamespace("fluid.postgresdb");
 fluid.defaults("fluid.postgresdb.request", {
     gradeNames: ["fluid.component"],
 
-    // The following are set by integrators that use this component (null here)
+    // The following are set by integrators that use this component
     databaseName:   null,   // e.g., "fluid_prefsdb"
     host:           null,   // e.g., "localhost"
     port:           null,   // e.g., 5432
@@ -70,6 +70,11 @@ fluid.defaults("fluid.postgresdb.operations", {
         modelDefinitions: null
     },
     invokers: {
+        connect: {
+            func: "{that}.createTables",
+            args: ["{that}.modelDefinitions", false]
+                   // models                  // do not delete existing tables
+        },
         createTables: {
             funcName: "fluid.postgresdb.operations.createTables",
             args: ["{that}", "{arguments}.0", "{arguments}.1"]
@@ -78,7 +83,7 @@ fluid.defaults("fluid.postgresdb.operations", {
         createOneTable: {
             funcName: "fluid.postgresdb.operations.createOneTable",
             args: ["{that}", "{arguments}.0", "{arguments}.1"]
-                             // model         // delete existing table
+                             // model         // delete existing table?
         },
         loadOneTable: {
             funcName: "fluid.postgresdb.operations.loadOneTable",
@@ -124,6 +129,16 @@ fluid.defaults("fluid.postgresdb.operations", {
             funcName: "fluid.postgresdb.operations.loadTableModels",
             args: ["{that}", "{arguments}.0"]
                              // path to table model definitions
+        },
+        loadModelsAndConnect: {
+            funcName: "fluid.postgresdb.operations.loadModelsAndConnect",
+            args: ["{that}", "{arguments}.0"]
+                             // path to table model definitions
+        },
+        getPlainRecords: {
+            funcName: "fluid.postgresdb.operations.getPlainRecords",
+            args: ["{arguments}.0"]
+                   // Sequelize results
         }
     },
     components: {
@@ -171,7 +186,7 @@ fluid.postgresdb.operations.createOneTable = function (that, tableDef, deleteExi
     var theTable = tableDef(that.request.sequelize);
 
     // Force the destruction (drop) of any existing table before (re)creating
-    // it.
+    // it based on `deleteExisting`
     var createPromise = theTable.model.sync({force: deleteExisting});
     createPromise.then(
         function (createdTable) {
@@ -217,7 +232,7 @@ fluid.postgresdb.operations.loadTables = function (that, tableData) {
 fluid.postgresdb.operations.loadOneTable = function (that, tableName, records) {
     var model = that.tables[tableName];
     if (model) {
-        var loadPromise = model.bulkCreate(records);
+        var loadPromise = (model.bulkCreate(records)).then(that.getPlainRecords);
         loadPromise.then(
             function (results) {
                 fluid.log("Loaded ", results.length, " records into table '", tableName, "'");
@@ -264,7 +279,7 @@ fluid.postgresdb.operations.deleteTableData = function (that, tableName, hardDel
 fluid.postgresdb.operations.selectRows = function (that, tableName, rowInfo) {
     var model = that.tables[tableName];
     if (model) {
-        return model.findAll({where: rowInfo});
+        return model.findAll({where: rowInfo}).then(that.getPlainRecords);
     } else {
         return fluid.promise().resolve([]);
     }
@@ -273,7 +288,7 @@ fluid.postgresdb.operations.selectRows = function (that, tableName, rowInfo) {
 
 /*
  * Retrieve the value at a given row/column in the given table.
- * SELECT <constraints.attributes> FROM <tableName> WHERE <valueSpec.where>
+ * SELECT <constraints.attributes> FROM <tableName> WHERE <constraints.where>
  *
  * @param {Object} that - Operations component instance.
  * @param {Object} that.tables - The known tables.
@@ -286,7 +301,7 @@ fluid.postgresdb.operations.selectRows = function (that, tableName, rowInfo) {
 fluid.postgresdb.operations.retrieveValue = function (that, tableName, constraints) {
     var model = that.tables[tableName];
     if (model) {
-        return model.findAll(constraints);
+        return model.findAll(constraints).then(that.getPlainRecords);
     } else {
         return fluid.promise().resolve([]);
     }
@@ -301,8 +316,7 @@ fluid.postgresdb.operations.retrieveValue = function (that, tableName, constrain
  * @param {Object} that.tables - The known tables.
  * @param {Object} tableName - The table whose contents are to be deleted.
  * @param {Object} record - Hash of name/value pairs.
- * @return {Promise} Promise whose value is an array of the record added and
- *                   whether it was added.
+ * @return {Promise} Promise whose value is an array of the record added.
  */
 fluid.postgresdb.operations.insertRecord = function (that, tableName, record) {
     return that.loadOneTable(tableName, [record]);
@@ -368,8 +382,37 @@ fluid.postgresdb.operations.updateFields = function (that, tableName, fieldData)
  *
  * @param {Object} that - Operations component instance.
  * @param {Object} that.modelDefinitions - List to populate with the table models.
- * @param {String} tabelModelsFilePath - Path to models definitions file.
+ * @param {String} tableModelsFilePath - Path to models definitions file.
  */
 fluid.postgresdb.operations.loadTableModels = function (that, tabelModelsFilePath) {
     that.modelDefinitions = fluid.require(tabelModelsFilePath, require);
+};
+
+/*
+ * Load the table model definitions and synchronize the connection with the
+ * database.
+ *
+ * @param {Object} that - Operations component instance.
+ * @param {Object} that.modelDefinitions - Models populated by the load and
+ *                                         then used to connect with database.
+ * @param {String} tableModelsFilePath - Path to models definitions file.
+ */
+fluid.postgresdb.operations.loadModelsAndConnect = function (that, tableModelsFilePath) {
+    that.loadTableModels(tableModelsFilePath);
+    return that.connect();
+};
+
+/*
+ * Utility to extract the results and return them aa an array of plain JSON
+ * objects.
+ *
+ * @param {Array} results - Array of sequelized results
+ * @return {Array} An array of plain JSON objects; can be empty
+ */
+fluid.postgresdb.operations.getPlainRecords = function (results) {
+    var records = [];
+    fluid.each(results, function (aResult) {
+        records.push(aResult.get({plain: true}));
+    });
+    return records;
 };

@@ -55,7 +55,7 @@ fluid.tests.postgresdb.utils.testLoadOneTable = function (records, tableData) {
         var expectedPairs = tableData[index];
         var keys = fluid.keys(expectedPairs);
         fluid.tests.postgresdb.utils.checkKeyValuePairs(
-            keys, aRecord.get({plain: true}), expectedPairs,
+            keys, aRecord, expectedPairs,
             "Check column value matches given data"
         );
     })

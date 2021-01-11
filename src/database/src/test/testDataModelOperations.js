@@ -429,7 +429,7 @@ fluid.tests.dataModel.operations.testFindSuccess = function (results, expected, 
     jqUnit.assertNotEquals("Check number of " + msg + " records found", 0, results.length);
     fluid.tests.postgresdb.utils.checkKeyValuePairs(
         fluid.keys(expected),
-        results[0].get({plain: true}),
+        results[0],
         expected,
         "Check found record: " + msg
     );
