@@ -133,13 +133,13 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
             {
                 task: "{pgTestOps}.createOneTable",
                 args: ["{pgTestOps}.modelDefinitions.rgbTableModel", true],
-                                                                        // delete existing table
+                                                                    // delete existing table
                 resolve: "fluid.tests.postgresdb.operations.testCreateOneTable",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tables"]
             }, {
                 task: "{pgTestOps}.createTables",
                 args: ["{pgTestOps}.modelDefinitions", true],
-                                                          // delete existing tables
+                                                       // delete existing tables
                 resolve: "fluid.tests.postgresdb.operations.testCreateTables",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tables"]
             }, {
@@ -329,8 +329,7 @@ fluid.tests.postgresdb.operations.testSelectRows = function (results, expected) 
     if (expected.length === 0) {
         jqUnit.assertEquals("Check zero rows returned", 0, results.length);
     } else {
-        fluid.each(results, function (actual) {
-            var actualRecord = actual.get({plain: true});
+        fluid.each(results, function (actualRecord) {
             fluid.each(expected, function (expectedRecord) {
                 if (expectedRecord.id === actualRecord.id) {
                     var expectedFields = fluid.keys(expectedRecord);
@@ -349,7 +348,7 @@ fluid.tests.postgresdb.operations.testRetrieveValue = function (results, expecte
     jqUnit.assertDeepEq(
         "Check value retrieved",
         expected[expectedKey],
-        results[0].get({plain: true})[expectedKey]
+        results[0][expectedKey]
     );
 };
 
@@ -376,7 +375,7 @@ fluid.tests.postgresdb.operations.testInsertRecord = function (results, expected
     // record (expectedAddition)
     var expectedKeys = fluid.keys(expectedAddition);
     fluid.tests.postgresdb.operations.checkKeyValuePairs(
-        expectedKeys, results[0].get({plain: true}), expectedAddition,
+        expectedKeys, results[0], expectedAddition,
         "Check added record"
     );
 };

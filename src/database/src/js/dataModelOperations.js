@@ -56,10 +56,19 @@ fluid.defaults("fluid.postgresdb.dataModelOps", {
             args: ["{arguments}.0", fluid.postgresdb.tableNames.cloudSafeCredentials]
                     // user id name/value pair
         },
+        findCloudCredentialsById: {
+            func: "{that}.findRecordById",
+            args: ["{arguments}.0", fluid.postgresdb.tableNames.cloudSafeCredentials]
+                    // id
+        },
         findClientById: {
             func: "{that}.findRecordById",
             args: ["{arguments}.0", fluid.postgresdb.tableNames.appInstallationClients]
                    // appInstallationClient id
+        },
+        findClientCredentialById: {
+            func: "{that}.findRecordById",
+            args: ["{arguments}.0", fluid.postgresdb.tableNames.clientCredentials]
         },
         findClientByOauth2ClientId: {
             func: "{that}.findRecordByFieldValue",
@@ -77,10 +86,10 @@ fluid.defaults("fluid.postgresdb.dataModelOps", {
                              // accessToken value
         },
         findPrefsSafeByPrefsSafeKey: {
-             funcName: "fluid.postgresdb.dataModelOps.findPrefsSafeByPrefsSafeKey",
-             args: ["{that}", "{arguments}.0"]
-                              // Prefs Safe key
-        },
+            funcName: "fluid.postgresdb.dataModelOps.findPrefsSafeByPrefsSafeKey",
+            args: ["{that}", "{arguments}.0"]
+                             // Prefs Safe key
+        }
     },
 });
 
@@ -144,7 +153,7 @@ fluid.postgresdb.dataModelOps.findPrefsSafeByUserId = function (that, userId) {
             fluid.log("No credentials for: '", userId , "', in ", fluid.postgresdb.tableNames.cloudSafeCredentials);
             togo.resolve(success);
         } else {
-            var credentials = success[0].get({plain: true});
+            var credentials = success[0];
             var next = that.findPrefsSafeById(credentials.prefsSafeId);
             fluid.promise.follow(next, togo);
         }
@@ -170,7 +179,7 @@ fluid.postgresdb.dataModelOps.findPrefsSafeByPrefsSafeKey = function (that, pref
             fluid.log("No such PrefsSafesKey: '", prefsSafesKey, "', in ", fluid.postgresdb.tableNames.prefsSafesKeys);
             togo.resolve(success);
         } else {
-            var prefsSafeKeyRecord = success[0].get({plain: true});
+            var prefsSafeKeyRecord = success[0];
             var next = that.findPrefsSafeById(prefsSafeKeyRecord.prefsSafeId);
             fluid.promise.follow(next, togo);
         }
@@ -203,14 +212,14 @@ fluid.postgresdb.dataModelOps.getAuthAndCredentialsByAccessToken = function (tha
             fluid.log("No authorization for token : '", accessToken, "'");
             togo.resolve({});
         } else {
-            var authorization = authResults[0].get({plain: true});
+            var authorization = authResults[0];
             var credPromise = that.findCloudCredentialsByUserId({"userId": authorization.userId});
             credPromise.then(function (credResults) {
                 if (credResults.length === 0) {
                     fluid.log("No credentials for token : '", accessToken, "'");
                     togo.resolve({});
                 } else {
-                    var credentials = credResults[0].get({plain: true});
+                    var credentials = credResults[0];
                     togo.resolve({
                         "accessToken": accessToken.accessToken,
                         "authorization": authorization,
