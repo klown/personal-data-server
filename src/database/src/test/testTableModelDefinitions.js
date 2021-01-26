@@ -35,9 +35,9 @@ fluid.defaults("fluid.tests.postgresdb.tableModels", {
             options: {
                 databaseName: "prefs_testdb",
                 host: "localhost",
-                port: 5432,
-                user: "admin",
-                password: "asecretpassword"
+                port: process.env.PGPORT || 5432,
+                user: process.env.POSTGRES_USER || "admin",
+                password: process.env.POSTGRES_PASSWORD || "asecretpassword"
             }
         }
     }

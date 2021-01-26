@@ -32,13 +32,13 @@ docker run -d \
     -e POSTGRES_USER=$POSTGRES_USER \
     -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
     -p $PGPORT:$PGPORT \
-    -d $POSTGRES_IMAGE postgres
+    -d $POSTGRES_IMAGE postgres -p $PGPORT
 
 log "Checking that PostgresDB is ready..."
 POSTGRESDB_ISREADY=0
 for i in `seq 1 30`
 do
-    docker exec --user postgres postgresdb pg_isready
+    docker exec --user postgres postgresdb pg_isready -p $PGPORT
     if [[ $? == 0 ]]; then
         POSTGRESDB_ISREADY=1
         break

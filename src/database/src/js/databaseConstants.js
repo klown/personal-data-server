@@ -26,6 +26,7 @@ fluid.postgresdb.dataModelTypes = fluid.freezeRecursive({
     prefsSafesKey: "prefsSafesKey"
 });
 
+// Postgres table names
 fluid.postgresdb.tableNames = fluid.freezeRecursive({
     users: "users",
     prefsSafes: "prefsSafes",
@@ -36,6 +37,8 @@ fluid.postgresdb.tableNames = fluid.freezeRecursive({
     prefsSafesKeys: "prefsSafesKeys"
 
 });
+
+fluid.postgresdb.schemaVersion = "0.2";
 
 // Error details that the database reports.
 fluid.postgresdb.errors = fluid.freezeRecursive({
