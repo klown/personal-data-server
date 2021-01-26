@@ -119,7 +119,7 @@ fluid.oauth2.oauth2orizeServer.listenOauth2orize = function (oauth2orizeServer, 
 };
 
 fluid.oauth2.oauth2orizeServer.grantAccessToken = function (authorizationService, gpiiKey, clientId, clientCredentialId, done) {
-    var passwordPromise = authorizationService.grantGpiiAppInstallationAuthorization(gpiiKey, clientId, clientCredentialId);
+    var passwordPromise = authorizationService.grantAppInstallationAuthorization(gpiiKey, clientId, clientCredentialId);
 
     var authorizationMapper = function (authorization) {
         return authorization.accessToken;

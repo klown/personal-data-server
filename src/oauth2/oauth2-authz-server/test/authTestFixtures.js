@@ -26,25 +26,25 @@ fluid.defaults("fluid.tests.oauth2.createService", {
 fluid.defaults("fluid.tests.oauth2.sequenceGrade", {
     gradeNames: ["fluid.test.sequence"],
     sequenceElements: {
-        startCouch: {
+/*        startCouch: {
             gradeNames: "fluid.tests.startCouchSequence",
             priority: "before:sequence"
-        },
+        },*/
         createPreferencesService: {
             gradeNames: "fluid.tests.oauth2.createService",
-            priority: "after:startCouch"
-        },
+//            priority: "after:startCouch"
+        }/*,
         stopCouch: {
             gradeNames: "fluid.tests.stopCouchSequence",
             priority: "after:sequence"
-        }
+        }*/
     }
 });
 
-
 // We use the same base grade as the main harness, but avoid merging with that to avoid picking up the wrong test data.
 fluid.defaults("fluid.tests.oauth2.baseEnvironment", {
-    gradeNames: ["fluid.tests.couchdb.environment.base"],
+//    gradeNames: ["fluid.tests.couchdb.environment.base"],
+    gradeNames: ["fluid.test.testEnvironment"],
     components: {
         caseHolder: {
             type: "fluid.tests.oauth2.caseHolder"

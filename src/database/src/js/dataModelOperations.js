@@ -10,7 +10,8 @@
  */
 "use strict";
 
-var fluid = require("infusion");
+var fluid   = require("infusion"),
+    uuid    = require("uuid");
 
 require("./databaseConstants.js");
 require("./postgresOperations.js");
@@ -89,6 +90,11 @@ fluid.defaults("fluid.postgresdb.dataModelOps", {
             funcName: "fluid.postgresdb.dataModelOps.findPrefsSafeByPrefsSafeKey",
             args: ["{that}", "{arguments}.0"]
                              // Prefs Safe key
+        },
+        addAuthorization: {
+            funcName: "fluid.postgresdb.dataModelOps.addAuthorization",
+            args: ["{that}", "{arguments}.0"]
+                             // authorization record to add
         }
     },
 });
@@ -229,5 +235,51 @@ fluid.postgresdb.dataModelOps.getAuthAndCredentialsByAccessToken = function (tha
             });
         }
     });
+    return togo;
+};
+
+/**
+ * Create and add appAuthorizationInstallation record with the given values. The
+ * `id` (UUID) and `schemaVersion` are set if no value is provided.  The `type`
+ * is set to `fluid.postgresdb.dataModelTypes.appInstallationAuthorizations`.
+ * All other values are set to their defaults if not provided.
+ *
+ * @param {Object} that - Data Model operations instance.
+ * @param {Object} appAuthorization - appInstallationAuthorization record to add
+ * @param {String} appAuthorization.prefsSafesKey - A prefsSafe key.
+ * @param {String} appAuthorization.clientId - An unique client id.
+ * @param {String} appAuthorization.clientCredentialId - An unique client credential id.
+ * @param {String} appAuthorization.accessToken - The access token.
+ * @param {String} appAuthorization.timestampExpires - The longevity of the access token.
+ * @return {Promise} On success: a Promise whose value is a single member array
+ *                   containing the appAuthorizationInstallation record
+ *                   parameter.  If the passed in record is null or the wrong
+ *                   type, the Promise is rejected with an appropriate error
+ *                   message.
+ */
+fluid.postgresdb.dataModelOps.addAuthorization = function (that, appAuthorization) {
+    var togo;
+    if (!appAuthorization) {
+        var error = fluid.postgresdb.composeError(
+            fluid.postgresdb.errors.missingDoc,
+            { docType: fluid.postgresdb.dataModelTypes.appInstallationAuthorizations }
+        );
+        fluid.log(error);
+        togo = fluid.promise().reject(error);
+    } else {
+        // Set `id`, `type`, and `schemaVersion`. The rest are handled as
+        // default values, e.g., `timestampRevoked` (null).
+        togo = that.insertRecord(
+            fluid.postgresdb.tableNames.appInstallationAuthorizations, {
+                id: appAuthorization.id || uuid.v4(),
+                type: fluid.postgresdb.dataModelTypes.appInstallationAuthorizations,
+                schemaVersion: appAuthorization.schemaVersion || fluid.postgresdb.schemaVersion,
+                clientId: appAuthorization.clientId,
+                prefsSafesKey: appAuthorization.prefsSafesKey,
+                clientCredentialId: appAuthorization.clientCredentialId,
+                accessToken: appAuthorization.accessToken,
+                timestampExpires: appAuthorization.timestampExpires
+        });
+    }
     return togo;
 };

@@ -1,5 +1,5 @@
 /*!
-Copyright 2014-2019 OCAD university
+Copyright 2014-2021 OCAD university
 
 Licensed under the New BSD license. You may not use this file except in
 compliance with this License.
@@ -8,23 +8,22 @@ The research leading to these results has received funding from the European Uni
 Seventh Framework Programme (FP7/2007-2013) under grant agreement no. 289016.
 
 You may obtain a copy of the License at
-https://github.com/GPII/universal/blob/master/LICENSE.txt
+    https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
 */
 
 "use strict";
 
 var fluid = require("infusion");
-var gpii = fluid.registerNamespace("gpii");
 var jqUnit = fluid.require("node-jqunit");
 
-fluid.registerNamespace("gpii.tests.oauth2");
-fluid.registerNamespace("gpii.tests.oauth2.testdata");
+fluid.registerNamespace("fluid.tests.oauth2");
+fluid.registerNamespace("fluid.tests.oauth2.testdata");
 
 require("../src/OAuth2Utilities.js");
 
-jqUnit.module("GPII OAuth2 Utilities");
+jqUnit.module("Fluid OAuth2 Utilities");
 
-gpii.tests.oauth2.makeRequestWithAuthorizationHeader = function (authHeaderValue) {
+fluid.tests.oauth2.makeRequestWithAuthorizationHeader = function (authHeaderValue) {
     return {
         headers: {
             authorization: authHeaderValue
@@ -32,29 +31,29 @@ gpii.tests.oauth2.makeRequestWithAuthorizationHeader = function (authHeaderValue
     };
 };
 
-gpii.tests.oauth2.testdata.badlyFormedAuthHeaderRequests = [
-    gpii.tests.oauth2.makeRequestWithAuthorizationHeader(""),
-    gpii.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer"),
-    gpii.tests.oauth2.makeRequestWithAuthorizationHeader("BearerAAA"),
-    gpii.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer AAA BBB")
+fluid.tests.oauth2.testdata.badlyFormedAuthHeaderRequests = [
+    fluid.tests.oauth2.makeRequestWithAuthorizationHeader(""),
+    fluid.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer"),
+    fluid.tests.oauth2.makeRequestWithAuthorizationHeader("BearerAAA"),
+    fluid.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer AAA BBB")
 ];
 
-gpii.tests.oauth2.testdata.goodAuthHeaderRequests = [
+fluid.tests.oauth2.testdata.goodAuthHeaderRequests = [
     {
-        req: gpii.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer AAA"),
+        req: fluid.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer AAA"),
         expected: "AAA"
     },
     {
-        req: gpii.tests.oauth2.makeRequestWithAuthorizationHeader("bearer BBB"),
+        req: fluid.tests.oauth2.makeRequestWithAuthorizationHeader("bearer BBB"),
         expected: "BBB"
     },
     {
-        req: gpii.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer  CCC"),
+        req: fluid.tests.oauth2.makeRequestWithAuthorizationHeader("Bearer  CCC"),
         expected: "CCC"
     }
 ];
 
-gpii.tests.oauth2.makeTestMiddleware = function (called, key) {
+fluid.tests.oauth2.makeTestMiddleware = function (called, key) {
     return function (req, res, next) {
         jqUnit.assertEquals("request", "request", req);
         jqUnit.assertEquals("response", "response", res);
@@ -66,66 +65,66 @@ gpii.tests.oauth2.makeTestMiddleware = function (called, key) {
 
 jqUnit.test("parseAccessTokenFromRequest() returns undefined if no Authorization header", function () {
     jqUnit.assertUndefined("undefined for empty req",
-        gpii.oauth2.parseAccessTokenFromRequest({}));
+        fluid.oauth2.parseAccessTokenFromRequest({}));
     jqUnit.assertUndefined("undefined for empty headers",
-        gpii.oauth2.parseAccessTokenFromRequest({ headers: {} }));
+        fluid.oauth2.parseAccessTokenFromRequest({ headers: {} }));
 });
 
 jqUnit.test("parseAccessTokenFromRequest() returns undefined for badly formed Authorization header", function () {
     jqUnit.expect(4);
-    gpii.tests.oauth2.testdata.badlyFormedAuthHeaderRequests.forEach(function (req) {
-        jqUnit.assertUndefined("expect undefined", gpii.oauth2.parseAccessTokenFromRequest(req));
+    fluid.tests.oauth2.testdata.badlyFormedAuthHeaderRequests.forEach(function (req) {
+        jqUnit.assertUndefined("expect undefined", fluid.oauth2.parseAccessTokenFromRequest(req));
     });
 });
 
 jqUnit.test("parseAccessTokenFromRequest() returns access token from Authorization header", function () {
     jqUnit.expect(3);
-    gpii.tests.oauth2.testdata.goodAuthHeaderRequests.forEach(function (pair) {
-        jqUnit.assertEquals(pair.expected, pair.expected, gpii.oauth2.parseAccessTokenFromRequest(pair.req));
+    fluid.tests.oauth2.testdata.goodAuthHeaderRequests.forEach(function (pair) {
+        jqUnit.assertEquals(pair.expected, pair.expected, fluid.oauth2.parseAccessTokenFromRequest(pair.req));
     });
 });
 
 jqUnit.asyncTest("Walk an empty array of middleware", function () {
     jqUnit.expect(0);
-    gpii.oauth2.walkMiddleware([], 0, "request", "response", function () { jqUnit.start(); });
+    fluid.oauth2.walkMiddleware([], 0, "request", "response", function () { jqUnit.start(); });
 });
 
 jqUnit.asyncTest("Walk an array of 1 middleware", function () {
     jqUnit.expect(3);
     var called = {};
-    var middleware1 = gpii.tests.oauth2.makeTestMiddleware(called, "middleware1");
+    var middleware1 = fluid.tests.oauth2.makeTestMiddleware(called, "middleware1");
     var check = function () {
         jqUnit.assertTrue("middleware1 called", called.middleware1);
         jqUnit.start();
     };
-    gpii.oauth2.walkMiddleware([middleware1], 0, "request", "response", check);
+    fluid.oauth2.walkMiddleware([middleware1], 0, "request", "response", check);
 });
 
 jqUnit.asyncTest("Walk an array of 2 middleware", function () {
     jqUnit.expect(6);
     var called = {};
-    var middleware1 = gpii.tests.oauth2.makeTestMiddleware(called, "middleware1");
-    var middleware2 = gpii.tests.oauth2.makeTestMiddleware(called, "middleware2");
+    var middleware1 = fluid.tests.oauth2.makeTestMiddleware(called, "middleware1");
+    var middleware2 = fluid.tests.oauth2.makeTestMiddleware(called, "middleware2");
     var check = function () {
         jqUnit.assertTrue("middleware1 called", called.middleware1);
         jqUnit.assertTrue("middleware2 called", called.middleware2);
         jqUnit.start();
     };
-    gpii.oauth2.walkMiddleware([middleware1, middleware2], 0, "request", "response", check);
+    fluid.oauth2.walkMiddleware([middleware1, middleware2], 0, "request", "response", check);
 });
 
 jqUnit.asyncTest("Walk a single middleware function", function () {
     jqUnit.expect(3);
     var called = {};
-    var middleware1 = gpii.tests.oauth2.makeTestMiddleware(called, "middleware1");
+    var middleware1 = fluid.tests.oauth2.makeTestMiddleware(called, "middleware1");
     var check = function () {
         jqUnit.assertTrue("middleware1 called", called.middleware1);
         jqUnit.start();
     };
-    gpii.oauth2.walkMiddleware(middleware1, 0, "request", "response", check);
+    fluid.oauth2.walkMiddleware(middleware1, 0, "request", "response", check);
 });
 
-jqUnit.test("Test gpii.oauth2.getTimestampExpires()", function () {
+jqUnit.test("Test fluid.oauth2.getTimestampExpires()", function () {
     jqUnit.expect(3);
 
     var testCases = [{
@@ -143,14 +142,14 @@ jqUnit.test("Test gpii.oauth2.getTimestampExpires()", function () {
     }];
 
     fluid.each(testCases, function (testCase) {
-        var result = gpii.oauth2.getTimestampExpires(testCase.timestampStarts, testCase.expiresIn);
+        var result = fluid.oauth2.getTimestampExpires(testCase.timestampStarts, testCase.expiresIn);
         var msg = "The calculated timestampExpires for the start timestamp \"" + testCase.timestampExpires + "\" expiring in " + testCase.expiresIn + " seconds is: " + testCase.expected;
 
         jqUnit.assertEquals(msg, testCase.expected, result);
     });
 });
 
-jqUnit.test("Test gpii.oauth2.getExpiresIn()", function () {
+jqUnit.test("Test fluid.oauth2.getExpiresIn()", function () {
     jqUnit.expect(6);
 
     var testCases = [{
@@ -180,14 +179,14 @@ jqUnit.test("Test gpii.oauth2.getExpiresIn()", function () {
     }];
 
     fluid.each(testCases, function (testCase) {
-        var result = gpii.oauth2.getExpiresIn(testCase.timestampStarts, testCase.timestampExpires);
+        var result = fluid.oauth2.getExpiresIn(testCase.timestampStarts, testCase.timestampExpires);
         var msg = "The timestamp \"" + testCase.timestampExpires + "\" will expire in " + testCase.expected + " seconds";
 
         jqUnit.assertEquals(msg, testCase.expected, result);
     });
 });
 
-jqUnit.test("Test gpii.oauth2.isIPINRange()", function () {
+jqUnit.test("Test fluid.oauth2.isIPINRange()", function () {
     jqUnit.expect(6);
 
     var testCases = [{
@@ -219,7 +218,7 @@ jqUnit.test("Test gpii.oauth2.isIPINRange()", function () {
     }];
 
     fluid.each(testCases, function (testCase) {
-        var result = gpii.oauth2.isIPINRange(testCase.ipAddress, testCase.allowedIPBlocks);
+        var result = fluid.oauth2.isIPINRange(testCase.ipAddress, testCase.allowedIPBlocks);
         jqUnit[testCase.expected ? "assertTrue" : "assertFalse"]("The IP verification result is expected", testCase.expected, result);
     });
 });

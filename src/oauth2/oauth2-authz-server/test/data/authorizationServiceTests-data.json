@@ -7,8 +7,8 @@
         "prefsSetId": "gpii-default",
         "revoked": false,
         "revokedReason": null,
-        "timestampCreated": "2017-11-21T18:11:22.101Z",
-        "timestampUpdated": null
+        "createdAt": "2017-11-21T18:11:22.101Z",
+        "updatedAt": null
     },
     {
         "id": "appInstallationClient-1",
@@ -16,8 +16,8 @@
         "schemaVersion": "0.2",
         "name": "AJC1",
         "computerType": "public",
-        "timestampCreated": "2017-11-21T18:11:22.101Z",
-        "timestampUpdated": null
+        "createdAt": "2017-11-21T18:11:22.101Z",
+        "updatedAt": null
     },
     {
         "id": "clientCredential-1",
@@ -28,7 +28,7 @@
         "oauth2ClientSecret": "client_secret_AJC1",
         "revoked": false,
         "revokedReason": null,
-        "timestampCreated": "2017-11-21T18:11:22.101Z",
+        "createdAt": "2017-11-21T18:11:22.101Z",
         "timestampRevoked": null
     },
     {
@@ -37,8 +37,8 @@
         "schemaVersion": "0.2",
         "name": "test",
         "computerType": "public",
-        "timestampCreated": "2017-11-21T18:11:22.101Z",
-        "timestampUpdated": null
+        "createdAt": "2017-11-21T18:11:22.101Z",
+        "updatedAt": null
     },
     {
         "id": "clientCredential-2",
@@ -49,7 +49,7 @@
         "oauth2ClientSecret": "client_secret_test",
         "revoked": false,
         "revokedReason": null,
-        "timestampCreated": "2017-11-21T18:11:22.101Z",
+        "createdAt": "2017-11-21T18:11:22.101Z",
         "timestampRevoked": null
     },
     {
@@ -61,7 +61,7 @@
         "oauth2ClientSecret": "client_secret_test-3",
         "revoked": false,
         "revokedReason": null,
-        "timestampCreated": "2017-11-22T18:11:22.101Z",
+        "createdAt": "2017-11-22T18:11:22.101Z",
         "timestampRevoked": null
     }
 ]

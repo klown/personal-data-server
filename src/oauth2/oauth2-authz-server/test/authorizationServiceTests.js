@@ -14,78 +14,113 @@
 
 */
 "use strict";
-var fluid = require("infusion");
+var fluid = require("infusion"),
+    jqUnit = require("node-jqunit");
 
-require("node-jqunit");
-
+require("../src/AuthorizationService.js");
+require("./data/authTestTableData.js");
 require("./authTestFixtures");
 
-fluid.require("%gpii-universal");
-gpii.loadTestingSupport();
+fluid.logObjectRenderChars = 4096;
+
+//gpii.loadTestingSupport();
 
 // The mock codeGenerator for testing
-fluid.defaults("gpii.tests.oauth2.mockCodeGenerator", {
+fluid.defaults("fluid.tests.oauth2.mockCodeGenerator", {
     gradeNames: ["fluid.component"],
     invokers: {
-        generateAccessToken: "gpii.tests.oauth2.mockCodeGenerator.generateAccessToken"
+        generateAccessToken: "fluid.tests.oauth2.mockCodeGenerator.generateAccessToken"
     }
 });
 
-gpii.tests.oauth2.mockCodeGenerator.generateAccessToken = function () {
+fluid.tests.oauth2.mockCodeGenerator.generateAccessToken = function () {
     return "test-access-token";
 };
 
-fluid.defaults("gpii.tests.oauth2.authorizationService.caseHolder", {
-    gradeNames: ["gpii.tests.oauth2.caseHolder"],
-    dataSourceConfig: {
-        baseUrl: "http://localhost",
-        port: 25984,
-        dbName: "gpii"
-    },
+fluid.defaults("fluid.tests.oauth2.authorizationService.caseHolder", {
+    gradeNames: ["fluid.tests.oauth2.caseHolder"],
     distributeOptions: [{
-        source: "{that}.options.dataSourceConfig",
-        target: "{that dataStore}.options.dataSourceConfig"
+        source: "{that}.options.components.dbRequest",
+        target: "{that dataStore}.options.components.request"
     }],
+    members: {
+        dataBaseReadyPromise: null  // set onCreate
+    },
     components: {
         authorizationService: {
             type: "fluid.oauth2.authorizationService",
             //createOnEvent: "onFixturesConstructed",
             options: {
-                gradeNames: ["gpii.tests.dbOperation.dbDataStore.base"],
+                gradeNames: ["fluid.tests.dbOperation.dbDataStore.base"],
                 components: {
+//                     request: {
+//                         type: "fluid.postgresdb.request",
+//                         options: {
+//                             host: "localhost",
+//                             port: 5432,
+//                             user: "admin",
+//                             password: "asecretpassword",
+//                             databaseName: "prefs_testdb"
+//                         }
+//                     },
                     dataStore: {
-                        type: "gpii.dbOperation.dbDataStore"
+                        type: "fluid.postgresdb.dataModelOps",
                     },
                     codeGenerator: {
-                        type: "gpii.tests.oauth2.mockCodeGenerator"
+                        type: "fluid.tests.oauth2.mockCodeGenerator"
                     }
                 }
+            }
+        },
+        dbRequest: {
+            type: "fluid.postgresdb.request",
+            options: {
+                host: "localhost",
+                port: process.env.PGPORT || 5432,
+                user: process.env.POSTGRES_USER || "admin",
+                password: process.env.POSTGRES_PASSWORD || "asecretpassword",
+                databaseName: "prefs_testdb"
             }
         }
     }
 });
 
+fluid.tests.oauth2.authorizationService.caseHolder.init = function (testCaseHolder, dataStore) {
+    var promise = dataStore.loadModelsAndConnect(
+        "%preferencesServer/src/database/data/tableModels.js"
+    );
+    promise.then(
+        function (success) {
+            fluid.log("Connected to database and its tables");
+        },
+        function (error) {
+            fluid.log("Failed to connect to the database and its tables");
+            fluid.log("Error", error.message);
+        }
+    );
+    testCaseHolder.dataBaseReadyPromise = promise;
+    return promise;
+};
 
 // The base test environment without any data
-fluid.defaults("gpii.tests.oauth2.authorizationService.testEnvironment", {
-    gradeNames: ["gpii.tests.oauth2.baseEnvironment"],
+fluid.defaults("fluid.tests.oauth2.authorizationService.testEnvironment", {
+    gradeNames: ["fluid.tests.oauth2.baseEnvironment"],
     databases: {
-        gpii: {
+        prefs_testdb: {
             data: [
-                "%gpii-universal/gpii/node_modules/gpii-oauth2/gpii-oauth2-authz-server/test/data/authorizationServiceTests-data.json",
-                "%gpii-universal/testData/dbData/views.json"
+                "%preferencesServer/src/oauth2/oauth2-authz-server/test/data/authorizationServiceTests-data.json"
             ]
         }
     },
     components: {
         caseHolder: {
-            type: "gpii.tests.oauth2.authorizationService.caseHolder"
+            type: "fluid.tests.oauth2.authorizationService.caseHolder"
         }
     }
 });
 
 // All expected results
-gpii.tests.oauth2.authorizationService.expected = {
+fluid.tests.oauth2.authorizationService.expected = {
     success: {
         accessToken: "test-access-token",
         expiresIn: 3600
@@ -96,160 +131,198 @@ gpii.tests.oauth2.authorizationService.expected = {
         isError: true
     },
     missingInput: {
-        message: "The input field \"GPII key, client ID or client credential ID\" was undefined",
+        message: "The input field \"user ID, client ID or client credential ID\" was undefined",
         statusCode: 400,
         isError: true
     }
 };
 
-fluid.defaults("gpii.tests.oauth2.authorizationService.withData.grantGpiiAppInstallationAuthorization", {
-    gradeNames: ["gpii.tests.oauth2.authorizationService.testEnvironment"],
+fluid.defaults("fluid.tests.oauth2.authorizationService.withData.grantAppInstallationAuthorization", {
+    gradeNames: ["fluid.tests.oauth2.authorizationService.testEnvironment"],
     components: {
         caseHolder: {
             options: {
                 modules: [{
-                    name: "Test grantGpiiAppInstallationAuthorization()",
+                    name: "Test grantAppInstallationAuthorization()",
                     tests: [
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns an access token",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "Iniialize connection to database",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", "gpiiAppInstallationClient-1", "clientCredential-1"],
+                                task: "{authorizationService}.dataStore.loadModelsAndConnect",
+                                args: ["%preferencesServer/src/database/data/tableModels.js"],
+                                resolve: "fluid.tests.oauth2.authorizationService.withData.testDatabaseConnection", // fluid.identity
+                                resolveArgs: ["{that}", "{authorizationService}"]
+                            }]
+                        },
+                        {
+                            name: "Initialize test table data -- load test data",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
+                            sequence: [{
+                                funcName: "fluid.tests.oauth2.authorizationService.testInputTestData",
+                                args: [],
+                            }]
+                        },
+                        {
+                            name: "Initialize test table data -- delete existing records",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
+                            sequence: [{
+                                task: "fluid.tests.oauth2.deleteExistingRecords",
+                                args: ["authorizationServiceTests-data", "{authorizationService}.dataStore"],
+                                resolve: "fluid.tests.oauth2.authorizationService.withData.testDatabaseConnection", // fluid.identity
+                                resolveArgs: ["{that}", "{authorizationService}", "{arguments}.0"]
+                            }]
+                        },
+                        {
+                            name: "Initialize test table data -- add test records",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
+                            sequence: [{
+                                task: "fluid.tests.oauth2.loadTestData",
+                                args: ["authorizationServiceTests-data", "{authorizationService}.dataStore"],
+                                resolve: "fluid.tests.oauth2.authorizationService.withData.testRecordsAdded",
+                                resolveArgs: ["{that}", "{authorizationService}", "{arguments}.0"]
+                            }]
+                        },
+                        {
+                            name: "grantAppInstallationAuthorization() returns an access token",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
+                            sequence: [{
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["alice_gpii_key", "appInstallationClient-1", "clientCredential-1"],
                                 resolve: "jqUnit.assertDeepEq",
                                 resolveArgs: [
                                     "The access token should be received in an expected format",
-                                    gpii.tests.oauth2.authorizationService.expected.success,
+                                    fluid.tests.oauth2.authorizationService.expected.success,
+                                    "{arguments}.0"
+                                ]
+                            }]
+                        }/*,
+                        {
+                            name: "grantAppInstallationAuthorization() returns an access token when the gpii key record is not found in the database",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
+                            sequence: [{
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["non-existent-gpii-key", "appInstallationClient-2", "cloudSafeCredential-2"],
+                                resolve: "jqUnit.assertDeepEq",
+                                resolveArgs: [
+                                    "The access token should be received in an expected format",
+                                    fluid.tests.oauth2.authorizationService.expected.success,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns an access token when the gpii key record is not found in the database",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when a gpii key is not provided in the argument list",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["non-existent-gpii-key", "gpiiAppInstallationClient-1", "clientCredential-1"],
-                                resolve: "jqUnit.assertDeepEq",
-                                resolveArgs: [
-                                    "The access token should be received in an expected format",
-                                    gpii.tests.oauth2.authorizationService.expected.success,
-                                    "{arguments}.0"
-                                ]
-                            }]
-                        },
-                        {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when a gpii key is not provided in the argument list",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
-                            sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: [undefined, "gpiiAppInstallationClient-1", "clientCredential-1"],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: [undefined, "appInstallationClient-2", "cloudSafeCredential-2"],
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when a gpii key is missing",
-                                    gpii.tests.oauth2.authorizationService.expected.missingInput,
+                                    fluid.tests.oauth2.authorizationService.expected.missingInput,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when a client id is not provided in the argument list",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when a client id is not provided in the argument list",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", undefined, "clientCredential-1"],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["org.idrc.user:nonadmin", undefined, "cloudSafeCredential-2"],
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when a client id is missing",
-                                    gpii.tests.oauth2.authorizationService.expected.missingInput,
+                                    fluid.tests.oauth2.authorizationService.expected.missingInput,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when a client credential id is not provided in the argument list",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when a client credential id is not provided in the argument list",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", "gpiiAppInstallationClient-1", undefined],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["org.idrc.user:nonadmin", "appInstallationClient-2", undefined],
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when a client credential id is missing",
-                                    gpii.tests.oauth2.authorizationService.expected.missingInput,
+                                    fluid.tests.oauth2.authorizationService.expected.missingInput,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when the client record is not found in the database",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when the client record is not found in the database",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", "non-existent-client-id", "clientCredential-1"],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["org.idrc.user:nonadmin", "non-existent-client-id", "cloudSafeCredential-2"],
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when the client record is not found in the database",
-                                    gpii.tests.oauth2.authorizationService.expected.unauthorized,
+                                    fluid.tests.oauth2.authorizationService.expected.unauthorized,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when the client credential record is not found in the database",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when the client credential record is not found in the database",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", "gpiiAppInstallationClient-1", "non-existent-clientCredential-id"],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["org.idrc.user:nonadmin", "appInstallationClient-2", "non-existent-clientCredential-id"],
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when the client credential record is not found in the database",
-                                    gpii.tests.oauth2.authorizationService.expected.unauthorized,
+                                    fluid.tests.oauth2.authorizationService.expected.unauthorized,
                                     "{arguments}.0"
                                 ]
                             }]
-                        },
+// HERE                        },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when the client type is not \"gpiiAppInstallationClient\"",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when the client type is not \"gpiiAppInstallationClient\"",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", "gpiiAppInstallationClient-2", "clientCredential-1"],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["org.idrc.user:nonadmin", "gpiiAppInstallationClient-2", "clientCredential-1"],  // ??
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when the client type is not \"gpiiAppInstallationClient\"",
-                                    gpii.tests.oauth2.authorizationService.expected.unauthorized,
+                                    fluid.tests.oauth2.authorizationService.expected.unauthorized,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when the client credential type is not \"clientCredential\"",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when the client credential type is not \"clientCredential\"",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
                                 args: ["alice_gpii_key", "gpiiAppInstallationClient-1", "clientCredential-3"],
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
-                                    "The error is returned when the client credential type is not \"clientCredential\"",
-                                    gpii.tests.oauth2.authorizationService.expected.unauthorized,
+                                    "The error is returned when the client credential type is not \"clientCredential\"",   // ??
+                                    fluid.tests.oauth2.authorizationService.expected.unauthorized,
                                     "{arguments}.0"
                                 ]
                             }]
                         },
                         {
-                            name: "grantGpiiAppInstallationAuthorization() returns error when the client credential does not belong to the client that requests for the authorization",
-                            sequenceGrade: "gpii.tests.oauth2.sequenceGrade",
+                            name: "grantAppInstallationAuthorization() returns error when the client credential does not belong to the client that requests for the authorization",
+                            sequenceGrade: "fluid.tests.oauth2.sequenceGrade",
                             sequence: [{
-                                task: "{authorizationService}.grantGpiiAppInstallationAuthorization",
-                                args: ["alice_gpii_key", "gpiiAppInstallationClient-1", "clientCredential-2"],
+                                task: "{authorizationService}.grantAppInstallationAuthorization",
+                                args: ["alice_gpii_key", "gpiiAppInstallationClient-1", "clientCredential-2"],   // ??
                                 reject: "jqUnit.assertDeepEq",
                                 rejectArgs: [
                                     "The error is returned when the client credential does not belong to the client that requests for the authorization",
-                                    gpii.tests.oauth2.authorizationService.expected.unauthorized,
+                                    fluid.tests.oauth2.authorizationService.expected.unauthorized,
                                     "{arguments}.0"
                                 ]
                             }]
-                        }
+                        }*/
                     ]
                 }]
             }
@@ -257,6 +330,26 @@ fluid.defaults("gpii.tests.oauth2.authorizationService.withData.grantGpiiAppInst
     }
 
 });
+
+fluid.tests.oauth2.authorizationService.testInputTestData = function () {
+    var testData = fluid.tests.oauth2.readTestDataJSON("authorizationServiceTests-data");
+    jqUnit.assertNotNull("Check input test data (non-null)", testData);
+    jqUnit.assertNotEquals("Check input test data (not empty)", fluid.keys(testData).length, 0);
+};
+
+fluid.tests.oauth2.authorizationService.withData.testDatabaseConnection = function (testCaseHolder, authService, other) {
+    // If the connection didn't reject, then control passed here -- meaning "success"
+    var y = fluid.identity(authService.dataStore);
+    debugger;
+    jqUnit.assertTrue("Check connection", y);
+};
+
+fluid.tests.oauth2.authorizationService.withData.testRecordsAdded = function (testCaseHolder, authService, results) {
+    testCaseHolder.testRecordsAdded = results;
+    debugger;
+    jqUnit.assertNotEquals("Check added test records", results.length, 0);
+};
+
 fluid.test.runTests([
-    "gpii.tests.oauth2.authorizationService.withData.grantGpiiAppInstallationAuthorization"
+    "fluid.tests.oauth2.authorizationService.withData.grantAppInstallationAuthorization"
 ]);

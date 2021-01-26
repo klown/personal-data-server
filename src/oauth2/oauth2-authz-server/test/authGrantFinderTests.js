@@ -23,6 +23,7 @@ require("node-jqunit");
 fluid.require("infusion");
 //gpii.loadTestingSupport();
 
+require("../src/AuthorizationService.js");
 require("./authTestFixtures");
 
 fluid.defaults("gpii.tests.oauth2.authorizationService", {
