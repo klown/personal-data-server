@@ -59,7 +59,7 @@ fluid.require("%preferencesServer/src/database/src/js", require);
     // APIs for App Installation clients
 
     /**
-     * Grant an authorization for the given App Installation. The gpii key will be verified before the access token is returned.
+     * Grant an authorization for the given App Installation. The prefsSafes key will be verified before the access token is returned.
      * @param {Component} dataStore - An instance of gpii.dbOperation.dbDataStore.
      * @param {Component} codeGenerator - An instance of fluid.oauth2.codeGenerator.
      * @param {String} prefsSafesKey - A preferences safes key.
@@ -76,7 +76,6 @@ fluid.require("%preferencesServer/src/database/src/js", require);
         } else {
             var clientPromise = dataStore.findClientById(clientId);
             var clientCredentialPromise = dataStore.findClientCredentialById(clientCredentialId);
-//            var clientCredentialPromise = dataStore.findCloudCredentialsByUserId({"userId": userId});
 
             // TODO: Update the usage of fluid.promise.sequence() once https://issues.fluidproject.org/browse/FLUID-5938 is resolved.
             var sources = [clientPromise, clientCredentialPromise];
@@ -89,18 +88,18 @@ fluid.require("%preferencesServer/src/database/src/js", require);
 
                 if (!clientRec || clientRec.type !== fluid.postgresdb.dataModelTypes.appInstallationClient) {
                     fluid.log("authorizationService, granting app installation authorization: invalid client or the type of the client with the client id (" + clientId + ") is not \"" + fluid.postgresdb.dataModelTypes.appInstallationClient + "\"");
-                    error = fluid.postgresdb.dbOperation.composeError(fluid.postgresdb.dbOperation.errors.unauthorized);
+                    error = fluid.postgresdb.composeError(fluid.postgresdb.errors.unauthorized);
                     promiseTogo.reject(error);
                 } else if (!clientCredentialRec || clientCredentialRec.type !== fluid.postgresdb.dataModelTypes.clientCredential) {
-                    fluid.log("authorizationService, granting GPII app installation authorization: invalid client credential or the type of the client credential with id (" + clientCredentialId + ") is not \"" + gpii.dbOperation.docTypes.clientCredential + "\"");
-                    error = fluid.postgresdb.dbOperation.composeError(fluid.postgresdb.dbOperation.errors.unauthorized);
+                    fluid.log("authorizationService, granting app installation authorization: invalid client credential or the type of the client credential with id (" + clientCredentialId + ") is not \"" + fluid.postgresdb.dataModelTypes.clientCredential + "\"");
+                    error = fluid.postgresdb.composeError(fluid.postgresdb.errors.unauthorized);
                     promiseTogo.reject(error);
                 } else if (clientCredentialRec.clientId !== clientId) {
-                    fluid.log("authorizationService, granting GPII app installation authorization: the client id (" + clientCredentialRec.clientId + ") that the client credential belongs to does not match the client id (" + clientId + ") that requests the authorization");
-                    error = fluid.postgresdb.dbOperation.composeError(fluid.postgresdb.errors.unauthorized);
+                    fluid.log("authorizationService, granting app installation authorization: the client id (" + clientCredentialRec.clientId + ") that the client credential belongs to does not match the client id (" + clientId + ") that requests the authorization");
+                    error = fluid.postgresdb.composeError(fluid.postgresdb.errors.unauthorized);
                     promiseTogo.reject(error);
                 } else {
-                    // Re-issue a new access token every time. In the case that multiple requests were made for the same "client credential + GPII key"
+                    // Re-issue a new access token every time. In the case that multiple requests were made for the same "client credential + prefsSafesKey"
                     // combination, the access token would be different for each request in the audit log. In the case that one request was detected to
                     // be from an attacker, invoking the associating access token would not affect other access tokens or the real user.
                     fluid.oauth2.authorizationService.createAppInstallationAuthorization(promiseTogo, dataStore, codeGenerator, prefsSafesKey, clientId, clientCredentialId, fluid.oauth2.defaultTokenLifeTimeInSeconds);
