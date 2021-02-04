@@ -44,6 +44,7 @@ fluid.postgresdb.schemaVersion = "0.2";
 fluid.postgresdb.errors = fluid.freezeRecursive({
     missingInput: {
         message: "The input field \"%fieldName\" was undefined",
+        statusCode: 400,
         isError: true
     },
     missingDoc: {
@@ -56,6 +57,7 @@ fluid.postgresdb.errors = fluid.freezeRecursive({
     },
     unauthorized: {
         message: "Unauthorized",
+        statusCode: 401,
         isError: true
     }
 });
