@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Inclusive Design Research Centre, OCAD University
+ * Copyright 2020-2021 Inclusive Design Research Centre, OCAD University
  * All rights reserved.
  *
  * Licensed under the New BSD license. You may not use this file except in
@@ -11,7 +11,7 @@
 
 var fluid = require("infusion"),
     jqUnit = require("node-jqunit");
-require("../js/postgresOperations.js");
+require("../js/index.js");
 
 jqUnit.module("PostgresDB request unit tests.");
 
@@ -24,10 +24,6 @@ fluid.defaults("fluid.tests.postgresdb.request", {
     port: process.env.PGPORT || 5432,
     user: process.env.POSTGRES_USER || "admin",
     password: process.env.POSTGRES_PASSWORD || "asecretpassword",
-    allDatabasesQuery: "SELECT datname FROM pg_database;",
-    members: {
-        queryResult: null,  // Set in the test (a Sequelize Promise)
-    },
     invokers: {
         "checkAllDatabases": {
             funcName: "fluid.tests.postgresdb.request.checkAllDatabases",
@@ -40,15 +36,15 @@ fluid.defaults("fluid.tests.postgresdb.request", {
  * Query postgresdb for all of the databases it contains.
  *
  * @param {Object} that - Test request instance.
- * @param {Object} that.sequelize - Connection to postgresdb.
- * @return {Promise} Promise returned by the request (Sequelize Promise).
+ * @param {Object} that.pool - Node-postgres object used for querie.
+ * @return {Promise} Results returned by the query.
  */
 fluid.tests.postgresdb.request.checkAllDatabases = function (that) {
-    that.queryResult = that.sequelize.query(that.options.allDatabasesQuery);
-    that.queryResult.then(null, function (error) {
+    var queryResult = that.query("SELECT datname FROM pg_database");
+    queryResult.then(null, function (error) {
         fluid.log(JSON.stringify(error.message));
     });
-    return that.queryResult;
+    return queryResult;
 };
 
 fluid.defaults("fluid.tests.postgresdb.request.environment", {
@@ -74,31 +70,38 @@ fluid.defaults("fluid.tests.postgresdb.request.testCaseHolder", {
                 args: ["{databaseRequest}"]
             }, {
                 task: "{databaseRequest}.checkAllDatabases",
-                resolve: "fluid.tests.postgresdb.request.testQueryResult",
+                resolve: "fluid.tests.postgresdb.request.testQueryResults",
                 resolveArgs: ["{arguments}.0", "{databaseRequest}"]
-            }]                // Sequelize Promise result
+                              // query results
+            }, {
+                task: "{databaseRequest}.query",
+                args: ["SELECT datname FROM no_such_databasez"],
+                reject: "jqUnit.assertEquals",
+                rejectArgs: [
+                    "Check error message",
+                    "{arguments}.0.message", // query result
+                    "relation \"no_such_databasez\" does not exist"
+                ]
+            }]
         }]
-
     }]
 });
 
 fluid.tests.postgresdb.request.testInit = function (databaseRequest) {
     jqUnit.assertNotNull(databaseRequest, "Check database request object is non-null");
-    jqUnit.assertNotNull(databaseRequest.sequelize, "Check database connection is non-null");
+    jqUnit.assertNotNull(databaseRequest.pool, "Check database connection is non-null");
 };
 
-fluid.tests.postgresdb.request.testQueryResult = function (result, databaseRequest) {
-    jqUnit.assertNotNull("Check for null query result", result);
-
-    var dataBases = result[0];
-    jqUnit.assertNotEquals("Check for empty query result", dataBases.length, 0);
+fluid.tests.postgresdb.request.testQueryResults = function (results, databaseRequest) {
+    jqUnit.assertNotNull("Check for null query result", results);
+    jqUnit.assertNotEquals("Check for empty query result", results.rowCount, 0);
 
     var ourDatabaseName = databaseRequest.options.databaseName;
-    var ourDatabase = fluid.find(dataBases, function(aDatabase) {
+    var ourDatabase = fluid.find(results.rows, function(aDatabase) {
         if (aDatabase.datname === ourDatabaseName) {
             return aDatabase;
         }
-    });
+    }, null);
     jqUnit.assertNotNull(ourDatabase, "Check for '" + ourDatabaseName + "'");
 };
 
