@@ -11,7 +11,7 @@
 "use strict";
 
 var fluid = require("infusion"),
-    pg  = require("pg");
+    pg    = require("pg");
 
 fluid.registerNamespace("fluid.postgresdb");
 
@@ -40,12 +40,17 @@ fluid.defaults("fluid.postgresdb.request", {
             funcName: "fluid.postgresdb.query",
             args: ["{that}.pool", "{arguments}.0"]
                                   // SQL query string
+        },
+        "createTables": {
+            funcName: "fluid.postgresdb.createTables",
+            args: ["{that}", "{arguments}.0"]
+                              // tables definition file
         }
     }
 });
 
 /**
- * Initiallize connection to the postgresdb, using node-postgres.
+ * Initialize connection to the postgres database, using node-postgres.
  *
  * @param {Object} that - Contains the options for the connection and a member
  *                        to hold a reference to the connection.
@@ -77,4 +82,21 @@ fluid.postgresdb.initConnection = function (that) {
  */
 fluid.postgresdb.query = function (pool, queryString) {
     return pool.query(queryString);
+};
+
+/**
+ * Utility to batch create a set of tables.
+ *
+ * @param {Object} that - Postgres request object.
+ * @param {Array} tableDefinitions - An array of "CREATE" statements.
+ * @return {Promise} A promise whose values are the creation results.
+ */
+fluid.postgresdb.createTables = function (that, tableDefinitions) {
+    var creationSequence = [];
+    fluid.each(tableDefinitions, function (aTableDef) {
+        creationSequence.push(that.query(aTableDef));
+    });
+    return fluid.promise.sequence(creationSequence).then(null, function (error) {
+        fluid.log(error.message);
+    });
 };

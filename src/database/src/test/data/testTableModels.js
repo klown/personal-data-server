@@ -8,70 +8,43 @@
 "use strict"
 
 var fluid = require("infusion");
-var DataTypes = require("sequelize");   // Postgres data types
 
-fluid.each(
-    // Array of table/model definitions
-    [{
-        modelName: "rgb",
-        fields: {
-            "id": { "type": DataTypes.STRING(36), "primaryKey": true },
-            "color": { "type": DataTypes.STRING(36) },
-            "colourMap": { "type": DataTypes.JSONB }
-        }
-    },
-    {
-        modelName: "roster.preferenceset",
-        "fields": {
-            "name": { "type": DataTypes.STRING(64), "primaryKey": true },
-            "description": { "type": DataTypes.STRING(64) },
-            "prefs_json": { "type": DataTypes.JSONB }
-        }
-    },
-    {
-        modelName: "massive",
-        fields: {
-            "text": { "type": DataTypes.TEXT }
-        }
-    },
-    {
-        modelName: "users",
-        fields: {
-            "id": { "type": DataTypes.STRING(64), "allowNull": false, "primaryKey": true },
-            "type": {
-                "validate": {
-                    "equals": "user"
-                },
-                "type": DataTypes.STRING(16),
-                "allowNull": false,
-                "defaultValue": "user"
-            },
-            "name": { "type": DataTypes.STRING(64), "allowNull": false },
-            "username": { "type": DataTypes.STRING(64), "allowNull": false },
-            "derived_key": { "type": DataTypes.STRING, "allowNull": false },
-            "verification_code": { "type": DataTypes.STRING, "allowNull": false },
-            "salt": { "type": DataTypes.STRING, "allowNull": false },
-            "iterations": { "type": DataTypes.INTEGER, "allowNull": false },
-            "email": { "type": DataTypes.STRING(32), "allowNull": false },
-            "roles": { "type": DataTypes.ARRAY(DataTypes.STRING(16)), "allowNull": false },
-            "verified": { "type": DataTypes.BOOLEAN, "allowNull": false, "defaultValue": false }
-        }
-    },
-    {
-        modelName: "nodata",
-        fields: {}
-    }],
-    // For each model definition (above), export a function that defines the
-    // the sequelize table model.
-    function (aModelDef) {
-        module.exports[aModelDef.modelName+"TableModel"] = function (sequelize) {
-            var tableModel = {};
-            tableModel.modelName = aModelDef.modelName;
-            // Freezing the name inhibits pluralizing in the database.
-            tableModel.model = sequelize.define(
-                aModelDef.modelName, aModelDef.fields, {freezeTableName: true}
-            );
-            return tableModel;
-        };
-    }
-);
+fluid.registerNamespace("fluid.tests.postgresdb");
+
+fluid.tests.postgresdb.tableNames = {
+    rgb: "rgb",
+    "roster.preferences": "roster.preferences",
+    massive: "massive",
+    users: "users"
+};
+
+// Array of table definitions
+fluid.tests.postgresdb.tableDefinitions = [
+    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.rgb}" (
+        id VARCHAR(36) PRIMARY KEY,
+        color VARCHAR(36),
+        "colourMap" JSONB,
+        "timeStampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "timeStameModified" TIMESTAMPTZ
+    );`,
+    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames['roster.preferences']}" (
+        name VARCHAR(64) PRIMARY KEY,
+        description VARCHAR(64),
+        prefs_json JSONB
+    );`,
+    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.massive}" (
+        text TEXT
+    );`,
+    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.users}" (
+        "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
+        name VARCHAR(64) NOT NULL,
+        username VARCHAR(64) NOT NULL,
+        derived_key VARCHAR(255) NOT NULL,
+        verification_code VARCHAR(255) NOT NULL,
+        salt VARCHAR(255) NOT NULL,
+        iterations INT NOT NULL,
+        email VARCHAR(32) NOT NULL,
+        roles VARCHAR(16)[] NOT NULL,
+        verified BOOLEAN NOT NULL DEFAULT false
+    );`
+];

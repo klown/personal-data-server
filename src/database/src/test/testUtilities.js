@@ -41,12 +41,28 @@ fluid.tests.postgresdb.utils.testCreateOneTable = function (result, tables) {
     jqUnit.assertDeepEq("Check result was stored", tables[result.getTableName()], result);
 };
 
-fluid.tests.postgresdb.utils.testCreateTables = function (result, tables) {
-    jqUnit.assertNotNull("Check for null create tables result", result);
-    jqUnit.assertEquals("Check number of tables", fluid.keys(tables).length, result.length);
-    fluid.each(result, function (aResult) {
-        fluid.tests.postgresdb.utils.testCreateOneTable(aResult, tables)
+fluid.tests.postgresdb.utils.dropExistingTables = function (postGresOps, tableNames) {
+    var dropSequence = [];
+    fluid.each(tableNames, function(aTableName) {
+        dropSequence.push(postGresOps.query(
+            `DROP TABLE IF EXISTS "${aTableName}" CASCADE;`
+        ));
     });
+    return fluid.promise.sequence(dropSequence);
+};
+
+fluid.tests.postgresdb.utils.testCreateTables = function (results, tables) {
+    jqUnit.assertNotNull("Check for null create tables result", results);
+    jqUnit.assertEquals("Check number of tables", tables.length, results.length);
+    /*
+    fluid.each(results, function (aResult, index) {
+        if (index === 0) {
+            jqUnit.assertEquals("Check DO command", "DO", aResult.command);
+        } else {
+            jqUnit.assertEquals("Check CREATE command", "CREATE", aResult.command);
+        }
+    });
+    */
 };
 
 fluid.tests.postgresdb.utils.testLoadOneTable = function (records, tableData) {
