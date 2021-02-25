@@ -41,8 +41,8 @@ fluid.defaults("fluid.postgresdb.request", {
             args: ["{that}.pool", "{arguments}.0"]
                                   // SQL query string
         },
-        "createTables": {
-            funcName: "fluid.postgresdb.createTables",
+        "bulkQuery": {
+            funcName: "fluid.postgresdb.bulkQuery",
             args: ["{that}", "{arguments}.0"]
                               // tables definition file
         }
@@ -85,18 +85,20 @@ fluid.postgresdb.query = function (pool, queryString) {
 };
 
 /**
- * Utility to batch create a set of tables.
+ * Utility to run a sequence of postgres queries in bulk.  This can be used to
+ * create or upgrade a set of tables in batch, or bulk load a set of records.
  *
  * @param {Object} that - Postgres request object.
- * @param {Array} tableDefinitions - An array of "CREATE" statements.
- * @return {Promise} A promise whose values are the creation results.
+ * @param {Array} queryArray - An array of SQL statements.
+ * @return {Promise} A promise whose values are the results of running the
+ *                   sequence of commands in the `queryArray`.
  */
-fluid.postgresdb.createTables = function (that, tableDefinitions) {
-    var creationSequence = [];
-    fluid.each(tableDefinitions, function (aTableDef) {
-        creationSequence.push(that.query(aTableDef));
+fluid.postgresdb.bulkQuery = function (that, queryArray) {
+    var commandSequence = [];
+    fluid.each(queryArray, function (aTableDef) {
+        commandSequence.push(that.query(aTableDef));
     });
-    return fluid.promise.sequence(creationSequence).then(null, function (error) {
+    return fluid.promise.sequence(commandSequence).then(null, function (error) {
         fluid.log(error.message);
     });
 };
