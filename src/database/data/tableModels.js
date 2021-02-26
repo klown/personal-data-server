@@ -15,23 +15,26 @@ require("../src/js/index.js");
 
 fluid.registerNamespace("fluid.postgresdb");
 
-fluid.postgresdb.tableDefinitions = [
-    `DO $$
+fluid.postgresdb.tableDefinitions = `
+    DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='prefsSafesType') THEN
-              CREATE TYPE "prefsSafesType" AS ENUM ('snapset', 'user');
+                CREATE TYPE "prefsSafesType" AS ENUM ('snapset', 'user');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='accessType') THEN
+                CREATE TYPE "accessType" AS ENUM ('public', 'private', 'shared by trusted parties');
             END IF;
         END
-    $$;`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.prefsSafes}" (
+    $$;
+    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.prefsSafes}" (
         "prefsSafesId" VARCHAR(36) PRIMARY KEY NOT NULL,
         "safeType" "prefsSafesType" NOT NULL,
         name VARCHAR(64),
         password VARCHAR(64),
         email VARCHAR(32),
         preferences JSONB NOT NULL DEFAULT '{}'
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.users}" (
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.users}" (
         "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
         name VARCHAR(64) NOT NULL,
         username VARCHAR(64) NOT NULL,
@@ -42,13 +45,13 @@ fluid.postgresdb.tableDefinitions = [
         email VARCHAR(32) NOT NULL,
         roles VARCHAR(16)[] NOT NULL,
         verified BOOLEAN NOT NULL DEFAULT false
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.cloudSafeCredentials}" (
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.cloudSafeCredentials}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         "prefsSafeId" VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64) NOT NULL
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.clientCredentials}" (
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.clientCredentials}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         "clientId" VARCHAR(36) NOT NULL,
         "oauth2ClientId" VARCHAR(64) NOT NULL,
@@ -56,8 +59,8 @@ fluid.postgresdb.tableDefinitions = [
         revoked BOOLEAN NOT NULL DEFAULT FALSE,
         "revokedReason" TEXT,
         "timestampRevoked" TIMESTAMP WITH TIME ZONE
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.appInstallationAuthorizations}" (
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.appInstallationAuthorizations}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         "clientId" VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64),
@@ -67,7 +70,13 @@ fluid.postgresdb.tableDefinitions = [
         "revokedReason" TEXT,
         "timestampRevoked" TIMESTAMPTZ,
         "timestampExpires" TIMESTAMPTZ NOT NULL
-    );`
-];
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.appInstallationClients}" (
+        id VARCHAR(36) PRIMARY KEY NOT NULL,
+        name VARCHAR(36) NOT NULL,
+        "userId" VARCHAR(64),
+        "computerType" "accessType" NOT NULL
+    );
+`;
 
 module.exports.tableDefinitions = fluid.postgresdb.tableDefinitions;

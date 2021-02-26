@@ -75,18 +75,18 @@ fluid.defaults("fluid.tests.postgresdb.tableModels.testCaseHolder", {
                 resolveArgs: ["Check DROP tables results", "{arguments}.0"]
                                                            // DROP results
             }, {
-                task: "{pgTestOps}.bulkQuery",
+                task: "{pgTestOps}.query",
                 args: ["{pgTestOps}.testTableDefinitions"],
                 resolve: "fluid.tests.postgresdb.utils.testCreateTables",
-                resolveArgs: ["{arguments}.0", "{pgTestOps}.testTableDefinitions"]
+                resolveArgs: ["{arguments}.0", fluid.tests.postgresdb.tableNames]
             }, {
                 // Next test is for the tables based on the actual data model,
                 // but still using test database, not actual database.
                 // TODO:  move this to the data models tests.
-                task: "{pgTestOps}.bulkQuery",
+                task: "{pgTestOps}.query",
                 args: ["{pgTestOps}.modelTableDefinitions"],
                 resolve: "fluid.tests.postgresdb.utils.testCreateTables",
-                resolveArgs: ["{arguments}.0", "{pgTestOps}.modelTableDefinitions"]
+                resolveArgs: ["{arguments}.0", fluid.postgresdb.tableNames /*"{pgTestOps}.modelTableDefinitions"*/]
             }]
         }]
     }]

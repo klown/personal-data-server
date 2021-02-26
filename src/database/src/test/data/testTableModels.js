@@ -18,24 +18,23 @@ fluid.tests.postgresdb.tableNames = {
     users: "users"
 };
 
-// Array of table definitions
-fluid.tests.postgresdb.tableDefinitions = [
+fluid.tests.postgresdb.tableDefinitions =
     `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.rgb}" (
         id VARCHAR(36) PRIMARY KEY,
         color VARCHAR(36),
         "colourMap" JSONB,
         "timeStampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        "timeStameModified" TIMESTAMPTZ
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames['roster.preferences']}" (
+        "timeStampModified" TIMESTAMPTZ
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames['roster.preferences']}" (
         name VARCHAR(64) PRIMARY KEY,
         description VARCHAR(64),
         prefs_json JSONB
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.massive}" (
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.massive}" (
         text TEXT
-    );`,
-    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.users}" (
+    );
+    CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.users}" (
         "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
         name VARCHAR(64) NOT NULL,
         username VARCHAR(64) NOT NULL,
@@ -46,5 +45,4 @@ fluid.tests.postgresdb.tableDefinitions = [
         email VARCHAR(32) NOT NULL,
         roles VARCHAR(16)[] NOT NULL,
         verified BOOLEAN NOT NULL DEFAULT false
-    );`
-];
+    );`;

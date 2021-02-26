@@ -51,9 +51,13 @@ fluid.tests.postgresdb.utils.dropExistingTables = function (postGresOps, tableNa
     return fluid.promise.sequence(dropSequence);
 };
 
-fluid.tests.postgresdb.utils.testCreateTables = function (results, tables) {
+fluid.tests.postgresdb.utils.testCreateTables = function (results, tableNames) {
     jqUnit.assertNotNull("Check for null create tables result", results);
-    jqUnit.assertEquals("Check number of tables", tables.length, results.length);
+    jqUnit.assertEquals(
+        "Check number of tables",
+        Object.keys(tableNames).length,
+        results.length
+    );
     /*
     fluid.each(results, function (aResult, index) {
         if (index === 0) {
