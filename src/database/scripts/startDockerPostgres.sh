@@ -11,10 +11,10 @@
 # Default values
 POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"postgresdb"}
 PGPORT=${PGPORT:-5432}
-POSTGRES_USER=${POSTGRES_USER:-"admin"}
+PGUSER=${PGUSER:-"admin"}
+PGDATABASE=${PGDATABASE:-"fluid_prefsdb"}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-"asecretpassword"}
 POSTGRES_IMAGE=${POSTGRES_IMAGE:-"postgres:13.1-alpine"}
-PGDATABASE=${PGDATABASE:-"fluid_prefsdb"}
 
 log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
@@ -22,14 +22,14 @@ log() {
 
 log "POSTGRES_MAIN_CONTAINER: $POSTGRES_MAIN_CONTAINER"
 log "PGPORT: $PGPORT"
-log "POSTGRES_USER: $POSTGRES_USER"
+log "PGUSER: $PGUSER"
 log "POSTGRES_IMAGE: $POSTGRES_IMAGE"
 log "PGDATABASE: $PGDATABASE"
 
 log "Starting postgres in a docker container, if not already running ..."
 docker run -d \
     --name="$POSTGRES_MAIN_CONTAINER" \
-    -e POSTGRES_USER=$POSTGRES_USER \
+    -e PGUSER=$PGUSER \
     -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
     -p $PGPORT:$PGPORT \
     -d $POSTGRES_IMAGE postgres -p $PGPORT
@@ -49,7 +49,7 @@ done
 if [[ $POSTGRESDB_ISREADY == 1 ]]; then
     log "Creating $PGDATABASE database ..."
     ERR_MSG="$(docker exec $POSTGRES_MAIN_CONTAINER \
-        createdb -p $PGPORT -U $POSTGRES_USER --echo $PGDATABASE 2>&1 >/dev/null)"
+        createdb -p $PGPORT -U $PGUSER --echo $PGDATABASE 2>&1 >/dev/null)"
 
     if [[ $? == 0 ]]; then
         EXIT_STATUS=0
