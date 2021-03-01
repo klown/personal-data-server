@@ -36,37 +36,27 @@ fluid.tests.postgresdb.utils.checkKeyValuePairs = function (keys, actualPairs, e
     });
 };
 
-fluid.tests.postgresdb.utils.testCreateOneTable = function (result, tables) {
-    jqUnit.assertNotNull("Check for null create table result", result);
-    jqUnit.assertDeepEq("Check result was stored", tables[result.getTableName()], result);
-};
-
 fluid.tests.postgresdb.utils.dropExistingTables = function (postGresOps, tableNames) {
-    var dropSequence = [];
+    var dropQueries = [];
     fluid.each(tableNames, function(aTableName) {
-        dropSequence.push(postGresOps.query(
+        dropQueries.push(
             `DROP TABLE IF EXISTS "${aTableName}" CASCADE;`
-        ));
+        );
     });
-    return fluid.promise.sequence(dropSequence);
+    return postGresOps.bulkQuery(dropQueries);
 };
 
-fluid.tests.postgresdb.utils.testCreateTables = function (results, tableNames) {
-    jqUnit.assertNotNull("Check for null create tables result", results);
-    jqUnit.assertEquals(
-        "Check number of tables",
-        Object.keys(tableNames).length,
-        results.length
+fluid.tests.postgresdb.utils.testQuery = function (results, numQueries) {
+    jqUnit.assertNotNull("Check for null result", results);
+    jqUnit.assertEquals("Check number of queries", numQueries, results.length);
+};
+
+fluid.tests.postgresdb.utils.testFailureCreateTable = function (error, tableName) {
+    jqUnit.assertNotNull("Check for null error", error);
+    jqUnit.assertEquals("Check error message",
+        "relation \"" + tableName + "\" already exists",
+        error.message
     );
-    /*
-    fluid.each(results, function (aResult, index) {
-        if (index === 0) {
-            jqUnit.assertEquals("Check DO command", "DO", aResult.command);
-        } else {
-            jqUnit.assertEquals("Check CREATE command", "CREATE", aResult.command);
-        }
-    });
-    */
 };
 
 fluid.tests.postgresdb.utils.testLoadOneTable = function (records, tableData) {

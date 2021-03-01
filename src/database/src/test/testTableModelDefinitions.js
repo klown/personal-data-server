@@ -22,7 +22,7 @@ jqUnit.module("PostgresDB table definitions unit tests.");
 
 fluid.registerNamespace("fluid.tests.postgresdb");
 
-// Table names, SQL CREATE, and SQL UPDATE statements
+// Table names, SQL CREATE, and SQL ALTER statements
 require("./data/testTableModels.js");
 
 fluid.defaults("fluid.tests.postgresdb.tableModels", {
