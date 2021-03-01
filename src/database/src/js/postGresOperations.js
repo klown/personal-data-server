@@ -74,14 +74,19 @@ fluid.postgresdb.initConnection = function (that) {
 };
 
 /**
- * Convenience function to surface node-postgres `query()` function.
+ * Convenience function to surface node-postgres `query()` function and log any
+ * errors.
  *
  * @param {Object} pool - node-postgres Pool instance to use for querying.
  * @param {String} queryString - SQL query.
  * @return {Promise} A promise whose value is the results of the query.
  */
 fluid.postgresdb.query = function (pool, queryString) {
-    return pool.query(queryString);
+    var promise = pool.query(queryString);
+    promise.then(null, function (error) {
+        fluid.log(error.message);
+    });
+    return promise;
 };
 
 /**
@@ -95,8 +100,8 @@ fluid.postgresdb.query = function (pool, queryString) {
  */
 fluid.postgresdb.bulkQuery = function (that, queryArray) {
     var commandSequence = [];
-    fluid.each(queryArray, function (aTableDef) {
-        commandSequence.push(that.query(aTableDef));
+    fluid.each(queryArray, function (aQuery) {
+        commandSequence.push(that.query(aQuery));
     });
     return fluid.promise.sequence(commandSequence).then(null, function (error) {
         fluid.log(error.message);

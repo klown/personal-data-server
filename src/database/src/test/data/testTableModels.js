@@ -11,30 +11,30 @@ var fluid = require("infusion");
 
 fluid.registerNamespace("fluid.tests.postgresdb");
 
-fluid.tests.postgresdb.tableNames = {
-    rgb: "rgb",
-    "roster.preferences": "roster.preferences",
-    massive: "massive",
-    users: "users"
-};
+fluid.tests.postgresdb.tableNames = [
+    "rgb",
+    "roster.preferences",
+    "massive",
+    "users"
+];
 
-fluid.tests.postgresdb.tableDefinitions =
-    `CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.rgb}" (
+fluid.tests.postgresdb.tableDefinitions = `
+    CREATE TABLE "${fluid.tests.postgresdb.tableNames[0]}" (
         id VARCHAR(36) PRIMARY KEY,
         color VARCHAR(36),
         "colourMap" JSONB,
         "timeStampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         "timeStampModified" TIMESTAMPTZ
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames['roster.preferences']}" (
+    CREATE TABLE "${fluid.tests.postgresdb.tableNames[1]}" (
         name VARCHAR(64) PRIMARY KEY,
         description VARCHAR(64),
         prefs_json JSONB
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.massive}" (
+    CREATE TABLE "${fluid.tests.postgresdb.tableNames[2]}" (
         text TEXT
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.tests.postgresdb.tableNames.users}" (
+    CREATE TABLE "${fluid.tests.postgresdb.tableNames[3]}" (
         "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
         name VARCHAR(64) NOT NULL,
         username VARCHAR(64) NOT NULL,
@@ -45,4 +45,14 @@ fluid.tests.postgresdb.tableDefinitions =
         email VARCHAR(32) NOT NULL,
         roles VARCHAR(16)[] NOT NULL,
         verified BOOLEAN NOT NULL DEFAULT false
-    );`;
+    );
+`;
+
+fluid.tests.postgresdb.tableUpdates = `
+    ALTER TABLE "${fluid.tests.postgresdb.tableNames[0]}"
+        RENAME COLUMN color TO colour;
+    ALTER TABLE "${fluid.tests.postgresdb.tableNames[0]}"
+        ADD "timeStampExpired" TIMESTAMPTZ;
+`;
+
+fluid.tests.postgresdb.numTableUpdates = 2;

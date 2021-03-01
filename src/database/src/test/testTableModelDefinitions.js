@@ -22,31 +22,16 @@ jqUnit.module("PostgresDB table definitions unit tests.");
 
 fluid.registerNamespace("fluid.tests.postgresdb");
 
+// Table names, SQL CREATE, and SQL UPDATE statements
 require("./data/testTableModels.js");
-
-/**
- * Load the table definitions SQL that corresponds to the actual data model.
- *
- * @return {Array} - Array of CREATE TABLE commands.
- */
-fluid.tests.postgresdb.loadModelTableDefinitions = function () {
-    var defs = fluid.require(
-        "%preferencesServer/src/database/data/tableModels.js", require
-    );
-    return defs.tableDefinitions;
-};
 
 fluid.defaults("fluid.tests.postgresdb.tableModels", {
     gradeNames: ["fluid.postgresdb.request"],
-    databaseName: "prefs_testdb",
+    databaseName: process.env.PGDATABASE || "prefs_testdb",
     host: "localhost",
     port: process.env.PGPORT || 5432,
-    user: process.env.POSTGRES_USER || "admin",
-    password: process.env.POSTGRES_PASSWORD || "asecretpassword",
-    members: {
-        testTableDefinitions: fluid.tests.postgresdb.tableDefinitions,
-        modelTableDefinitions: fluid.tests.postgresdb.loadModelTableDefinitions()
-    }
+    user: process.env.PGUSER || "admin",
+    password: process.env.POSTGRES_PASSWORD || "asecretpassword"
 });
 
 fluid.defaults("fluid.tests.postgresdb.tableModels.environment", {
@@ -68,28 +53,44 @@ fluid.defaults("fluid.tests.postgresdb.tableModels.testCaseHolder", {
         tests: [{
             name: "Database operations tests",
             sequence: [{
-                // First two tests are for the test tables.
+                // First, delete any existing test tables.  This actually tests
+                // "{pgTestOps}.bulkQuery()"
                 task: "fluid.tests.postgresdb.utils.dropExistingTables",
                 args: ["{pgTestOps}", fluid.tests.postgresdb.tableNames],
-                resolve: "jqUnit.assertNotNull",
-                resolveArgs: ["Check DROP tables results", "{arguments}.0"]
-                                                           // DROP results
+                resolve: "fluid.tests.postgresdb.utils.testQuery",
+                resolveArgs: ["{arguments}.0", fluid.tests.postgresdb.tableNames.length]
+                               // DROP results
             }, {
+                // Create the tables
                 task: "{pgTestOps}.query",
-                args: ["{pgTestOps}.testTableDefinitions"],
-                resolve: "fluid.tests.postgresdb.utils.testCreateTables",
-                resolveArgs: ["{arguments}.0", fluid.tests.postgresdb.tableNames]
+                args: [fluid.tests.postgresdb.tableDefinitions],
+                resolve: "fluid.tests.postgresdb.utils.testQuery",
+                resolveArgs: ["{arguments}.0", fluid.tests.postgresdb.tableNames.length]
             }, {
-                // Next test is for the tables based on the actual data model,
-                // but still using test database, not actual database.
-                // TODO:  move this to the data models tests.
+                // Test failure by trying to create the same tables again. It
+                // will fail on the first table.
                 task: "{pgTestOps}.query",
-                args: ["{pgTestOps}.modelTableDefinitions"],
-                resolve: "fluid.tests.postgresdb.utils.testCreateTables",
-                resolveArgs: ["{arguments}.0", fluid.postgresdb.tableNames /*"{pgTestOps}.modelTableDefinitions"*/]
+                args: [fluid.tests.postgresdb.tableDefinitions],
+                reject: "fluid.tests.postgresdb.utils.testFailureCreateTable",
+                rejectArgs: ["{arguments}.0", fluid.tests.postgresdb.tableNames[0]]
+                              // error
+            }, {
+                // Test ALTER of a table.
+                task: "{pgTestOps}.query",
+                args: [fluid.tests.postgresdb.tableUpdates],
+                resolve: "fluid.tests.postgresdb.testTableUpdates",
+                resolveArgs: ["{arguments}.0", fluid.tests.postgresdb.numTableUpdates]
+
             }]
         }]
     }]
 });
+
+fluid.tests.postgresdb.testTableUpdates = function (results, numUpdates) {
+    fluid.tests.postgresdb.utils.testQuery(results, numUpdates);
+    fluid.each(results, function (aResult) {
+        jqUnit.assertEquals("Check ALTER command", "ALTER", aResult.command);
+    });
+};
 
 fluid.test.runTests("fluid.tests.postgresdb.tableModels.environment");
