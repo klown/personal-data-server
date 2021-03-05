@@ -44,7 +44,12 @@ fluid.defaults("fluid.postgresdb.request", {
         "bulkQuery": {
             funcName: "fluid.postgresdb.bulkQuery",
             args: ["{that}", "{arguments}.0"]
-                              // tables definition file
+                              // array of SQL query strings
+        },
+        "loadFromJSON" : {
+            funcName: "fluid.postgresdb.loadFromJSON",
+            args: ["{that}", "{arguments}.0", "{arguments}.1"]
+                             // table name    // array of JSON
         }
     }
 });
@@ -103,7 +108,105 @@ fluid.postgresdb.bulkQuery = function (that, queryArray) {
     fluid.each(queryArray, function (aQuery) {
         commandSequence.push(that.query(aQuery));
     });
-    return fluid.promise.sequence(commandSequence).then(null, function (error) {
-        fluid.log(error.message);
-    });
+    return fluid.promise.sequence(commandSequence).then(
+        null,
+        function (error) {
+            fluid.log(error.message);
+        }
+    );
 };
+
+/**
+ * Utility to insert a set of records into a table given an array of JSON
+ * objects.
+ *
+ * The structure of the JSON must match the structure of the table.
+ * The names of the fields must match the column names.  Where the table
+ * requires a non-null value, there is a value in the JSON object, and so on.
+ *
+ * @param {Object} that - Postgres request object.
+ * @param {Sting} tableName - Name of table to insert into.
+ * @param {Array} jsonArray - An array of JSON objects who.
+ * @return {Promise} A promise whose values are the results of running the
+ *                   sequence of commands in the `queryArray`.
+ */
+fluid.postgresdb.loadFromJSON = function (that, tableName, jsonArray) {
+    var insertions = [];
+    fluid.each(jsonArray, function (aRecord) {
+        var columns = fluid.postgresdb.stringifyJoinKeys(Object.keys(aRecord));
+        var values = fluid.postgresdb.stringifyJoinValues(Object.values(aRecord));
+        insertions.push(
+            `INSERT INTO "${tableName}" (${columns}) VALUES (${values});`
+        );
+    });
+    // For debugging
+    fluid.each(insertions, function (anInsertion) {
+        fluid.log(fluid.logLevel.TRACE, anInsertion);
+    });
+    return that.bulkQuery(insertions);
+};
+
+/**
+ * Utility to stringify each element of an array of object keys and join them
+ * as a single string separated by commas.  This is similar to the Array.join()
+ * function, but where each element is quoted with double quotes.
+ *
+ * @param {Array} keys - Array of object keys.
+ * @return {String} - The keys in a comma separated string where each key is
+ *                    quoted.
+ */
+fluid.postgresdb.stringifyJoinKeys = function (keys) {
+    if (keys.length === 0) {
+        return "";
+    }
+    var theJoin = JSON.stringify(keys[0]);
+    for (var i = 1; i < keys.length; i++) {
+        theJoin += "," + JSON.stringify(keys[i]);
+    }
+    return theJoin;
+};
+
+/**
+ * Utility to stringify each element of an array of object values and join them
+ * as a single string separated by commas.  This is similar to the Array.join()
+ * function, but where each element is quoted with a single quote.  Also, if
+ * a value is an object, it is stringified as well as quoted.
+ *
+ * @param {Array} values - Array of object values.
+ * @return {String} - The keys in a comma separated string where each key is
+ *                    quoted.
+ */
+fluid.postgresdb.stringifyJoinValues = function (values) {
+    if (values.length === 0) {
+        return "";
+    }
+    var theJoin = "'" + fluid.postgresdb.maybeStringify(values[0]) + "'";
+    for (var i = 1; i < values.length; i++) {
+        theJoin += ",'" + fluid.postgresdb.maybeStringify(values[i]) + "'";
+    }
+    return theJoin;
+};
+
+/**
+ * Utility to return a stringified object if given an object; otherwise just
+ * return it.
+ *
+ * The input value is checked via `fluid.isPrimitive()`, and if so, it is
+ * returned as is.  Otherwise the result of `JSON.stringify()` is returned. If
+ * the argument is an array, the square brackets are replaced with curly ones.
+ * @param {Any} aValue - Value to stringify if necessary.
+ * @return {Any|String} - The value as is, or stringified.
+ */
+fluid.postgresdb.maybeStringify = function (aValue) {
+    if (fluid.isPrimitive(aValue)) {
+        return aValue;
+    }
+    else if (fluid.isArrayable(aValue)) {
+        return JSON.stringify(aValue).replace(/\[/g, '{').replace(/\]/g, '}');
+    }
+    else {
+        return JSON.stringify(aValue);
+    }
+};
+
+

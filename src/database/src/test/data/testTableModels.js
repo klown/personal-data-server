@@ -13,7 +13,7 @@ fluid.registerNamespace("fluid.tests.postgresdb");
 
 fluid.tests.postgresdb.tableNames = [
     "rgb",
-    "roster.preferences",
+    "roster.preferenceset",
     "massive",
     "users"
 ];
