@@ -317,7 +317,8 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
             }, {
                 // Delete all records from one table using TRUNCATE.  Note that
                 // TRUNCATE returns nothing so it either resolved or rejected.
-                // The next test checks that all the reoords are gone.
+                // The test that follows the current TRUNCATE test checks that
+                // all the reoords are gone.
                 task: "{pgTestOps}.query",
                 args: ["TRUNCATE massive;"],
                 resolve: "fluid.identity",
@@ -379,7 +380,7 @@ fluid.tests.postgresdb.operations.testRetrieveValue = function (results, expecte
 
 fluid.tests.postgresdb.operations.testEmptyTable = function (results, tableName) {
     jqUnit.assertEquals(
-        "Check retrieve value when querying non-existent table '" + tableName + "'",
+        "Check retrieve value when querying empty table '" + tableName + "'",
         0, results.rowCount
     );
 };

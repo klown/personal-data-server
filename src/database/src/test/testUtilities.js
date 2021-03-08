@@ -57,43 +57,42 @@ fluid.tests.postgresdb.utils.testQuery = function (results, numQueries, command)
     }
 };
 
-fluid.tests.postgresdb.utils.testFailureCreateTable = function (error, tableName) {
-    jqUnit.assertNotNull("Check for null error", error);
-    jqUnit.assertEquals("Check error message",
-        "relation \"" + tableName + "\" already exists",
-        error.message
-    );
-};
-
+/**
+ * Compare the key-value pairs of the JSON returned from a database query
+ * against an expected set of key-value pairs.  Date values are a special case
+ * since, even though PostGres is documented as outputting the date in ISO
+ * format, it replaces the 'T' with a space.  See the note in the "Data/Time
+ * Types" documentation:
+ * https://www.postgresql.org/docs/13/datatype-datetime.html#DATATYPE-DATETIME-OUTPUT
+ *
+ * @param {Array} keys - The field names of the JSON objects to compare.
+ * @param {Object} actualPairs - JSON object returned by the database.
+ * @param {Object} expectedPairs - Expected JSON object.
+ * @param {String} msg - Message for the comparison tests.
+ */
 fluid.tests.postgresdb.utils.checkKeyValuePairs = function (keys, actualPairs, expectedPairs, msg) {
     fluid.each(keys, function (key) {
         var actualValue = actualPairs[key];
         var expectedValue = expectedPairs[key];
         var message = msg + " for key '" + key + "'";
-        // Special case: handle time stamps -- they are Date objects as they
-        // come out of the database.
+        // Special case: time stamps -- convert the value to Date objects for
+        // comparison
         if (actualValue instanceof Date) {
-            jqUnit.assertEquals(
-                message,
-                new Date(expectedValue).getTime(),
-                actualValue.getTime()
-            );
+            var actualDate = new Date(actualValue);
+            var expectedDate = new Date(expectedValue);
+            jqUnit.assertDeepEq(message, actualDate, expectedDate);
         } else {
             jqUnit.assertDeepEq(message, expectedValue, actualValue);
         }
     });
 };
 
-fluid.tests.postgresdb.utils.testLoadOneTable = function (records, tableData) {
-    jqUnit.assertNotNull("Check for null result", records);
-    fluid.each(records, function (aRecord, index) {
-        var expectedPairs = tableData[index];
-        var keys = fluid.keys(expectedPairs);
-        fluid.tests.postgresdb.utils.checkKeyValuePairs(
-            keys, aRecord, expectedPairs,
-            "Check column value matches given data"
-        );
-    })
+fluid.tests.postgresdb.utils.testFailureCreateTable = function (error, tableName) {
+    jqUnit.assertNotNull("Check for null error", error);
+    jqUnit.assertEquals("Check error message",
+        "relation \"" + tableName + "\" already exists",
+        error.message
+    );
 };
 
 fluid.tests.postgresdb.utils.testLoadTables = function (results, allTablesData) {
