@@ -208,5 +208,3 @@ fluid.postgresdb.maybeStringify = function (aValue) {
         return JSON.stringify(aValue);
     }
 };
-
-

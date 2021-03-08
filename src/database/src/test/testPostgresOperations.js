@@ -15,7 +15,7 @@
 var fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
-require("../js/postgresOperations.js");
+require("../js/index.js");
 require("./testUtilities.js");
 
 // Tables structures and test data records

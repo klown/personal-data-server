@@ -1,7 +1,7 @@
 /*!
 Database Utilities
 
-Copyright 2017-2020 OCAD university
+Copyright 2017-2021 OCAD university
 
 Copied from "GPII Database Utilties":
     gpii-universal/gpii/node_modules/gpii-db-operation/src/DbUtils.js
