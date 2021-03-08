@@ -26,7 +26,7 @@ fluid.postgresdb.tableDefinitions = `
             END IF;
         END
     $$;
-    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.prefsSafes}" (
+    CREATE TABLE "${fluid.postgresdb.tableNames.prefsSafes}" (
         "prefsSafesId" VARCHAR(36) PRIMARY KEY NOT NULL,
         "safeType" "prefsSafesType" NOT NULL,
         name VARCHAR(64),
@@ -34,7 +34,7 @@ fluid.postgresdb.tableDefinitions = `
         email VARCHAR(32),
         preferences JSONB NOT NULL DEFAULT '{}'
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.users}" (
+    CREATE TABLE "${fluid.postgresdb.tableNames.users}" (
         "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
         name VARCHAR(64) NOT NULL,
         username VARCHAR(64) NOT NULL,
@@ -46,12 +46,12 @@ fluid.postgresdb.tableDefinitions = `
         roles VARCHAR(16)[] NOT NULL,
         verified BOOLEAN NOT NULL DEFAULT false
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.cloudSafeCredentials}" (
+    CREATE TABLE "${fluid.postgresdb.tableNames.cloudSafeCredentials}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         "prefsSafeId" VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64) NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.clientCredentials}" (
+    CREATE TABLE "${fluid.postgresdb.tableNames.clientCredentials}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         "clientId" VARCHAR(36) NOT NULL,
         "oauth2ClientId" VARCHAR(64) NOT NULL,
@@ -60,7 +60,7 @@ fluid.postgresdb.tableDefinitions = `
         "revokedReason" TEXT,
         "timestampRevoked" TIMESTAMP WITH TIME ZONE
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.appInstallationAuthorizations}" (
+    CREATE TABLE "${fluid.postgresdb.tableNames.appInstallationAuthorizations}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         "clientId" VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64),
@@ -71,7 +71,7 @@ fluid.postgresdb.tableDefinitions = `
         "timestampRevoked" TIMESTAMPTZ,
         "timestampExpires" TIMESTAMPTZ NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS "${fluid.postgresdb.tableNames.appInstallationClients}" (
+    CREATE TABLE "${fluid.postgresdb.tableNames.appInstallationClients}" (
         id VARCHAR(36) PRIMARY KEY NOT NULL,
         name VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64),
