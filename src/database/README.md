@@ -3,7 +3,7 @@
 The purpose of this module is to provide a set of common operations for
 persistent storage of data, using a Postgres database.  The database is
 implemented using [postgresdb](https://www.postgresql.org//) with
-[Sequelize](https://sequelize.readthedocs.io/en/v3).  Documentation of the fluid
+[node-postgres](https://node-postgres.com/).  Documentation of the fluid
 components is available in the `docs` folder.
 
 ## Getting started
@@ -17,9 +17,9 @@ docker image and launch it with the following configuration:
 | Envionment variable        | Default Value     | Description |
 | -------------------------- | -------------     | ----------- |
 | `POSTGRES_MAIN_CONTAINER`  | `postgresdb`      | The main Docker container running the postgresdb interface |
-| `POSTGRES _LISTEN_PORT`    | `5432`            | Postgres TCP port for accessing the database |
-| `POSTGRES_USER`            | `admin`           | User that has admin privileges for all tables in the database |
-| `POSTGRES_PASSWORD`        | `asecretpassword` | User's password |
+| `PGPORT`                   | `5432`            | Postgres TCP port for accessing the database |
+| `PG_USER`                  | `admin`           | User that has admin privileges for all tables in the database |
+| `PGPASSWORD`               | `asecretpassword` | User's password |
 
 ## Start Up
 
@@ -33,8 +33,8 @@ environment variables (see below for an example).  The script is in the
 startDockerPostgres.sh
 ```
 
-If you wish to change, for example, the Postgres TCP port
-`POSTGRESDB_LISTEN_PORT`, execute the script as follows:
+If you wish to change, for example, the Postgres TCP port `PGPORT`, execute
+the script as follows:
 
 ```console
 export PGPORT=5433; startDockerPostgres.sh

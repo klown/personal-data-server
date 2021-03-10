@@ -9,11 +9,10 @@
 
 var fluid = require("infusion");
 var allTests = [
+    "./testStringifyJoin.js",
     "./testPostgresRequest.js",
     "./testPostgresOperations.js",
-    "./testTableModelDefinitions.js",
-    "./testStringifyJoin.js"/*,
-    "./testDataModelOperations.js"*/
+    "./testTableModelDefinitions.js"
 ];
 
 fluid.each(allTests, function (aTest) {

@@ -126,9 +126,8 @@ fluid.postgresdb.bulkQuery = function (that, queryArray) {
  *
  * @param {Object} that - Postgres request object.
  * @param {Sting} tableName - Name of table to insert into.
- * @param {Array} jsonArray - An array of JSON objects who.
- * @return {Promise} A promise whose values are the results of running the
- *                   sequence of commands in the `queryArray`.
+ * @param {Array} jsonArray - An array of JSON objects to load.
+ * @return {Promise} whose values is an array of successful INSERT results.
  */
 fluid.postgresdb.loadFromJSON = function (that, tableName, jsonArray) {
     var insertions = [];
