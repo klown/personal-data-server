@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Inclusive Design Research Centre, OCAD University
+ * Copyright 2020-2021 Inclusive Design Research Centre, OCAD University
  * All rights reserved.
  *
  * Licensed under the New BSD license. You may not use this file except in
@@ -62,10 +62,8 @@ fluid.defaults("fluid.postgresdb.request", {
  * @param {String} that.options.databaseName - Name of the database.
  * @param {String} that.options.user - Name of the user with admin access.
  * @param {String} that.options.password - User's password.
- * @param {String} that.options.dialect - The dialect for SQL requests,
- *                                        e.g. "postgres".
  * @param {Number} that.options.port - The port number for the connection.
- * @param {Object} that.pool - Allocated and used to make postgres queries.
+ * @param {Object} that.pool - Allocated and used to connect to the database.
  *
  */
 fluid.postgresdb.initConnection = function (that) {
@@ -95,20 +93,23 @@ fluid.postgresdb.query = function (pool, queryString) {
 };
 
 /**
- * Utility to run a sequence of postgres queries in bulk.  This can be used to
+ * Utility to execute an array of database queries in bulk.  This can be used to
  * create or upgrade a set of tables in batch, or bulk load a set of records.
+ * Although not required, the array can express a logical sequence of queries,
+ * where a single query's position in the array indicates that it must come
+ * before a subsequent query, or after a previous query.
  *
  * @param {Object} that - Postgres request object.
  * @param {Array} queryArray - An array of SQL statements.
  * @return {Promise} A promise whose values are the results of running the
- *                   sequence of commands in the `queryArray`.
+ *                   sequence of queries in the `queryArray`.
  */
 fluid.postgresdb.bulkQuery = function (that, queryArray) {
-    var commandSequence = [];
+    var querySequence = [];
     fluid.each(queryArray, function (aQuery) {
-        commandSequence.push(that.query(aQuery));
+        querySequence.push(that.query(aQuery));
     });
-    return fluid.promise.sequence(commandSequence).then(
+    return fluid.promise.sequence(querySequence).then(
         null,
         function (error) {
             fluid.log(error.message);
@@ -120,14 +121,18 @@ fluid.postgresdb.bulkQuery = function (that, queryArray) {
  * Utility to insert a set of records into a table given an array of JSON
  * objects.
  *
- * The structure of the JSON must match the structure of the table.
- * The names of the fields must match the column names.  Where the table
- * requires a non-null value, there is a value in the JSON object, and so on.
+ * The structure of the JSON must match the structure of the table.  That is,
+ * the names of the fields must match the column names, and the field values
+ * must match the value types declared for the table.  In addition, where the
+ * table column requires a non-null value and no default is specified, there
+ * must be a corresponding name/value pair in the JSON object.  If the table
+ * column value is allowed to be null or has a default, the corresponding JSON
+ * name/value pair can be omitted.
  *
  * @param {Object} that - Postgres request object.
  * @param {Sting} tableName - Name of table to insert into.
  * @param {Array} jsonArray - An array of JSON objects to load.
- * @return {Promise} whose values is an array of successful INSERT results.
+ * @return {Promise} whose value is an array of successful INSERT results.
  */
 fluid.postgresdb.loadFromJSON = function (that, tableName, jsonArray) {
     var insertions = [];
@@ -148,7 +153,7 @@ fluid.postgresdb.loadFromJSON = function (that, tableName, jsonArray) {
 /**
  * Utility to stringify each element of an array of object keys and join them
  * as a single string separated by commas.  This is similar to the Array.join()
- * function, but where each element is quoted with double quotes.
+ * function, but here, each element is quoted with double quotes.
  *
  * @param {Array} keys - Array of object keys.
  * @return {String} - The keys in a comma separated string where each key is
@@ -168,8 +173,8 @@ fluid.postgresdb.stringifyJoinKeys = function (keys) {
 /**
  * Utility to stringify each element of an array of object values and join them
  * as a single string separated by commas.  This is similar to the Array.join()
- * function, but where each element is quoted with a single quote.  Also, if
- * a value is an object, it is stringified as well as quoted.
+ * function, but where each element is quoted with a single quote.  If a value
+ * is a plaing object, it is stringified as well as quoted.
  *
  * @param {Array} values - Array of object values.
  * @return {String} - The keys in a comma separated string where each key is

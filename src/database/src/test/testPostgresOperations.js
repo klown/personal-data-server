@@ -52,7 +52,7 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
     gradeNames: ["fluid.postgresdb.request"],
 
     databaseName: process.env.PGDATABASE || "prefs_testdb",
-    host: "localhost",
+    host: process.env.PGHOST || "localhost",
     port: process.env.PGPORT || 5432,
     user: process.env.POSTGRES_USER || "admin",
     password: process.env.POSTGRES_PASSWORD || "asecretpassword",
@@ -86,13 +86,6 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
         tableData: fluid.tests.postgresdb.testTableData,
         // Single record data from the tableData member, set onCreate()
         rgbChartreuse: null,
-    },
-    // Changes that should fail
-    missingIdentifier: {
-        attributes: {
-            "verified": false,
-            "email": "carla@globalhost"
-        }
     },
     listeners: {
         "onCreate": {
@@ -169,7 +162,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 args: ["{pgTestOps}"]
             },
             // In the following, the first argument to the 'resolveArgs' or
-            // 'rejectArgs' is a Promise value
+            // 'rejectArgs' is a Promise -- the result of a query or queries.
             {
                 // First, delete any existing test tables.
                 task: "fluid.tests.postgresdb.utils.dropExistingTables",

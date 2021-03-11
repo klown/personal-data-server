@@ -20,7 +20,7 @@ fluid.registerNamespace("fluid.tests.postgresdb");
 fluid.defaults("fluid.tests.postgresdb.request", {
     gradeNames: ["fluid.postgresdb.request"],
     databaseName: "prefs_testdb",
-    host: "localhost",
+    host: process.env.PGPHOST || "localhost",
     port: process.env.PGPORT || 5432,
     user: process.env.PGUSER || "admin",
     password: process.env.POSTGRES_PASSWORD || "asecretpassword",

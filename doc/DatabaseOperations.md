@@ -57,13 +57,14 @@ options.  It is then ready for database queries.
 
 The `queryString` can be a single SQL query, or a set of them.  An example of
 the former is:
-```
+
+``` .sql
 SELECT * FROM users WHERE "userId" = 'carla';
 ```
 
 An example of the latter is:
 
-```
+``` .sql
 DO $$
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='prefsSafesType') THEN
@@ -151,4 +152,3 @@ a value is an object, it is stringified as well as quoted.
 The input value is checked via `fluid.isPrimitive()`, and if so, it is
 returned as is.  Otherwise the result of `JSON.stringify()` is returned. If
 the argument is an array, the square brackets are replaced with curly brackets.
-

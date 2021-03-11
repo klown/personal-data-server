@@ -57,7 +57,7 @@ fluid.defaults("fluid.tests.postgresdb.stringifyJoin.environment", {
 fluid.defaults("fluid.tests.postgresdb.stringifyJoin.testCaseHolder", {
     gradeNames: ["fluid.test.testCaseHolder"],
     modules: [{
-        name: "StringJoin test case",
+        name: "StringifyJoin test case",
         tests: [{
             name: "Check stringifyKeysJoin(), stringifyJoinValues(), maybeStringify()",
             sequence: [{

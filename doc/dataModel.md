@@ -29,7 +29,6 @@ support the user management feature implemented using [fluid-express-user](https
   - Similarly, are the `name` and `email` needed?  They are also built into
     `User`s.  Again, only needed for `PrefsSafesKey` access?
 
-
 | Name             | Type                        | Required? | Default | Description |
 | ---              | ---                         | ---       |  ---    | ---         |
 | prefsSafesId     | String                      | Required  | None    | Unique ID of this preferences safe. |
@@ -139,16 +138,16 @@ This table contains information to associate users with their preferences safes
 | timestampUpdated | Date   | Optional  | null    | The timestamp when the token is updated.     |
 | timestampRevoked | Date   | Optional  | null    | The timestamp when the token is revoked.     |
 
-
 ## Field Examples and Explanations
 
 ### prefsSafes.preferences
 
 Object. Required.
 
-* Each preferences set in a preferences safe is keyed by an internally generated id. The default preferences set is
-keyed by a fixed string "default".
-* Each preferences set contains a field called "name" that is to save the user defined name for this preferences set.
+- Each preferences set in a preferences safe is keyed by an internally generated
+  id. The default preferences set is keyed by a fixed string "default".
+- Each preferences set contains a field called "name" that is to save the user
+  defined name for this preferences set.
 
 Example:
 
@@ -219,9 +218,10 @@ Example:
 This table contains all OAuth2 client credentials assigned to all OAuth clients, including: 1. App installation clients;
 2. Privileged prefs creator clients; 3. Web prefs consumer clients.
 
-* At any time, each client should only have one active un-revoked client credential in this document.
-* TODO: there's an ongoing discussion on whether to stop support privileged prefs creator clients and web prefs
-consumer clients.
+- At any time, each client should only have one active un-revoked client
+  credential in this document.
+- TODO: there's an ongoing discussion on whether to stop support privileged
+  prefs creator clients and web prefs consumer clients.
 
 ``` .json
 {
@@ -237,5 +237,5 @@ consumer clients.
 ```
 
 ## TODO list
-- ??
 
+- Update the diagram to match the tabular descriptions.
