@@ -51,7 +51,7 @@ fluid.tests.postgresdb.anotherUserToInsertJSON =  {
 fluid.defaults("fluid.tests.postgresdb.operations", {
     gradeNames: ["fluid.postgresdb.request"],
 
-    databaseName: process.env.PGDATABASE || "prefs_testdb",
+    database: process.env.PGDATABASE || "prefs_testdb",
     host: process.env.PGHOST || "localhost",
     port: process.env.PGPORT || 5432,
     user: process.env.POSTGRES_USER || "admin",
@@ -97,7 +97,7 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
         request: {
             type: "fluid.postgresdb.request",
             options: {
-                databaseName: process.env.PGDATABASE || "prefs_testdb",
+                database: process.env.PGDATABASE || "prefs_testdb",
                 host: "localhost",
                 port: process.env.PGPORT || 5432,
                 user: process.env.POSTGRES_USER || "admin",

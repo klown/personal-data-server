@@ -19,7 +19,7 @@ fluid.registerNamespace("fluid.tests.postgresdb");
 
 fluid.defaults("fluid.tests.postgresdb.request", {
     gradeNames: ["fluid.postgresdb.request"],
-    databaseName: "prefs_testdb",
+    database: "prefs_testdb",
     host: process.env.PGPHOST || "localhost",
     port: process.env.PGPORT || 5432,
     user: process.env.PGUSER || "admin",
@@ -96,7 +96,7 @@ fluid.tests.postgresdb.request.testQueryResults = function (results, databaseReq
     jqUnit.assertNotNull("Check for null query result", results);
     jqUnit.assertNotEquals("Check for empty query result", results.rowCount, 0);
 
-    var ourDatabaseName = databaseRequest.options.databaseName;
+    var ourDatabaseName = databaseRequest.options.database;
     var ourDatabase = fluid.find(results.rows, function(aDatabase) {
         if (aDatabase.datname === ourDatabaseName) {
             return aDatabase;

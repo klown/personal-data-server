@@ -27,7 +27,7 @@ require("./data/testTableModels.js");
 
 fluid.defaults("fluid.tests.postgresdb.tableModels", {
     gradeNames: ["fluid.postgresdb.request"],
-    databaseName: process.env.PGDATABASE || "prefs_testdb",
+    database: process.env.PGDATABASE || "prefs_testdb",
     host: process.env.PGHOST ||"localhost",
     port: process.env.PGPORT || 5432,
     user: process.env.PGUSER || "admin",

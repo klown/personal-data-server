@@ -19,7 +19,7 @@ fluid.defaults("fluid.postgresdb.request", {
     gradeNames: ["fluid.component"],
 
     // The following are set by integrators that use this component
-    databaseName:   null,   // e.g., "fluid_prefsdb"
+    database:       null,   // e.g., "fluid_prefsdb"
     host:           null,   // e.g., "localhost"
     port:           null,   // e.g., 5432
     user:           null,   // e.g., "admin"
@@ -59,7 +59,7 @@ fluid.defaults("fluid.postgresdb.request", {
  *
  * @param {Object} that - Contains the options for the connection and a member
  *                        to hold a reference to the connection.
- * @param {String} that.options.databaseName - Name of the database.
+ * @param {String} that.options.database - Name of the database.
  * @param {String} that.options.user - Name of the user with admin access.
  * @param {String} that.options.password - User's password.
  * @param {Number} that.options.port - The port number for the connection.
