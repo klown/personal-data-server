@@ -32,7 +32,9 @@ fluid.postgresdb.tableDefinitions = `
         name VARCHAR(64),
         password VARCHAR(64),
         email VARCHAR(32),
-        preferences JSONB NOT NULL DEFAULT '{}'
+        preferences JSONB NOT NULL DEFAULT '{}',
+        "timestampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "timestampUpdated" TIMESTAMPTZ
     );
     CREATE TABLE "${fluid.postgresdb.tableNames.users}" (
         "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
@@ -58,24 +60,40 @@ fluid.postgresdb.tableDefinitions = `
         "oauth2ClientSecret" VARCHAR(255) NOT NULL,
         revoked BOOLEAN NOT NULL DEFAULT FALSE,
         "revokedReason" TEXT,
-        "timestampRevoked" TIMESTAMP WITH TIME ZONE
+        "timestampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "timestampUpdated" TIMESTAMPTZ,
+        "timestampRevoked" TIMESTAMPTZ
     );
     CREATE TABLE "${fluid.postgresdb.tableNames.appInstallationAuthorizations}" (
-        id VARCHAR(36) PRIMARY KEY NOT NULL,
+        "tokenId" VARCHAR(36) PRIMARY KEY NOT NULL,
         "clientId" VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64),
         "clientCredentialId" VARCHAR(36) NOT NULL,
         "accessToken" VARCHAR(64) NOT NULL,
         revoked BOOLEAN NOT NULL DEFAULT FALSE,
         "revokedReason" TEXT,
+        "timestampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         "timestampRevoked" TIMESTAMPTZ,
         "timestampExpires" TIMESTAMPTZ NOT NULL
     );
     CREATE TABLE "${fluid.postgresdb.tableNames.appInstallationClients}" (
-        id VARCHAR(36) PRIMARY KEY NOT NULL,
+        "clientId" VARCHAR(36) PRIMARY KEY NOT NULL,
         name VARCHAR(36) NOT NULL,
         "userId" VARCHAR(64),
         "computerType" "accessType" NOT NULL
+        "timestampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "timestampUpdated" TIMESTAMPTZ,
+        "timestampRevoked" TIMESTAMPTZ
+    );
+    CREATE TABLE "${fluid.postgresdb.tableNames.prefsSafesKey}" (
+        "keyId" VARCHAR(36) PRIMARY KEY NOT NULL,
+        "prefsSafesId" VARCHAR(36),
+        "prefsSetId" VARCHAR(36),
+        revoked BOOLEAN NOT NULL DEFAULT FALSE,
+        "revokedReason" TEXT,
+        "timestampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "timestampUpdated" TIMESTAMPTZ,
+        "timestampRevoked" TIMESTAMPTZ
     );
 `;
 
