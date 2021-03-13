@@ -118,7 +118,7 @@ fluid.tests.postgresdb.request.testResults = function (results, databaseRequest)
     jqUnit.assertNotEquals("Check for empty query result", results.rowCount, 0);
 
     var ourDatabaseName = databaseRequest.options.database;
-    var ourDatabase = fluid.find(results.rows, function(aDatabase) {
+    var ourDatabase = fluid.find(results.rows, function (aDatabase) {
         if (aDatabase.datname === ourDatabaseName) {
             return aDatabase;
         }

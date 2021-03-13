@@ -8,7 +8,7 @@
  * You may obtain a copy of the License at
  * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
  */
-"use strict"
+"use strict";
 
 var fluid = require("infusion");
 require("../src/js/index.js");

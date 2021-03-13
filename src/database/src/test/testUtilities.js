@@ -125,7 +125,7 @@ fluid.tests.postgresdb.utils.testLoadTables = function (results, allTablesData) 
          var tableName = fluid.tests.postgresdb.tableNames[index];
          fluid.tests.postgresdb.utils.testResults(
             aResult, allTablesData[tableName].length, "INSERT"
-         );
+        );
     });
 };
 

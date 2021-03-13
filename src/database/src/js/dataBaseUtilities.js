@@ -15,8 +15,7 @@ You may obtain a copy of the License at
 
 "use strict";
 
-var fluid = fluid || require("infusion"),
-    gpii = fluid.registerNamespace("gpii");
+var fluid = fluid || require("infusion");
 
 fluid.registerNamespace("fluid.postgresdb");
 
@@ -24,7 +23,7 @@ fluid.registerNamespace("fluid.postgresdb");
  * @param {Object} error - An object that contains an element keyed by "message".
  * @param {Object} termMap - An object that contains the mapping between terms used within error.message and their actual values.
  * @return {Object} The input object "error" with terms in error.message being replaced by actual values.
-*/
+ */
 fluid.postgresdb.composeError = function (error, termMap) {
     var err = fluid.copy(error);
     err.message = fluid.stringTemplate(err.message, termMap);

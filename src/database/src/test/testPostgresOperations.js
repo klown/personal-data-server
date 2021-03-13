@@ -87,13 +87,13 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
     `,
     primaryKeyChangeExpected: fluid.extend(
         true, {}, fluid.tests.postgresdb.anotherUserToInsertJSON,
-         { userId: "some.new.id", verified: false, email: "carla@globalhost" }
+        { userId: "some.new.id", verified: false, email: "carla@globalhost" }
     ),
     members: {
         postgresOps: new postgresdb.PostgresRequest(fluid.tests.postgresdb.databaseConfig),
         tableData: fluid.tests.postgresdb.testTableData,
         // Single record data from the tableData member, set onCreate()
-        rgbChartreuse: null,
+        rgbChartreuse: null
     },
     listeners: {
         "onCreate": {
@@ -123,7 +123,7 @@ fluid.tests.postgresdb.operations.loadOneTableFromJSON = function (pgOps, tableN
  * @param {Object} that.rgbChartreuse - Reference to the "chartreuse" rgb data.
  */
 fluid.tests.postgresdb.operations.findChartreuse = function (that) {
-    that.rgbChartreuse = fluid.find(that.tableData.rgb, function(aColour) {
+    that.rgbChartreuse = fluid.find(that.tableData.rgb, function (aColour) {
         if (aColour.id === "chartreuse") {
             return aColour;
         }
@@ -227,8 +227,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 task: "fluid.tests.postgresdb.utils.runSQL",
                 args: ["{pgTestOps}.postgresOps", "DELETE FROM rgb;"],
                 resolve: "fluid.tests.postgresdb.operations.testDeleteTableData",
-                resolveArgs: ["{arguments}.0", "{pgTestOps}", "rgb"]
-                              // results has number of rows deleted
+                resolveArgs: ["{arguments}.0", "{pgTestOps}", "rgb"] // results has number of rows deleted
             }, {
                 // Check that rgb data is truly gone
                 task: "fluid.tests.postgresdb.utils.runSQL",
@@ -272,8 +271,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     "SELECT * FROM rgb WHERE color='green';"
                 ],
                 resolve: "fluid.tests.postgresdb.operations.testSelectRows",
-                resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData.rgb"]
-                              // array of rows
+                resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData.rgb"] // array of rows
             }, {
                 // Select from non-existant table -- should fail
                 task: "fluid.tests.postgresdb.utils.runSQL",
@@ -387,7 +385,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
             }]
         }]
     }]
-})
+});
 
 fluid.tests.postgresdb.operations.testInit = function (pgTestOps) {
     jqUnit.assertNotNull("Check operations instance is non-null", pgTestOps.postgresOps);
@@ -398,7 +396,7 @@ fluid.tests.postgresdb.operations.testInit = function (pgTestOps) {
     );
     jqUnit.assertEquals(
         "Check chartreuse data", "chartreuse", pgTestOps.rgbChartreuse.id
-    )
+    );
 };
 
 fluid.tests.postgresdb.operations.testDeleteTableData = function (result, dataBaseOps, tableName) {

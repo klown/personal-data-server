@@ -1,6 +1,5 @@
-/* eslint-env node */
 "use strict";
-require('json5/lib/register');
+require("json5/lib/register");
 
 var fluid = require("infusion");
 
