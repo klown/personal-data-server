@@ -12,8 +12,7 @@
 POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"postgresdb"}
 PGPORT=${PGPORT:-5432}
 PGUSER=${PGUSER:-"admin"}
-
-PGDATABASE="prefs_testdb"
+PGDATABASE=${PGDATABASE:-"prefs_testdb"}
 
 log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
