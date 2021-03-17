@@ -6,9 +6,7 @@
         "name": "admin",
         "derived_key": "98f5ab8c475a720739779fad5fd61092edc94a08",
         "email": "admin@localhost",
-        "roles": [
-            "admin"
-        ],
+        "roles": ["admin"],
         "salt": "2653c80aabd3889c3dfd6e198d3dca93",
         "verified": true,
         "verification_code": "DE74AAF3-2A0F-47A3-BBC6-5A1FD2A9A6BE"
@@ -19,9 +17,7 @@
         "username": "nonadmin",
         "name": "nonadmin",
         "email": "nonadmin@localhost",
-        "roles": [
-            "nonadmin"
-        ],
+        "roles": ["nonadmin"],
         "derived_key": "9ff4bc1c1846181d303971b08b65122a45174d04",
         "salt": "2653c80aabd3889c3dfd6e198d3dca93",
         "verified": true,
@@ -33,7 +29,7 @@
         "name": "unverified",
         "username": "unverified",
         "email": "unverified@localhost",
-        "roles": [],
+        "roles": ["user", "admin"],
         "derived_key": "80a49cde29016df5daf977937027a574c8ba5f89",
         "salt": "04fe38b871928a6e057b8fe2acd64180",
         "verification_code": "51cd39a0-a87d-11e4-ae25-295d11aea1d5"

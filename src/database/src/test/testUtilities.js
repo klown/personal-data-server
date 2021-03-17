@@ -17,39 +17,62 @@ var fluid = require("infusion"),
 
 fluid.registerNamespace("fluid.tests.postgresdb.utils");
 
-/**
- * Delete the given tables from the database.  The tables are dropped in bulk.
- *
- * @param {Component} postGresOps - Postgres test request object
- * @param {Array} tablesNames - Array of tables to delete.
- * @param {Promise} The value of the drop operation.
- */
-fluid.tests.postgresdb.utils.dropExistingTables = function (postGresOps, tableNames) {
-    var dropQueries = [];
-    fluid.each(tableNames, function(aTableName) {
-        dropQueries.push(
-            `DROP TABLE IF EXISTS "${aTableName}" CASCADE;`
-        );
-    });
-    return postGresOps.bulkQuery(dropQueries);
+// Host, port, database name, etc. for testing
+fluid.tests.postgresdb.databaseConfig = {
+    database: process.env.PGDATABASE        || "prefs_testdb",
+    host: process.env.PGPHOST               || "localhost",
+    port: process.env.PGPORT                || 5432,
+    user: process.env.PGUSER                || "admin",
+    password: process.env.POSTGRES_PASSWORD || "asecretpassword"
 };
 
 /**
- * Check that the database query worked.  Success is at least a check that the
- * results from the query is non-null and there are an equal number of them as
- * there were queries made.  Node-postgres returns a results array where each
- * object in the array has a `command` property.  A `command` parameter is
- * optional, and if provided, is compared to the `command` properties of the
- * results.
+ * A test of the `runSqlArray()` method by a bulk deletion of the given tables
+ * from the database.  The tables are dropped in bulk.
  *
- * @param {Component} postGresOps - Postgres test request object
- * @param {Number} numQueries - Mumber of queries made.
- * @param {String} command - Optional: if present, it will be checked against
- *                           commands in the results.
+ * @param {Component} postgresOps - Postgres operations instance.
+ * @param {Array} tablesNames - Array of tables to delete.
+ & @param {String} ifExists - (Optional) additional IF EXISTS clause.
+ * @param {Promise} The value of the drop operation.
  */
-fluid.tests.postgresdb.utils.testQuery = function (results, numQueries, command) {
+fluid.tests.postgresdb.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
+    ifExists = ifExists || "";
+    var dropSQL = [];
+    fluid.each(tableNames, function(aTableName, index) {
+        dropSQL.push(
+            `DROP TABLE ${ifExists} "${aTableName}" CASCADE;`
+        );
+    });
+    return postgresOps.runSqlArray(dropSQL);
+};
+
+/**
+ * Run SQL statement.
+ *
+ * @param {Object} pgOps - Postgres operations instance.
+ * @param {String} sql - SQL statement.
+ * @return {Promise} Result of running the statment.
+ */
+fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql) {
+    return pgOps.runSql(sql);
+};
+
+/**
+ * Check the results of running some SQL.  At least check that the
+ * results from the query is non-null and there are an equal number of them as
+ * there were statements.  Node-postgres returns a results array where each
+ * object in the array has a `command` property.  A `command` parameter is
+ * optional here, but if provided, is compared to the `command` properties of
+ * the results.
+ *
+ * @param {Array} results - SQL statement(s) results.
+ * @param {Number} numStatements - Expected number of SQL statements executed.
+ * @param {String} command - Optional: if present, it will be checked against
+ *                           commands returned in the results.
+ */
+fluid.tests.postgresdb.utils.testResults = function (results, numStatements, command) {
     jqUnit.assertNotNull("Check for null result", results);
-    jqUnit.assertEquals("Check number of queries", numQueries, results.length);
+    jqUnit.assertEquals("Check number of queries", numStatements, results.length);
     if (command) {
         fluid.each(results, function (aResult) {
             jqUnit.assertEquals("Check query command", command, aResult.command);
@@ -58,7 +81,7 @@ fluid.tests.postgresdb.utils.testQuery = function (results, numQueries, command)
 };
 
 /**
- * Compare the key-value pairs of the JSON returned from a database query
+ * Compare the key-value pairs of the JSON returned from a database operation
  * against an expected set of key-value pairs.  Date values are a special case
  * since, even though PostGres is documented as outputting the date in ISO
  * format, it replaces the 'T' with a space.  See the note in the "Data/Time
@@ -66,21 +89,21 @@ fluid.tests.postgresdb.utils.testQuery = function (results, numQueries, command)
  * https://www.postgresql.org/docs/13/datatype-datetime.html#DATATYPE-DATETIME-OUTPUT
  *
  * @param {Array} keys - The field names of the JSON objects to compare.
- * @param {Object} actualPairs - JSON object returned by the database.
+ * @param {Object} actualPairs - JSON object returned from the database.
  * @param {Object} expectedPairs - Expected JSON object.
  * @param {String} msg - Message for the comparison tests.
  */
 fluid.tests.postgresdb.utils.checkKeyValuePairs = function (keys, actualPairs, expectedPairs, msg) {
-    fluid.each(keys, function (key) {
-        var actualValue = actualPairs[key];
-        var expectedValue = expectedPairs[key];
-        var message = msg + " for key '" + key + "'";
+    fluid.each(keys, function (aKey) {
+        var actualValue = actualPairs[aKey];
+        var expectedValue = expectedPairs[aKey];
+        var message = msg + " for key '" + aKey + "'";
         // Special case: time stamps -- convert the value to Date objects for
         // comparison
         if (actualValue instanceof Date) {
             var actualDate = new Date(actualValue);
             var expectedDate = new Date(expectedValue);
-            jqUnit.assertDeepEq(message, actualDate, expectedDate);
+            jqUnit.assertDeepEq(message, expectedDate, actualDate);
         } else {
             jqUnit.assertDeepEq(message, expectedValue, actualValue);
         }
@@ -99,8 +122,14 @@ fluid.tests.postgresdb.utils.testLoadTables = function (results, allTablesData) 
     jqUnit.assertNotNull("Check for null result", results);
     fluid.each(results, function (aResult, index) {
          var tableName = fluid.tests.postgresdb.tableNames[index];
-         fluid.tests.postgresdb.utils.testQuery(
+         fluid.tests.postgresdb.utils.testResults(
             aResult, allTablesData[tableName].length, "INSERT"
          );
+    });
+};
+
+fluid.tests.postgresdb.utils.finish = function (pgOps) {
+    return pgOps.end().then(() => {
+        console.log("Postgres operations done");
     });
 };

@@ -10,41 +10,58 @@
 "use strict";
 
 var fluid = require("infusion"),
-    jqUnit = require("node-jqunit");
-require("../js/index.js");
+    jqUnit = require("node-jqunit"),
+    postgresdb = require("../js/index.js");
+
+require("./testUtilities.js");
 
 jqUnit.module("PostgresDB request unit tests.");
 
 fluid.registerNamespace("fluid.tests.postgresdb");
 
 fluid.defaults("fluid.tests.postgresdb.request", {
-    gradeNames: ["fluid.postgresdb.request"],
-    database: "prefs_testdb",
-    host: process.env.PGPHOST || "localhost",
-    port: process.env.PGPORT || 5432,
-    user: process.env.PGUSER || "admin",
-    password: process.env.POSTGRES_PASSWORD || "asecretpassword",
+    gradeNames: ["fluid.component"],
+    members: {
+        postgresdb: new postgresdb.PostgresRequest(fluid.tests.postgresdb.databaseConfig),
+    },
     invokers: {
         "checkAllDatabases": {
             funcName: "fluid.tests.postgresdb.request.checkAllDatabases",
+            args: ["{that}"]
+        },
+        "checkNoSuchDatabase": {
+            funcName: "fluid.tests.postgresdb.request.checkNoSuchDatabase",
             args: ["{that}"]
         }
     }
 });
 
-/*
- * Query postgresdb for all of the databases it contains.
+/**
+ * Check postgresdb for all of the databases it contains.
  *
  * @param {Object} that - Test request instance.
- * @param {Object} that.pool - Node-postgres object used for querie.
- * @return {Promise} Results returned by the query.
+ * @return {Promise} Results returned by the request.
  */
 fluid.tests.postgresdb.request.checkAllDatabases = function (that) {
-    var queryResult = that.query("SELECT datname FROM pg_database");
-    queryResult.then(null, function (error) {
+    var result = that.postgresdb.runSql("SELECT datname FROM pg_database");
+    result.then(null, function (error) {
         fluid.log(JSON.stringify(error.message));
     });
-    return queryResult;
+    return result;
+};
+
+/**
+ * Check postgresdb for a non-existent database.
+ *
+ * @param {Object} that - Test request instance.
+ * @return {Promise} Results returned by the request.
+ */
+fluid.tests.postgresdb.request.checkNoSuchDatabase = function (that) {
+    var result = that.postgresdb.runSql("SELECT datname FROM no_such_databasez");
+    result.then(null, function (error) {
+        fluid.log(JSON.stringify(error.message));
+    });
+    return result;
 };
 
 fluid.defaults("fluid.tests.postgresdb.request.environment", {
@@ -62,26 +79,30 @@ fluid.defaults("fluid.tests.postgresdb.request.environment", {
 fluid.defaults("fluid.tests.postgresdb.request.testCaseHolder", {
     gradeNames: ["fluid.test.testCaseHolder"],
     modules: [{
-        name: "Database request test case",
+        name: "Database request test cases",
         tests: [{
             name: "Check initialization and connection",
             sequence: [{
                 funcName: "fluid.tests.postgresdb.request.testInit",
-                args: ["{databaseRequest}"]
+                args: ["{databaseRequest}.postgresdb"]
             }, {
                 task: "{databaseRequest}.checkAllDatabases",
-                resolve: "fluid.tests.postgresdb.request.testQueryResults",
+                resolve: "fluid.tests.postgresdb.request.testResults",
                 resolveArgs: ["{arguments}.0", "{databaseRequest}"]
                               // query results
             }, {
-                task: "{databaseRequest}.query",
-                args: ["SELECT datname FROM no_such_databasez"],
+                task: "{databaseRequest}.checkNoSuchDatabase",
                 reject: "jqUnit.assertEquals",
                 rejectArgs: [
                     "Check error message",
                     "{arguments}.0.message", // query result
                     "relation \"no_such_databasez\" does not exist"
                 ]
+            }, {
+                // No result; either resolves or fails.
+                task: "fluid.tests.postgresdb.utils.finish",
+                args: ["{databaseRequest}.postgresdb"],
+                resolve: "fluid.identity",
             }]
         }]
     }]
@@ -92,7 +113,7 @@ fluid.tests.postgresdb.request.testInit = function (databaseRequest) {
     jqUnit.assertNotNull(databaseRequest.pool, "Check database connection is non-null");
 };
 
-fluid.tests.postgresdb.request.testQueryResults = function (results, databaseRequest) {
+fluid.tests.postgresdb.request.testResults = function (results, databaseRequest) {
     jqUnit.assertNotNull("Check for null query result", results);
     jqUnit.assertNotEquals("Check for empty query result", results.rowCount, 0);
 

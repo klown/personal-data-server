@@ -1,62 +1,59 @@
-# Postgres Database Components and API
+# Postgres Database Objects and API
 
-Accessing the database involves setting up Postgres tables according to a table
-definition, and adding, retrieving, and modifying the data within those tables.
-A fluid component has been defined for performing these operations using
-JavaScript.
+Accessing the database involves setting up postgres tables according to table
+definitions, and adding, retrieving, and modifying the data within those tables.
+A JavaScript class has been defined for performing these operations.
 
 The implementation is a combination of [PostgreSQL](https://www.postgresql.org/),
-[node-postgres](https://node-postgres.com/), and code to handle SQL and JSON.
-Requests made to the database that manipulate the tables and their contents are
-given in the form of PostgreSQL strings.  Responses from the database are JSON.
-
-Most of the functions return a `Promise`.  The operations described here use
-only `then()`, `resolve()`, and `reject()` functions, allowing the use of
-[Infusion's promise API](https://docs.fluidproject.org/infusion/development/promisesapi).
+[node-postgres](https://node-postgres.com/), [node-pg-format](https://github.com/datalanche/node-pg-format)
+and code to handle SQL and JSON.  Requests made to the database that manipulate
+the tables and their contents are given in the form of PostgreSQL strings.
+Responses from the database are JSON.
 
 ## APIs
 
-The library consists of a single fluid component that establishes a
+The library consists of a single JavaScript class that establishes a
 connection to the data base (host, port, etc.) and provides an interface to
-make PostgresSQL queries
+execute PostgresSQL commands.
 
-### `fluid.postgresdb.request`
+### `class PostgresRequest`
 
-The request component is for initializing the connection with the database and
-provides a means to make queries of it.
+The request for initializing the connection with the database and provides
+a way to run SQL statements.  It extends the node-postgres [`Pool`](https://node-postgres.com/api/pool)
+class; in particular, it inherits the `query()` method that is used to execute
+SQL statements.
 
-#### Component options
+#### Configuration
 
-These options are all set to `null` in the base grade.  Integrators need to set
-these as appropriate to their situation.
+The following options are set by passing a `config` object to `PostgresRequest`'s
+constructor.  Integrators need to define these as appropriate to their
+situation.
 
-| Option            | Type       | Description | Default |
-| ----------------- | ---------- | ----------- | ------- |
-| `databaseName`    | String     | Required. Name of the database containing the tables, e.g., `"fluid_prefsdb"` | `null` |
-| `host`            | String     | Required. The host for the requests, e.g., `"localhost"` | `null` |
-| `port`            | Integer    | Required. The port for the requests, e.g., `5432` | `null` |
-| `user`            | String     | Required. User administrator's name, e.g., `"admin"`| `null` |
-| `password`        | String     | Required for secure implementations. User administrator's password | `null` |
-
-#### Component members
-
-| Member            | Type       | Description |
+| Option            | Type       | Description |
 | ----------------- | ---------- | ----------- |
-| `pool`            | Object     | Access to the node-postgres instance.
+| `databaseName`    | String     | Required. Name of the database containing the tables, e.g., `"fluid_prefsdb"` |
+| `host`            | String     | Required. The host for the requests, e.g., `"localhost"` |
+| `port`            | Integer    | Required. The port for the requests, e.g., `5432` |
+| `user`            | String     | Required. User administrator's name, e.g., `"admin"`|
+| `password`        | String     | Required for secure implementations. User administrator's password |
 
-When initialized, the request component allocates a node-postgress [`Pool`](https://node-postgres.com/api/pool)
-and uses it to establish the connection to the database as per the request's
-options.  It is then ready for database queries.
 
 #### Operations API
 
-##### `query(queryString)` (Invoker)
+##### `constructor(configuration)`
 
-- `queryString {String}` SQL query string.
-- Returns: `{Promise}` whose value is the result(s) of the query.
+- `configuration {Object}` The database name, host, port, etc. -- see
+["Configuration"](#Configuration) above.
 
-The `queryString` can be a single SQL query, or a set of them.  An example of
-the former is:
+##### `async runSql(sql)`
+
+- `sql {String}` The SQL command(s) to run.
+- Returns: `{Promise}` whose value is the result(s) of running the SQL
+statement(s) in `sql`.
+
+A wrapper around the inherited `query()` method, that adds an error handler
+for logging errors.  The `sql` parameter can be a single SQL command or a
+semi-colon separated list of commands.  An example of the former is:
 
 ``` .sql
 SELECT * FROM users WHERE "userId" = 'carla';
@@ -90,65 +87,35 @@ INSERT INTO "prefsSafes" ("prefsSafesId", "safeType", name, password, email)
 
 ```
 
-In both cases, the query is a single `String`.
+In both cases, the argument is a single `String`.
 
-The returned `Promise` is configured with a rejection handler that logs any
-error.
+The returned `Promise` is configured with an error handler that logs any error.
 
-##### `bulkQuery(queryArray)` (Invoker)
+##### `async runSqlArray(sqlArray)`
 
-- `queryArray {Array}` An array of SQL statements.
-- Returns: `{Promise}` A promise whose values are the results of running the
-sequence of commands in the `queryArray`.
+- `sqlArray {Array}` An array of SQL statements.
+- Returns: `{Promise}` A promise whose value array contains the results of
+each SQL statement in the sequence of commands in the `sqlArray`.
 
-Loop to execute the input array as a `fluid.promise.sequence()`.  The returned
-`Promise` is configured with a rejection handler that logs any error.
+A utility to run an array of SQL statements.
 
 While there is no constraint on the order of the SQL statements in the input
 array, this function can be used to define a logical sequence of database
-queries, where the order of the queries is defined by their position in the
+requests, where the order of the commands is defined by their position in the
 array.
 
-##### `loadFromJSON(tableName, records)` (Invoker)
+##### `async loadFromJSON(tableName, jsonArray)`
 
 - `tableName {String}` The name of the table to load with the given records.
 - `jsonArray {Array}` An array of JSON objects containing the data to load into
 the given table.
-- Returns: `{Promise}` whose values is an array of successful INSERT results.
+- Returns: `{Promise}` whose values is an array of successful INSERT results, or
+an error message.
 
 Bulk load the given records into the given table.  The records' JSON field
 names must match the column names of the table, and the values of each field
 contain the value to store in the corresponding column.  For columns that are
 required and have no default value set, the JSON field must exist and its value
-be of the correct type and format for the column.  For table columns that are
-not required, or have a default value, the corresponding JSON field can be
-missing.
-
-##### `fluid.postgresdb.stringifyJoinKeys(keys)` (Function)
-
-- `keys {Array}` An array of strings as given by `Object.keys()`.
-- Returns: A comma-separated string of the keys, each quoted with double quotes.
-
-Utility to stringify each element of an array of object keys and join them
-as a single string separated by commas.  This is similar to the `Array.join()`
-function, but where each element is quoted with double quotes.
-
-##### `fluid.postgresdb.stringifyJoinValues(values)` (Function)
-
-- `values {Array}` Array of object values as given by `Object.values()`.
-- Returns: A comma-separated string of the values each quoted with single
-quotes.
-
-Utility to stringify each element of an array of object values and join them
-as a single string separated by commas.  This is similar to the `Array.join()`
-function, but where each element is quoted with a single quote.  Also, if
-a value is an object, it is stringified as well as quoted.
-
-##### `fluid.postgresdb.maybeStringify(aValue)` (Function)
-
-- `aValue {Any}` The value to possibly stringify.
-- Returns `{Any|String}` - The value as is, or stringified.
-
-The input value is checked via `fluid.isPrimitive()`, and if so, it is
-returned as is.  Otherwise the result of `JSON.stringify()` is returned. If
-the argument is an array, the square brackets are replaced with curly brackets.
+be of the correct type and match the range of values for that column.  For
+table columns that are not required, or have a default value, the corresponding
+JSON field can be missing.

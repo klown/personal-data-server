@@ -1,10 +1,9 @@
-# fluid-postgres
+# PostgreSQL Database Access
 
 The purpose of this module is to provide a set of common operations for
-persistent storage of data, using a Postgres database.  The database is
-implemented using [postgresdb](https://www.postgresql.org//) with
-[node-postgres](https://node-postgres.com/).  Documentation of the fluid
-components is available in the `docs` folder.
+persistent storage of data, using a PostgreSQL database.  Database operations
+are implemented using [postgresdb](https://www.postgresql.org//) with
+[node-postgres](https://node-postgres.com/).
 
 ## Getting started
 
@@ -23,9 +22,13 @@ docker image and launch it with the following configuration:
 
 ## Start Up
 
-Use the provided script to start up the a container running PostGres and
-initialize an empty `fluid_prefsdb` database.  The script uses the configuration
-described above, but the values can be overridden by setting up the appropriate
+WARNING:  The script described below uses Docker to start a container based on
+the Postgres docker image, and it will download the image if it is not on the
+system. The Docker image is about 160 MB.
+
+Use the provided script to start up a container running PostGres and initialize
+an empty `fluid_prefsdb` database.  The script uses the configuration described
+above, but the values can be overridden by setting up the appropriate
 environment variables (see below for an example).  The script is in the
 `scripts` folder and is run as follows:
 
@@ -42,7 +45,8 @@ export PGPORT=5433; startDockerPostgres.sh
 
 ## Shut Down
 
-When you wish to shut down the cluster, use the `stop` script:
+When you wish to shut down the database and its container, use the `stop`
+script:
 
 ```console
 stopDockerPostgres.sh

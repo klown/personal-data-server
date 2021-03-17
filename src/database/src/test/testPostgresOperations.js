@@ -13,9 +13,9 @@
 "use strict";
 
 var fluid = require("infusion"),
-    jqUnit = require("node-jqunit");
+    jqUnit = require("node-jqunit"),
+    postgresdb = require("../js/index.js");
 
-require("../js/index.js");
 require("./testUtilities.js");
 
 // Tables structures and test data records
@@ -49,13 +49,7 @@ fluid.tests.postgresdb.anotherUserToInsertJSON =  {
 };
 
 fluid.defaults("fluid.tests.postgresdb.operations", {
-    gradeNames: ["fluid.postgresdb.request"],
-
-    database: process.env.PGDATABASE || "prefs_testdb",
-    host: process.env.PGHOST || "localhost",
-    port: process.env.PGPORT || 5432,
-    user: process.env.POSTGRES_USER || "admin",
-    password: process.env.POSTGRES_PASSWORD || "asecretpassword",
+    gradeNames: ["fluid.component"],
 
     userToInsert: fluid.tests.postgresdb.anotherUserToInsert,
     userToInsertJSON: fluid.tests.postgresdb.anotherUserToInsertJSON,
@@ -83,6 +77,7 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
          { userId: "some.new.id", verified: false, email: "carla@globalhost" }
     ),
     members: {
+        postgresOps: new postgresdb.PostgresRequest(fluid.tests.postgresdb.databaseConfig),
         tableData: fluid.tests.postgresdb.testTableData,
         // Single record data from the tableData member, set onCreate()
         rgbChartreuse: null,
@@ -92,20 +87,20 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
             funcName: "fluid.tests.postgresdb.operations.findChartreuse",
             args: ["{that}"]
         }
-    },
-    components: {
-        request: {
-            type: "fluid.postgresdb.request",
-            options: {
-                database: process.env.PGDATABASE || "prefs_testdb",
-                host: "localhost",
-                port: process.env.PGPORT || 5432,
-                user: process.env.POSTGRES_USER || "admin",
-                password: process.env.POSTGRES_PASSWORD || "asecretpassword",
-            }
-        }
     }
 });
+
+/**
+ * Load one table from an arry of JSON inputs.
+ *
+ * @param {Object} pgOps - PostgresRequset instance.
+ * @param {Sting} tableName - Name of table to load with the incoming records.
+ * @param {Array} dataToLoad - Array of JSON object containing the data to load.
+ * @return {Promise} Result of loading the records.
+ */
+fluid.tests.postgresdb.operations.loadOneTableFromJSON = function (pgOps, tableName, dataToLoad) {
+    return pgOps.loadFromJSON(tableName, dataToLoad);
+};
 
 /**
  * Provide quick access to the `chartreuse` test data.
@@ -123,20 +118,20 @@ fluid.tests.postgresdb.operations.findChartreuse = function (that) {
 };
 
 /**
- * Load the test table data into all of test tables
+ * Load test data supplied for all of the test tables into those tables
  *
- * @param {Component} postGresOps - Postgres test request object.
- * @param {Object} tableData - Where all of the table data is held.
+ * @param {Object} pgOps - PostgresRequset instance.
+ * @param {Object} tableData - Where all of the input data is held.
  * @return (Promise) - results of the requests to load the test data.
  */
-fluid.tests.postgresdb.operations.bulkLoad = function (pgTestRequest, tableData) {
+fluid.tests.postgresdb.operations.loadJSON = function (pgTestOps, tableData) {
     var loadSequence = [];
     fluid.each(fluid.tests.postgresdb.tableNames, function (aTableName) {
         loadSequence.push(
-            pgTestRequest.loadFromJSON(aTableName, tableData[aTableName])
+            pgTestOps.loadFromJSON(aTableName, tableData[aTableName])
         );
     });
-    return fluid.promise.sequence(loadSequence);
+    return Promise.all(loadSequence);
 };
 
 fluid.defaults("fluid.tests.postgresdb.operations.environment", {
@@ -162,51 +157,78 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 args: ["{pgTestOps}"]
             },
             // In the following, the first argument to the 'resolveArgs' or
-            // 'rejectArgs' is a Promise -- the result of a query or queries.
+            // 'rejectArgs' is a Promise -- the result of a database request.
             {
-                // First, delete any existing test tables.
-                task: "fluid.tests.postgresdb.utils.dropExistingTables",
-                args: ["{pgTestOps}", fluid.tests.postgresdb.tableNames],
-                resolve: "fluid.tests.postgresdb.utils.testQuery",
+                // Start with a clean database: drop any existing test tables.
+                task: "fluid.tests.postgresdb.utils.testSqlArray",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    fluid.tests.postgresdb.tableNames,
+                    "IF EXISTS"
+                ],
+                resolve: "fluid.tests.postgresdb.utils.testResults",
                 resolveArgs: [
                     "{arguments}.0", // DROP results
                     fluid.tests.postgresdb.tableNames.length,
                     "DROP"
                 ]
             }, {
-                task: "{pgTestOps}.query",
-                args: [fluid.tests.postgresdb.tableDefinitions],
-                resolve: "fluid.tests.postgresdb.utils.testQuery",
+                // Drop the tables again -- should reject since there are no
+                // such tables any more.
+                task: "fluid.tests.postgresdb.utils.testSqlArray",
+                args: ["{pgTestOps}.postgresOps", fluid.tests.postgresdb.tableNames],
+                reject: "fluid.tests.postgresdb.operations.testDropNonExistentTable",
+                rejectArgs: [
+                    "{arguments}.0.message",
+                    fluid.tests.postgresdb.tableNames
+                ]
+            }, {
+                // Create the test tables
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    fluid.tests.postgresdb.tableDefinitions
+                ],
+                resolve: "fluid.tests.postgresdb.utils.testResults",
                 resolveArgs: [
                     "{arguments}.0",  // CREATE results
                     fluid.tests.postgresdb.tableNames.length,
                     "CREATE"
                 ]
             }, {
-                task: "{pgTestOps}.loadFromJSON",
-                args: ["rgb", "{pgTestOps}.tableData.rgb"],
-                resolve: "fluid.tests.postgresdb.utils.testQuery",
+                // Load one test table with data
+                task: "fluid.tests.postgresdb.operations.loadOneTableFromJSON",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    "rgb",
+                    "{pgTestOps}.tableData.rgb"
+                ],
+                resolve: "fluid.tests.postgresdb.utils.testResults",
                 resolveArgs: [
                     "{arguments}.0",  // INSERT results
                     "{pgTestOps}.tableData.rgb.length",
                     "INSERT"
                 ]
             }, {
-                task: "{pgTestOps}.query",
-                args: ["DELETE FROM rgb;"],
+                // Delete all records from the rgb table loaded previously
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "DELETE FROM rgb;"],
                 resolve: "fluid.tests.postgresdb.operations.testDeleteTableData",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}", "rgb"]
                               // results has number of rows deleted
             }, {
                 // Check that rgb data is truly gone
-                task: "{pgTestOps}.query",
-                args: ["SELECT * FROM rgb;"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "SELECT * FROM rgb;"],
                 resolve: "fluid.tests.postgresdb.operations.testEmptyTable",
                 resolveArgs: ["{arguments}.0", "rgb"]
             }, {
-                // Attempt to load into a non-existent table.
-                task: "{pgTestOps}.query",
-                args: ["INSERT INTO noSuchTable (foo, bar) VALUES ('baz', 'snafu');"],
+                // Test failure of attempt to load into a non-existent table.
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    "INSERT INTO noSuchTable (foo, bar) VALUES ('baz', 'snafu');"
+                ],
                 reject: "jqUnit.assertEquals",
                 rejectArgs: [
                     "Check INSERT into non-existent table",
@@ -214,23 +236,26 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     "relation \"nosuchtable\" does not exist"
                 ]
             }, {
-                task: "fluid.tests.postgresdb.operations.bulkLoad",
-                args: ["{pgTestOps}", "{pgTestOps}.tableData"],
+                // Load all tables with data
+                task: "fluid.tests.postgresdb.operations.loadJSON",
+                args: ["{pgTestOps}.postgresOps", "{pgTestOps}.tableData"],
                 resolve: "fluid.tests.postgresdb.utils.testLoadTables",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData"]
             }, {
                 // Select from existing table
-                task: "{pgTestOps}.query",
+                task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
+                    "{pgTestOps}.postgresOps",
                     "SELECT * FROM rgb WHERE color='green';"
                 ],
                 resolve: "fluid.tests.postgresdb.operations.testSelectRows",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData.rgb"]
                               // array of rows
             }, {
-                // Select from non-existant table
-                task: "{pgTestOps}.query",
+                // Select from non-existant table -- should fail
+                task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
+                    "{pgTestOps}.postgresOps",
                     "SELECT * FROM \"noSuchTable\" WHERE color='green';"
                 ],
                 reject: "jqUnit.assertEquals",
@@ -240,17 +265,19 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     "relation \"noSuchTable\" does not exist"
                 ]
             }, {
-                // Test retrieval of a JSON value
-                task: "{pgTestOps}.query",
+                // Test retrieval of a JSONB value
+                task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
+                    "{pgTestOps}.postgresOps",
                     "SELECT \"colourMap\" FROM rgb WHERE id='chartreuse'"
                 ],
                 resolve: "fluid.tests.postgresdb.operations.testRetrieveValue",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.rgbChartreuse", "colourMap"]
             }, {
                 // Test failing case where query value (column) does not exist
-                task: "{pgTestOps}.query",
+                task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
+                    "{pgTestOps}.postgresOps",
                     "SELECT \"noSuchColumn\" FROM rgb WHERE color='chartreuse';"
                 ],
                 reject: "jqUnit.assertEquals",
@@ -261,14 +288,17 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 ]
             }, {
                 // Insert new record
-                task: "{pgTestOps}.query",
-                args: ["{pgTestOps}.options.userToInsert"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    "{pgTestOps}.options.userToInsert"
+                ],
                 resolve: "fluid.tests.postgresdb.operations.testInsertRecord",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.options.userToInsertJSON"]
             }, {
                 // Insert new record again -- should fail
-                task: "{pgTestOps}.query",
-                args: ["{pgTestOps}.options.userToInsert"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "{pgTestOps}.options.userToInsert"],
                 reject: "jqUnit.assertEquals",
                 rejectArgs: [
                     "Check second INSERT of same record",
@@ -277,20 +307,23 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 ]
             }, {
                 // Update a field with a proper identifier
-                task: "{pgTestOps}.query",
-                args: ["{pgTestOps}.options.userChanges"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "{pgTestOps}.options.userChanges"],
                 resolve: "fluid.tests.postgresdb.operations.testUpdateFields",
-                resolveArgs: ["{arguments}.0", true, "{pgTestOps}.options.userChangesExpected"]
+                resolveArgs: ["{arguments}.0", "{pgTestOps}.options.userChangesExpected"]
             }, {
                 // Update the primary key itself
-                task: "{pgTestOps}.query",
-                args: ["{pgTestOps}.options.primaryKeyChange"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "{pgTestOps}.options.primaryKeyChange"],
                 resolve: "fluid.tests.postgresdb.operations.testUpdateFields",
-                resolveArgs: ["{arguments}.0", true, "{pgTestOps}.options.primaryKeyChangeExpected"]
+                resolveArgs: ["{arguments}.0", "{pgTestOps}.options.primaryKeyChangeExpected"]
             }, {
                 // Update with non-existent primary key; should return zero results
-                task: "{pgTestOps}.query",
-                args: ["UPDATE users SET iterations=55 WHERE \"userId\"='noSuchUser';"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    "UPDATE users SET iterations=55 WHERE \"userId\"='noSuchUser';"
+                ],
                 resolve: "jqUnit.assertEquals",
                 resolveArgs: [
                     "Check UPDATE with mismatched primaryKey",
@@ -298,8 +331,9 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 ]
             }, {
                 // Test successful deletion
-                task: "{pgTestOps}.query",
+                task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
+                    "{pgTestOps}.postgresOps",
                     "DELETE FROM \"roster.preferenceset\" WHERE name='default';"
                 ],
                 resolve: "jqUnit.assertEquals",
@@ -310,25 +344,30 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
             }, {
                 // Delete all records from one table using TRUNCATE.  Note that
                 // TRUNCATE returns nothing so it either resolved or rejected.
-                // The test that follows the current TRUNCATE test checks that
-                // all the reoords are gone.
-                task: "{pgTestOps}.query",
-                args: ["TRUNCATE massive;"],
+                // The test that follows this TRUNCATE test checks that all of
+                // the reoords were deleted.
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "TRUNCATE massive;"],
                 resolve: "fluid.identity",
                 resolveArgs: []
             }, {
                 // Check that massive data is truly gone
-                task: "{pgTestOps}.query",
-                args: ["SELECT * FROM massive;"],
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: ["{pgTestOps}.postgresOps", "SELECT * FROM massive;"],
                 resolve: "fluid.tests.postgresdb.operations.testEmptyTable",
                 resolveArgs: ["{arguments}.0", "massive"]
+            }, {
+                // No result; either resolves or fails.
+                task: "fluid.tests.postgresdb.utils.finish",
+                args: ["{pgTestOps}.postgresOps"],
+                resolve: "fluid.identity",
             }]
         }]
     }]
 })
 
 fluid.tests.postgresdb.operations.testInit = function (pgTestOps) {
-    jqUnit.assertNotNull("Check operations instance is non-null", pgTestOps);
+    jqUnit.assertNotNull("Check operations instance is non-null", pgTestOps.postgresOps);
     jqUnit.assertTrue(
         "Check test data",
         pgTestOps.tableData &&
@@ -345,21 +384,17 @@ fluid.tests.postgresdb.operations.testDeleteTableData = function (result, dataBa
 };
 
 fluid.tests.postgresdb.operations.testSelectRows = function (result, expected) {
-    if (expected.length === 0) {
-        jqUnit.assertEquals("Check zero rows returned", 0, result.rowCount);
-    } else {
-        fluid.each(result.rows, function (actualRecord) {
-            fluid.each(expected, function (expectedRecord) {
-                if (expectedRecord.id === actualRecord.id) {
-                    var expectedFields = Object.keys(expectedRecord);
-                    fluid.tests.postgresdb.utils.checkKeyValuePairs(
-                         expectedFields, actualRecord, expectedRecord,
-                        "Check row values"
-                    );
-                }
-            });
+    fluid.each(result.rows, function (actualRecord) {
+        fluid.each(expected, function (expectedRecord) {
+            if (expectedRecord.id === actualRecord.id) {
+                var expectedFields = Object.keys(expectedRecord);
+                fluid.tests.postgresdb.utils.checkKeyValuePairs(
+                     expectedFields, actualRecord, expectedRecord,
+                    "Check row values"
+                );
+            }
         });
-    }
+    });
 };
 
 fluid.tests.postgresdb.operations.testRetrieveValue = function (results, expected, expectedKey) {
@@ -388,22 +423,20 @@ fluid.tests.postgresdb.operations.testInsertRecord = function (results, expected
     );
 };
 
-fluid.tests.postgresdb.operations.testUpdateFields = function (results, shouldSucceed, expected) {
-    if (shouldSucceed) {
-        fluid.tests.postgresdb.utils.checkKeyValuePairs(
-            Object.keys(expected),
-            results.rows[0],
-            expected,
-            "Check update results"
-        );
-    } else {
-        jqUnit.assertEquals("Check error message", "Missing primary key", results);
-    }
+fluid.tests.postgresdb.operations.testUpdateFields = function (results, expected) {
+    fluid.tests.postgresdb.utils.checkKeyValuePairs(
+        Object.keys(expected),
+        results.rows[0],
+        expected,
+        "Check update results"
+    );
 };
 
-fluid.tests.postgresdb.operations.testNoSuchTable = function (actualError, expectedError) {
-    jqUnit.assertDeepEq(
-        "Check access to non-existent table", expectedError, actualError
+fluid.tests.postgresdb.operations.testDropNonExistentTable = function (message, tableNames) {
+    jqUnit.assertEquals(
+        "Check DROP of non-existant table",
+        `table "${tableNames[0]}" does not exist`,
+        message,
     );
 };
 
