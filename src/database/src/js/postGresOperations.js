@@ -36,12 +36,14 @@ class PostgresRequest extends pg.Pool {
      * command or a semi-colon separated list of commands.
      *
      * @param {String} sql - The SQL command(s) to run.
+     * @param {Array} values - Optional array of values for any parameters
+     *                         in the `sql` argument.
      * @return {Promise} A promise whose value(s) is/are the result of running
      *                   the SQL statement(s) in the `sql` parameter.  A
      *                   function to log any error is attached to the promise.
      */
-    async runSql (sql) {
-        var promise = this.query(sql);
+    async runSql (sql, values) {
+        var promise = this.query(sql, values);
         promise.then(null, function (error) {
              console.error(error.message);
         });
@@ -92,7 +94,8 @@ class PostgresRequest extends pg.Pool {
         var insertions = [];
         jsonArray.forEach(function (aRecord) {
             // Special case for array values: pg-format requires them to be
-            // processed differently for INSERT vs IN; see github issue #22:
+            // processed differently for INSERT vs IN.  The solution is to use
+            // the ARRAY format string for both.  See github issue #22:
             // https://github.com/datalanche/node-pg-format/issues/22
             var jsonValues = Object.values(aRecord);
             var tableValues = [];

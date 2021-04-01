@@ -26,6 +26,19 @@ jqUnit.module("PostgresDB operations unit tests.");
 
 fluid.registerNamespace("fluid.tests.postgresdb");
 
+fluid.tests.postgresdb.parameterizedInsert = `
+    INSERT INTO rgb (id, color, "colourMap") VALUES($1, $2, $3);
+`;
+
+fluid.tests.postgresdb.valueParameters = [
+    "plum",
+    "purple",
+    {
+        "name": "purple",
+        "HSL": [306, 41, 40]
+    }
+];
+
 fluid.tests.postgresdb.anotherUserToInsert = `
     INSERT INTO users
                ("userId",                iterations, username, name,    email,             roles,      derived_key,                                salt,                               verification_code, verified)
@@ -183,7 +196,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     fluid.tests.postgresdb.tableNames
                 ]
             }, {
-                // Create the test tables
+                // Create all of the test tables
                 task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
                     "{pgTestOps}.postgresOps",
@@ -196,7 +209,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     "CREATE"
                 ]
             }, {
-                // Load one test table with data
+                // Load one test table based on JSON data
                 task: "fluid.tests.postgresdb.operations.loadOneTableFromJSON",
                 args: [
                     "{pgTestOps}.postgresOps",
@@ -242,6 +255,16 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 resolve: "fluid.tests.postgresdb.utils.testLoadTables",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.tableData"]
             }, {
+                // Add another rgb record using parameters
+                task: "fluid.tests.postgresdb.utils.runSQL",
+                args: [
+                    "{pgTestOps}.postgresOps",
+                    fluid.tests.postgresdb.parameterizedInsert,
+                    fluid.tests.postgresdb.valueParameters
+                ],
+                resolve: "fluid.tests.postgresdb.utils.testResults",
+                resolveArgs: [["{arguments}.0"], 1, "INSERT"]
+            }, {
                 // Select from existing table
                 task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
@@ -274,7 +297,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 resolve: "fluid.tests.postgresdb.operations.testRetrieveValue",
                 resolveArgs: ["{arguments}.0", "{pgTestOps}.rgbChartreuse", "colourMap"]
             }, {
-                // Test failing case where query value (column) does not exist
+                // Test failing case where column does not exist
                 task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
                     "{pgTestOps}.postgresOps",
@@ -287,7 +310,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     "column \"noSuchColumn\" does not exist"
                 ]
             }, {
-                // Insert new record
+                // Insert new user record
                 task: "fluid.tests.postgresdb.utils.runSQL",
                 args: [
                     "{pgTestOps}.postgresOps",

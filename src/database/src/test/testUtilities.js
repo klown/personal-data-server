@@ -51,10 +51,11 @@ fluid.tests.postgresdb.utils.testSqlArray = function (postgresOps, tableNames, i
  *
  * @param {Object} pgOps - Postgres operations instance.
  * @param {String} sql - SQL statement.
+ * @param {Array} values - Optional values for any parameters in `sql`.
  * @return {Promise} Result of running the statment.
  */
-fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql) {
-    return pgOps.runSql(sql);
+fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql, values) {
+    return pgOps.runSql(sql, values);
 };
 
 /**

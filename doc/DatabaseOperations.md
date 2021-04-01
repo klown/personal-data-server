@@ -45,9 +45,10 @@ situation.
 - `configuration {Object}` The database name, host, port, etc. -- see
 ["Configuration"](#Configuration) above.
 
-##### `async runSql(sql)`
+##### `async runSql(sql, values)`
 
 - `sql {String}` The SQL command(s) to run.
+- `values {Array}` Optional array of values for parameters in the `sql` argument.
 - Returns: `{Promise}` whose value is the result(s) of running the SQL
 statement(s) in `sql`.
 
@@ -88,6 +89,20 @@ INSERT INTO "prefsSafes" ("prefsSafesId", "safeType", name, password, email)
 ```
 
 In both cases, the argument is a single `String`.
+
+The method also supports parameterized statements, for example (note that the
+`colourMap` column type is `JSONB`):
+
+``` .sql
+runSql(
+    "INSERT INTO rgb (id, color, \"colourMap\") VALUES($1, $2, $3);",
+    [
+        "plum",
+        "purple",
+        { "name": "purple", "HSL": [306, 41, 40] }
+    ]
+);
+```
 
 The returned `Promise` is configured with an error handler that logs any error.
 
