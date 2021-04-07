@@ -37,7 +37,6 @@ situation.
 | `user`            | String     | Required. User administrator's name, e.g., `"admin"`|
 | `password`        | String     | Required for secure implementations. User administrator's password |
 
-
 #### Operations API
 
 ##### `constructor(configuration)`

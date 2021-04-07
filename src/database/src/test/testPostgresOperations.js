@@ -133,9 +133,9 @@ fluid.tests.postgresdb.operations.findChartreuse = function (that) {
 /**
  * Load test data supplied for all of the test tables into those tables
  *
- * @param {Object} pgOps - PostgresRequset instance.
+ * @param {Object} pgTestOps - PostgresRequset instance.
  * @param {Object} tableData - Where all of the input data is held.
- * @return (Promise) - results of the requests to load the test data.
+ * @return {Promise} - results of the requests to load the test data.
  */
 fluid.tests.postgresdb.operations.loadJSON = function (pgTestOps, tableData) {
     var loadSequence = [];
@@ -381,7 +381,7 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                 // No result; either resolves or fails.
                 task: "fluid.tests.postgresdb.utils.finish",
                 args: ["{pgTestOps}.postgresOps"],
-                resolve: "fluid.identity",
+                resolve: "fluid.identity"
             }]
         }]
     }]
@@ -410,7 +410,7 @@ fluid.tests.postgresdb.operations.testSelectRows = function (result, expected) {
             if (expectedRecord.id === actualRecord.id) {
                 var expectedFields = Object.keys(expectedRecord);
                 fluid.tests.postgresdb.utils.checkKeyValuePairs(
-                     expectedFields, actualRecord, expectedRecord,
+                    expectedFields, actualRecord, expectedRecord,
                     "Check row values"
                 );
             }
@@ -457,7 +457,7 @@ fluid.tests.postgresdb.operations.testDropNonExistentTable = function (message, 
     jqUnit.assertEquals(
         "Check DROP of non-existant table",
         `table "${tableNames[0]}" does not exist`,
-        message,
+        message
     );
 };
 

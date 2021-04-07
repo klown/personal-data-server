@@ -8,7 +8,9 @@
  * You may obtain a copy of the License at
  * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
  */
-"use strict"
+/* eslint-disable no-console */
+
+"use strict";
 
 var pg      = require("pg"),
     format  = require("pg-format");
@@ -23,9 +25,9 @@ class PostgresRequest extends pg.Pool {
      * @param {Object} configuration - The host, port, user, etc. to configure
      *                                 the Pool.
      */
-    constructor (configuration) {
+    constructor(configuration) {
         super(configuration);
-        this.on('error', (err, client) => {
+        this.on("error", (err, client) => {
             console.error("Error with client %O: %O", client, err);
         });
     };
@@ -42,15 +44,15 @@ class PostgresRequest extends pg.Pool {
      *                   the SQL statement(s) in the `sql` parameter.  A
      *                   function to log any error is attached to the promise.
      */
-    async runSql (sql, values) {
+    async runSql(sql, values) {
         var promise = this.query(sql, values);
         promise.then(null, function (error) {
-             console.error(error.message);
+            console.error(error.message);
         });
         return promise;
     };
 
-   /**
+    /**
      * Utility to run an array of SQL commands in bulk.  Examples include
      * creating or upgrading a set of tables in batch, or the bulk load of a
      * set of records.
@@ -64,7 +66,7 @@ class PostgresRequest extends pg.Pool {
      * @return {Promise} A promise whose values are the results of running the
      *                   sequence of SQL statements in the `sqlArray`.
      */
-    async runSqlArray (sqlArray) {
+    async runSqlArray(sqlArray) {
         var results = [];
         for (var i = 0; i < sqlArray.length; i++) {
             let aResult = await this.runSql(sqlArray[i]);
@@ -90,7 +92,7 @@ class PostgresRequest extends pg.Pool {
      * @return {Promise} whose value is an array of successful INSERT results,
      *                   or an error.
      */
-    async loadFromJSON (tableName, jsonArray) {
+    async loadFromJSON(tableName, jsonArray) {
         var insertions = [];
         jsonArray.forEach(function (aRecord) {
             // Special case for array values: pg-format requires them to be

@@ -22,7 +22,7 @@ fluid.registerNamespace("fluid.tests.postgresdb");
 fluid.defaults("fluid.tests.postgresdb.request", {
     gradeNames: ["fluid.component"],
     members: {
-        postgresdb: new postgresdb.PostgresRequest(fluid.tests.postgresdb.databaseConfig),
+        postgresdb: new postgresdb.PostgresRequest(fluid.tests.postgresdb.databaseConfig)
     },
     invokers: {
         "checkAllDatabases": {
@@ -88,8 +88,10 @@ fluid.defaults("fluid.tests.postgresdb.request.testCaseHolder", {
             }, {
                 task: "{databaseRequest}.checkAllDatabases",
                 resolve: "fluid.tests.postgresdb.request.testResults",
-                resolveArgs: ["{arguments}.0", "{databaseRequest}"]
-                              // query results
+                resolveArgs: [
+                    "{arguments}.0", // query results
+                    "{databaseRequest}"
+                ]
             }, {
                 task: "{databaseRequest}.checkNoSuchDatabase",
                 reject: "jqUnit.assertEquals",
@@ -102,7 +104,7 @@ fluid.defaults("fluid.tests.postgresdb.request.testCaseHolder", {
                 // No result; either resolves or fails.
                 task: "fluid.tests.postgresdb.utils.finish",
                 args: ["{databaseRequest}.postgresdb"],
-                resolve: "fluid.identity",
+                resolve: "fluid.identity"
             }]
         }]
     }]

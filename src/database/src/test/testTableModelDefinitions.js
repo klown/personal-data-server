@@ -93,7 +93,7 @@ fluid.defaults("fluid.tests.postgresdb.tableModels.testCaseHolder", {
                 // No result; either resolves or fails.
                 task: "fluid.tests.postgresdb.utils.finish",
                 args: ["{pgTestOps}.pgDataModelsOps"],
-                resolve: "fluid.identity",
+                resolve: "fluid.identity"
             }]
         }]
     }]

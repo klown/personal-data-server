@@ -31,14 +31,14 @@ fluid.tests.postgresdb.databaseConfig = {
  * from the database.  The tables are dropped in bulk.
  *
  * @param {Component} postgresOps - Postgres operations instance.
- * @param {Array} tablesNames - Array of tables to delete.
- & @param {String} ifExists - (Optional) additional IF EXISTS clause.
- * @param {Promise} The value of the drop operation.
+ * @param {Array} tableNames - Array of tables to delete.
+ * @param {String} ifExists - (Optional) additional IF EXISTS clause.
+ * @return {Promise} The value of the drop operation.
  */
 fluid.tests.postgresdb.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
     ifExists = ifExists || "";
     var dropSQL = [];
-    fluid.each(tableNames, function(aTableName, index) {
+    fluid.each(tableNames, function (aTableName) {
         dropSQL.push(
             `DROP TABLE ${ifExists} "${aTableName}" CASCADE;`
         );
@@ -122,8 +122,8 @@ fluid.tests.postgresdb.utils.testFailureCreateTable = function (error, tableName
 fluid.tests.postgresdb.utils.testLoadTables = function (results, allTablesData) {
     jqUnit.assertNotNull("Check for null result", results);
     fluid.each(results, function (aResult, index) {
-         var tableName = fluid.tests.postgresdb.tableNames[index];
-         fluid.tests.postgresdb.utils.testResults(
+        var tableName = fluid.tests.postgresdb.tableNames[index];
+        fluid.tests.postgresdb.utils.testResults(
             aResult, allTablesData[tableName].length, "INSERT"
         );
     });
@@ -131,6 +131,6 @@ fluid.tests.postgresdb.utils.testLoadTables = function (results, allTablesData) 
 
 fluid.tests.postgresdb.utils.finish = function (pgOps) {
     return pgOps.end().then(() => {
-        console.log("Postgres operations done");
+        fluid.log("Postgres operations done");
     });
 };
