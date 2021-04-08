@@ -1,142 +1,142 @@
 # Data Model
 
-This documentation describes the evolution of the data model used in the [GPII project](https://wiki.gpii.net/w/Main_Page).
-This data model was implemented using CouchDB but the plan is to migrate to Postgres.
+This documentation describes the current data model used by the Personal Data
+Service.  It is based on the data model used in the [GPII project](https://wiki.gpii.net/w/Main_Page).
+GPII's data model was implemented using CouchDB but the Personal Data Service
+will use PostgresSQL.
 
 Diagrams below are drawn using [Entity Relationship Model](https://en.wikipedia.org/wiki/Entity–relationship_model).
-Arrows are used to express cardinality where a single line indicates "one single", and the crow's foot indicates "one
-or more". For example, one `Prefs Safe` could have one or more `GPII Keys`, or in other words, one or more keys can
-reference to the same preferences safe.
+Arrows are used to express cardinality where a single line indicates
+"one single", and the crow's foot indicates "one or more". For example, a single
+`Prefs Safe` could have one or more `PrefsSafe Keys`, or in other words, one
+or more keys can reference to the same preferences safe.
 
-## Initial Data Model
+## The Data Model
 
-![Initial data model](images/dataModelnitial.png)
-
-## Final Data Model
-
-This is the final data model that was used in the production when the GPII project ended. It added 4 new fields, the
-red highlighted, in the `Client Credentials` document type to accommodate the requirement for adding NOVA college as
-a new client.
-
-![Initial data model](images/dataModelFinal.png)
-
-## Future Data Model
-
-This data model was in development when the GPII project ended. The goal was to support the user management feature
-implemented using [fluid-express-user](https://github.com/fluid-project/fluid-express-user).
+This data model was in development when the GPII project ended. The goal was to
+support the user management feature implemented using [fluid-express-user](https://github.com/fluid-project/fluid-express-user).
 
 ![Data model supporting user management](images/dataModelWithUserManagement.png)
 
 ## Table Descriptions
 
-### GPII Keys
-
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The value of the key written onto key tokens. | None |
-| type | String | Required | The document type for storing GPII keys. | The value must be "gpiiKey". |
-| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
-| prefsSafeId | String | Optional | The ID of the preferences safe that the GPII key connects with. Set to null if the GPII key does not have a preferences safe connected. | null |
-| prefsSetId | String | Optional | The key of the preferences set in a preferences safe that the GPII key points to. The identifier matches a key within the `contexts` block of a preference set. For example, the default prefsSetId is a fixed name "gpii-default". | null |
-| revoked | Boolean | Required | Whether this GPII key has been revoked. | false |
-| revokedReason | String | Optional | The revoked reason. | null |
-| timestampCreated | Date | Required | The timestamp when the token is created. | now() |
-| timestampUpdated | Date | Optional | The timestamp when the token is updated. | null |
-| timestampRevoked | Date | Optional | The timestamp when the token is revoked. | null |
-
 ### Prefs Safes
 
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The ID of the preferences safe. | None |
-| type | String | Required | The document type for storing preferences safes. | The value must be "prefsSafe". |
-| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
-| prefsSafeType | enum of ["snapset", "user"] | Required | Indicates whether this preferences safe is allowed to be modified: the ones with "snapset" type are unmodifiable while the ones with "user" type are modifiable. | "user" |
-| name | String | Optional | The user defined name for the corresponding preferences safe. A pair of “preference-safe-name and password” can potentially be used as a key. | null |
-| password | String | Optional | The user defined password for this preferences safe. A “preference-safe-name and password” pair can potentially be used as a key. In the future data model, this field is moved to the "Users" document that holds login information for the user management. | null |
-| email | String | Optional | The user email. | null |
-| preferences | Object | Required | The user preferences. Refer to the "More Document Field Examples and Explanations" section for an example of this field. | null |
-| timestampCreated | Date | Required | The timestamp when the token is created. | now() |
-| timestampUpdated | Date | Optional | The timestamp when the token is updated. | null |
+- QUESTIONS:
+  - Is the `password` field needed, or is the one in the associated `User` record
+    sufficient (`User.derived_key`)?  Is the `password` field "optional", and used
+   only for the `PrefsSafesKey` access?
+  - Similarly, are the `name` and `email` needed?  They are also built into
+    `User`s.  Again, only needed for `PrefsSafesKey` access?
 
-### Client Credentials
-
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The ID of the client credential. | None |
-| type | String | Required | The document type for storing client credentials. | The value must be "clientCredential". |
-| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
-| clientId | String | Required | The client id that this client credential belongs to. | None |
-| oauth2ClientId | String | Required | The unique identifier issued to a registered OAuth2 client by the authorization server. | None |
-| oauth2ClientSecret | String | Required | Confidential shared secret between the client and the authorization server, used to verify the identity of the client. | None |
-| revoked | Boolean | Required | Whether this client credential has been revoked. | false |
-| revokedReason | String | Optional | The revoked reason. | null |
-| timestampCreated | Date | Required | The timestamp when the token is created. | now() |
-| timestampUpdated | Date | Optional | The timestamp when the token is updated. | null |
-| timestampRevoked | Date | Optional | The timestamp when the token is revoked. | null |
-
-### GPII App Installation Clients
-
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The ID of the GPII app installation client. | None |
-| type | String | Required | The document type for storing GPII app installation clients. | The value must be "gpiiAppInstallationClient". |
-| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
-| name | String | Required | The user provided client name.| None |
-| userId or gpiiKey | String | Optional | The id of the user or the GPII key who creates this client. The intention of this field is to identify the person who manages this client. It's still in question whether this field should record userId or gpiiKey. | null |
-| computerType | enum of ["public", "private", "shared by trusted parties"] | Required | Identify the type of the computer where this GPII app is installed. | None |
-| timestampCreated | Date | Required | The timestamp when the token is created. | now() |
-| timestampUpdated | Date | Optional | The timestamp when the token is updated. | null |
-
-### GPII App Installation Authorizations
-
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The ID of the authorization record. | None |
-| type | String | Required | The document type for storing GPII app installation authorizations. | The value must be "gpiiAppInstallationAuthorization". |
-| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
-| clientId | String | Required | The client id that this authorization is assigned to. | None |
-| gpiiKey | String | Required | The GPII key whose associated user preferences that this authorization is authorized to access. | None |
-| clientCredentialId | String | Required | The client credential id that is used to request this authorization. | None |
-| accessToken | String | Required | The access token used to retrieved the protected user preferences. | None |
-| revoked | Boolean | Required | Whether this authorization has been revoked. | false |
-| revokedReason | String | Optional | The revoked reason. | null |
-| timestampCreated | Date | Required | The timestamp when the token is created. | now() |
-| timestampRevoked | Date | Optional | The timestamp when the token is revoked. | null |
-| timestampExpires | Date | Required | The timestamp when this authorization expires. | None |
-
-### GPII Cloud Safe Credentials
-
-This document only exists in the future data model. It contains the mapping data that shows which user login can access which preferences safe.
-
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The ID of the safe credential record. | None |
-| type | String | Required | The document type for storing GPII cloud safe credentials. | The value must be "gpiiCloudSafeCredentials". |
-| schemaVersion | String | Required | The version of the schema that the current document structure corresponds with. | None |
-| prefsSafeId | String | Required | The ID of the preferences safe that is allowed to be accessed by the corresponding user login. | None |
-| gpiiExpressUserId | String | Required | The user ID that is authorized to access the corresponding preferences safe. | None |
+| Name             | Type                        | Required? | Default | Description |
+| ---              | ---                         | ---       |  ---    | ---         |
+| prefsSafesId     | String                      | Required  | None    | Unique ID of this preferences safe. |
+| safeType         | enum of ["snapset", "user"] | Required  | "user"  | Indicates whether this preferences safe is allowed to be modified: the ones with "snapset" type are unmodifiable while the ones with "user" type are modifiable. |
+| name             | String                      | Optional  | null    | The user defined name for the corresponding preferences safe. A pair of “preference-safe-name and password” can potentially be used as a key. |
+| password         | String                      | Optional  | null    | The user defined password for this preferences safe. A “preference-safe-name and password” pair can potentially be used as a key. In the future data model, this field is moved to the "Users" document that holds login information for the user management. |
+| email            | String                      | Optional  | null    | The user email. |
+| preferences      | Object                      | Required  | null    | The user preferences. Refer to the "More Document Field Examples and Explanations" section for an example of this field. |
+| timestampCreated | Date                        | Required  | now()   | The timestamp when the token is created. |
+| timestampUpdated | Date                        | Optional  | null    | The timestamp when the token is updated. |
 
 ### Users
 
-This document only exists in the future data model. It contains all user login information.
+Table of Records that contains information about users.
 
-| Name | Type | Required or Optional | Description | Default |
-| --- | --- | --- | --- | --- |
-| id | String | Required | The ID of the user record. | None |
-| type | String | Required | The document type for storing users. | The value must be "user". |
-| name | String | Required | The name of the user. | None |
-| username | String | Required | The user name for login. | None |
-| derived_key | String | Required | The encrypted version of the password for login. | None |
-| verification_code | String | Required | The code sent to a user for verifying the email address. | None |
-| salt | String | Required | The securely-generated random bytes that are supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) when producing the derived key. | None |
-| iterations | String | Required | The count of iterations that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. | None |
-| email | String | Required | The email provided by the user when signing up a new account. | None |
-| roles | Array | Required | The user roles. Each user can have more than one role. For now, [fluid-express-user](https://github.com/fluid-project/fluid-express-user) only supports the role of "user". | None |
-| verified | Boolean | Required | Whether the user has verified their email address. | false |
+| Name              | Type    | Required? | Default | Description |
+| ---               | ---     | ---       | ---     | ---         |
+| userId            | String  | Required  | None    | The ID of the user record; references a user's Cloud Safe Credentials. |
+| name              | String  | Required  | None    | The name of the user. |
+| username          | String  | Required  | None    | The user name for login. |
+| derived_key       | String  | Required  | None    | The encrypted version of the password for login. |
+| verification_code | String  | Required  | None    | The code sent to a user for verifying the email address. |
+| salt              | String  | Required  | None    | The securely-generated random bytes that are supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) when producing the derived key. |
+| iterations        | String  | Required  | None    | The count of iterations that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. |
+| email             | String  | Required  | None    | The email provided by the user when signing up a new account. |
+| roles             | Array   | Required  | None    | The user roles. Each user can have more than one role. For now, [fluid-express-user](https://github.com/fluid-project/fluid-express-user) only supports the role of "user". |
+| verified          | Boolean | Required  | false   | Whether the user has verified their email address. |
 
 Refer to [fluid-express-user](https://github.com/fluid-project/fluid-express-user/blob/master/tests/data/users.json) for
 samples of user records in the most up-to-date document structure.
+
+### Cloud Safe Credentials
+
+- QUESTIONS:
+  - Should this have a reference to an App Installation Authorization (access
+    token) to support SSO?
+
+This table contains information to associate users with their preferences safes
+
+| Name               | Type    | Required? | Default | Description |
+| ---                | ---     | ---       | ---     | ---         |
+| id                 | String  | Required  | None    | The ID of these cloud safe credentials. |
+| prefsSafeId        | String  | Required  | None    | The ID of the preferences safe that is allowed to be accessed by the corresponding user login. |
+| userId             | String  | Required  | None    | The user ID that is authorized to access the corresponding preferences safe. |
+| timestampCreated   | Date    | Required  | now()   | The timestamp when these credentials were created. |
+| timestampUpdated   | Date    | Optional  | null    | The timestamp when these credentials were updated. |
+| timestampRevoked   | Date    | Optional  | null    | The timestamp when these credentials were revoked. |
+
+### Client Credentials
+
+| Name               | Type    | Required? | Default | Description |
+| ---                | ---     | ---       | ---     | ---         |
+| id                 | String  | Required  | None    | The ID of theses client credentials. |
+| clientId           | String  | Required  | None    | The App Installation Client that these credentials are for. |
+| oauth2ClientId     | String  | Required  | None    | The unique identifier issued to a registered OAuth2 client by the authorization server. |
+| oauth2ClientSecret | String  | Required  | None    | Confidential shared secret between the OAuth2 client and the authorization server, used to verify the identity of the OAuth2 client. |
+| revoked            | Boolean | Required  | false   | Whether thes client credentials have been revoked. |
+| revokedReason      | String  | Optional  | null    | The revoked reason. |
+| timestampCreated   | Date    | Required  | now()   | The timestamp when these credentials were created. |
+| timestampUpdated   | Date    | Optional  | null    | The timestamp when these credentials were updated. |
+| timestampRevoked   | Date    | Optional  | null    | The timestamp when these credentials were revoked. |
+
+### App Installation Clients
+
+- QUESTIONS:
+  - Do we want to support `userId or prefsSafesKey`?  Keep for future expansion?
+  - Should this be combined with the Cloud Safe Credentials?
+
+| Name                    | Type                                                       | Required? | Default | Description |
+| ---                     | ---                                                        | ---       | ---     | ---         |
+| clientId                | String                                                     | Required  | None    | The ID of this App Installation client. |
+| name                    | String                                                     | Required  | None    | The user provided client name. |
+| userId or prefsSafesKey | String                                                     | Optional  | null    | The ID of the `User` or the `PrefsSafes` associated with this client. The intention of this field is to identify the person who manages this client. It's still in question whether this field should record userId or prefsSafeSKey. |
+| computerType            | enum of ["public", "private", "shared by trusted parties"] | Required  | None    | Type of computer where this app is installed. |
+| timestampCreated        | Date                                                       | Required  | now()   | The timestamp when the token is created. |
+| timestampUpdated        | Date                                                       | Optional  | null    | The timestamp when the token is updated. |
+
+### App Installation Authorizations
+
+| Name               | Type    | Required? | Default | Description |
+| ---                | ---     | ---       | ---     | ---         |
+| tokenId            | String  | Required  | None    | The ID of this authorization token record. |
+| clientId           | String  | Required  | None    | The ID of the associated App Installation Client. |
+| prefsSafesKey      | String  | Required  | None    | The PrefsSafe key whose access is authorized by this App Installation. |
+| clientCredentialId | String  | Required  | None    | The client credential id that is used to request this authorization. |
+| accessToken        | String  | Required  | None    | The access token used to retrieve the protected user preferences. |
+| revoked            | Boolean | Required  | false   | Whether this authorization has been revoked. |
+| revokedReason      | String  | Optional  | null    | The revoked reason. |
+| timestampCreated   | Date    | Required  | now()   | The timestamp when the authorization is created. |
+| timestampRevoked   | Date    | Optional  | null    | The timestamp when the authorization is revoked. |
+| timestampExpires   | Date    | Required  | None    | The timestamp when this authorization expires. |
+
+### PrefsSafes Keys
+
+- QUESTIONS:
+  - Do we want to support this?  If not, how are the related tables affect?
+  - Related tables
+
+| Name             | Type   | Required? | Default | Description                                  |
+| ---              | ---    | ---       | ---     | ---                                          |
+| keyId            | String | Required  | None    | The ID of this key, written onto key tokens. |
+| prefsSafeId      | String | Optional  | null    | The ID of the preferences safe that this key connects with. Set to null if the key does not have a preferences safe connected. |
+| prefsSetId       | String | Optional  | null    | The key of the preferences set in a preferences safe that this key points to. The identifier matches a key within the `prefsSets` block of a preference set. For example, the default prefsSetId is a fixed name "default". |
+| revoked          | Boolean| Required  | false   | Whether this key has been revoked.           |
+| revokedReason    | String | Optional  | null    | The revoked reason.                          |
+| timestampCreated | Date   | Required  | now()   | The timestamp when the token is created.     |
+| timestampUpdated | Date   | Optional  | null    | The timestamp when the token is updated.     |
+| timestampRevoked | Date   | Optional  | null    | The timestamp when the token is revoked.     |
 
 ## Field Examples and Explanations
 
@@ -144,87 +144,70 @@ samples of user records in the most up-to-date document structure.
 
 Object. Required.
 
-* Each preferences set in a preferences safe is keyed by an internally generated id. The default preferences set is keyed by a fixed string "gpii-default".
-* Each preferences set contains a field called "name" that is to save the user defined name for this preferences set.
+- Each preferences set in a preferences safe is keyed by an internally generated
+  id. The default preferences set is keyed by a fixed string "default".
+- Each preferences set contains a field called "name" that is to save the user
+  defined name for this preferences set.
 
 Example:
 
-```
+``` .json
 {
-    "flat": {
-        "contexts": {
-            "gpii-default": {
-                "name": "Default preferences",   // user defined name
-                "preferences": {
-                    "http://registry.gpii.net/common/highContrastEnabled": true,
-                    "http://registry.gpii.net/common/highContrastTheme": "white-black",
-                    "http://registry.gpii.net/common/cursorSize": 0.5
-                },
-                "metadata": [
-                    {
-                        "type": "required",
-                        "scope": [
-                            "http://registry.gpii.net/common/screenReaderTTSEnabled"
-                        ],
-                        "value": 1024
-                    },
-                    {
-                        "type": "priority",
-                        "scope": [
-                            "http://registry.gpii.net/applications/com.freedomScientific.jaws"
-                        ],
-                        "value": 1024
-                    }
-                ]
+    "prefsSets": {
+        "default": {
+            "name": "Default preferences",   // user defined name
+            "preferences": {
+                "http://registry.gpii.net/common/highContrastEnabled": true,
+                "http://registry.gpii.net/common/highContrastTheme": "white-black",
+                "http://registry.gpii.net/common/cursorSize": 0.5
             },
-            "internalID-1": {
-                "name": "subway",   // user defined name
-                "preferences": {
-                    "http://registry.gpii.net/common/highContrastEnabled": true,
-                    "http://registry.gpii.net/common/highContrastTheme": "white-black",
-                    "http://registry.gpii.net/common/cursorSize": 0.5
+            "metadata": [
+                {
+                    "type": "required",
+                    "scope": [
+                        "http://registry.gpii.net/common/screenReaderTTSEnabled"
+                    ],
+                    "value": 1024
                 },
-                "metadata": [
-                    {
-                        "type": "required",
-                        "scope": [
-                            "http://registry.gpii.net/common/screenReaderTTSEnabled"
-                        ],
-                        "value": 1024
-                    },
-                    {
-                        "type": "priority",
-                        "scope": [
-                            "http://registry.gpii.net/applications/com.freedomScientific.jaws"
-                        ],
-                        "value": 1024
-                    }
-                ],
-                "conditions": [
-                    {
-                        "type": "http://registry.gpii.net/conditions/inRange",
-                        "min": 400,
-                        "inputPath": "http://registry\\.gpii\\.net/common/environment/illuminance"
-                    }
-                ]
-            }
-        }
-    }
-    "ISO24751": {
-        "contexts": {
-            "gpii-default": {
-                "name": "Default preferences",
-                "preferences": {
-                    "display": {
-                        "screenEnhancement": {
-                            "fontSize": 24
-                        }
-                    },
-                    "control": {
-                        "onscreenKeyboard": true
-                    }
+                {
+                    "type": "priority",
+                    "scope": [
+                        "http://registry.gpii.net/applications/com.freedomScientific.jaws"
+                    ],
+                    "value": 1024
                 }
-            }
+            ]
+        },
+        "internalID-1": {
+            "name": "subway",   // user defined name
+            "preferences": {
+                "http://registry.gpii.net/common/highContrastEnabled": true,
+                "http://registry.gpii.net/common/highContrastTheme": "white-black",
+                "http://registry.gpii.net/common/cursorSize": 0.5
+            },
+            "metadata": [
+                {
+                    "type": "required",
+                    "scope": [
+                        "http://registry.gpii.net/common/screenReaderTTSEnabled"
+                    ],
+                    "value": 1024
+                },
+                {
+                    "type": "priority",
+                    "scope": [
+                        "http://registry.gpii.net/applications/com.freedomScientific.jaws"
+                    ],
+                    "value": 1024
+                }
+            ],
+            "conditions": [
+                {
+                    "type": "http://registry.gpii.net/conditions/inRange",
+                    "min": 400,
+                    "inputPath": "http://registry\\.gpii\\.net/common/environment/illuminance"
+                }
+            ]
         }
     }
 }
@@ -232,36 +215,20 @@ Example:
 
 ### clientCredentials
 
-This table contains all OAuth2 client credentials assigned to all OAuth clients, including: 1. GPII app installation clients;
+This table contains all OAuth2 client credentials assigned to all OAuth clients, including: 1. App installation clients;
 2. Privileged prefs creator clients; 3. Web prefs consumer clients.
 
-* At any time, each client should only have one active un-revoked client credential in this document.
-* TODO: there's an ongoing discussion on whether to stop support privileged prefs creator clients and web prefs consumer clients.
+- At any time, each client should only have one active un-revoked client
+  credential in this document.
+- TODO: there's an ongoing discussion on whether to stop support privileged
+  prefs creator clients and web prefs consumer clients.
 
-```
+``` .json
 {
-    "_id": "clientCredential-1",
-    "type": "clientCredential",
-    "schemaVersion": "0.1",
-    "clientId": "gpiiAppInstallationClient-1",
-    "oauth2ClientId": "oauth2ClientId-for-NOVA",
-    "oauth2ClientSecret": "oauth2ClientSecret-for-NOVA",
-    "allowedIPBlocks": [
-        "125.19.23.0/24",          // IPv4 block
-        "2001:cdba::3257:9652",    // IPv6 block
-        "62.230.58.1"              // IP string
-    ],
-    "allowedPrefsToWrite": [
-        // common registry preferences
-        "http://registry.gpii.net/common/language",
-        "http://registry.gpii.net/common/DPIScale",
-        "http://registry.gpii.net/common/highContrast/enabled",
-        "http://registry.gpii.net/common/selfVoicing/enabled",
-        // application specific preferences
-        "http://registry.gpii.net/applications/com.microsoft.windows.mouseSettings"
-    ],
-    "isCreateGpiiKeyAllowed": true,
-    "isCreatePrefsSafeAllowed": true,
+    "id": "clientCredential-1",
+    "clientId": "appInstallationClient-1",
+    "oauth2ClientId": "<random string of characters>",
+    "oauth2ClientSecret": "<random string of characters>",
     "revoked": false,
     "revokedReason": null,
     "timestampCreated": "2017-11-21T18:11:22.101Z",
@@ -271,14 +238,4 @@ This table contains all OAuth2 client credentials assigned to all OAuth clients,
 
 ## TODO list
 
-This list will continue to expand.
-
-* Remove ontologies
-* Remove/replace all occurrences of `gpii` and `GPII`.
-  * Change the name of `GPII Keys` document and the type value `gpiiKey` in it or, if it is no longer a use case, remove it entirely
-  * Change `GPII App Installation Client` to `App Installation Client`
-  * Change its `type` from `gpiiAppInstallationClient` to `appInstallationClient`
-  * Change `GPII App  Installation Authorization` to `App Installation Authorization`
-  * Change its `type` `gpiiAppInstallationAuthorization` to `appInstallationAuthorization`
-  * Change the `type` `gpiiExpressUserId` to `expressUserId`, or just `userId`.  How important is it that it is an express user?
-* Change `contexts`, the top level within an ontology, to `prefsSets`, representing a container of named sets of preferences.
+- Update the diagram to match the tabular descriptions.

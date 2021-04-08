@@ -1,0 +1,29 @@
+[
+    {
+        "prefsSafesId": "prefsSafe-1",
+        "prefsSafeType": "user",
+        "name": "someDefaultPrefs",
+        "password": null,
+        "email": "someone@somewhere.com",
+        "preferences": {
+            "prefsSets": {
+                "default": {
+                    "name": "Default preferences",
+                    "preferences": {
+                        "http://registry.gpii.net/common/matchMakerType": "ruleBased",
+                        "http://registry.gpii.net/common/fontSize": 24,
+                        "http://registry.gpii.net/common/foregroundColor": "white",
+                        "http://registry.gpii.net/common/backgroundColor": "black",
+                        "http://registry.gpii.net/common/fontFaceFontName": [
+                            "Comic Sans"
+                        ],
+                        "http://registry.gpii.net/common/fontFaceGenericFontFace": "sans serif",
+                        "http://registry.gpii.net/common/magnification": 2
+                    }
+                }
+            }
+        },
+        "timestampCreated": "2017-12-01T18:43:32.889Z",
+        "timestampUpdated": "2020-12-11T22:13:01.616Z"
+    }
+]
