@@ -1,38 +1,120 @@
-# Preferences Edge Proxy Refinement I
+# Preferences Edge Proxy Workflow
 
-This describes the requests, responses, and payloads for the workflow where a
-static site makes save/retrieve requests of a secured preferences server.  For
-example, the static site may have incorporated UIO+ into their pages.  The user
-wants to save or retrieve their UIO+ preferences.
+One of the workflows we want the Personal Data Storage or Preferences Service to
+support is one where a static site makes save/retrieve requests of the secured
+service.  Included in this workflow is an OAuth2 authorization sequence where
+users are authenticated by a third party single sign on (SSO) provider, such as
+Google or Github.
 
-The outline of the workflow is taken verbatim from the Fluid wiki page titled
-"GPII Preferences Edge Proxy Refinement I", specifically, the [Workflow](https://wiki.fluidproject.org/display/fluid/GPII+Preferences+Edge+Proxy+Refinement+I#GPIIPreferencesEdgeProxyRefinementI-Workflow)
-section.
+This documents the requests, responses, payloads, and database structures needed
+to support static access and single sign on workflows.  For example, a static
+site may have incorporated UIO into their pages.  The user wants to save or
+retrieve their UIO preferences from the preferences server.
 
-The example requests and payloads assume that the OAuth2 authorization server
+The examples of requests and payloads assume that the OAuth2 authorization server
 is Google.  Google provides an [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/)
 where each step can be tried and information about the requests is
-displayed.  The playground requires a Google developer account.  For the
-"Select and authorize APIs" step in the playground, select the "Google OAuth2
-API v2" API set.
+displayed, which was used to document some of the details.
 
-## Draft WORKFLOW for end user interacting with the combined system
+## OpenID Connect Workflow
 
-1. User is on the site belonging to the preferences consumer. Embedded on it is
-   a prefs editor which they have interacted with. They select an action which
-   requires interaction with the prefs server (in the wireframes, Import or
-   Export) Step 0
-2. We enter Step 1 of the OAuth flow - the user’s browser is redirected to
-   GET <authorization-server>/authorize - Step 1a - they see a LOGIN UI
-   (implemented by the GPII authorization server)
-  - a. This endpoint is NOT exposed at the same origin as the preferences consumer
-     to avoid leakage of these credentials
-  - b. In the current authorization server endpoint this is exposed at the URL
-     /login
-  - c. The authorization server’s endpoint /login will need to be exposed by the
-     overall cluster’s proxy configuration at a distinct origin
+![Preferences OpenID Connect Flow](./images/StaticAuthWorkflow.png)
 
-```
+## Actors/Resources
+
+* **Resource Owner**: The user attempting to authorize UIO to use their
+  preferences
+* **UIO**: An embedded instance of User Interface Options (UI Options);
+  preferences editor/enactors
+* **Edge Proxy**: Lambda functions, server configuration, or light weight server
+  to handle redirects between UIO and the prefs server. To allow cross origin
+  requests.
+* **Preferences Server**: An instance of the Preferences Server. Stores
+  preferenences and authenticates with a single sign on (SSO) provider, e.g. Google.
+* **Google SSO**: Using Google as SSO provider. The examples are based on their
+  API but others could be substituted.
+
+## Workflow Description
+
+1. Open login
+    a. Trigger login to Preferences server from UIO
+    b. UIO makes a local request handled by the Edge Proxy. This is to prevent
+       cross origin requests. e.g. `/login/google`
+    c. The Edge Proxy redirects this request to the proper endpoint on the
+       Preferences Server.
+2. The Preferences Server sends the [authentication request](https://developers.google.com/identity/protocols/oauth2/openid-connect#sendauthrequest)
+   to Google.
+    a. the authentication request includes the following as query parameters:
+        * `client_id` identifying the Preferences Server to Google
+        * `response_type` which is usually `code`
+        * `scope` which would likely be `openid email`
+        * `redirect_uri` which is the endpoint on the Preferences Server that
+           will receive the response from Google. It must match the authorized
+           redirect URI that was pre-regisitered with Google.
+        * `state`, the anti-forgery unique session token
+    b. Login and consent:  The Resource Owner may be presented with a login
+       screen by Google in their domain, and asked to consent the requested
+       scope.
+        * If the user is already logged into Google, they will be presented
+          with the consent dialog unless they have previously consented.  In
+          that case, Google automatically authorizes the user and retrieves
+          their consent.
+    c. The Resource Owner authenticates with Google and grants consent
+    d. [Authorization code and anti-forgery](https://developers.google.com/identity/protocols/oauth2/openid-connect#confirmxsrftoken):
+       Google responds to the Preferences Server at the `redirect_uri` including:
+        * `state` anti-forgery token from step 1d
+        * `code` the authentication code provided by Google
+        * `scope` the scopes that the user consented to at step 2.
+    e. The Preferences Server confirms that the `state` (anti-forgery token) is
+       valid by checking that it matches the value it sent to Google in step 1d.
+    f. [Exchange Authorization Code](https://developers.google.com/identity/protocols/oauth2/openid-connect#exchangecode):
+       The Preferences Server requests exchanging the Authorization Code for an
+       Access Token and ID Token. This includes the following:
+        * `code`, the Authorization Code sent from the previous response from
+           Google
+        * `client_id` for the Preferences Server (same value as steps 2a and 2d)
+        * `redirect_uri` which is the endpoint on the Preferences Server that
+          will receive the response from Google (same value as step 2a and 2d)
+        * `grant_type` which must be set to `authorization_code`
+    g. Google responds at the previously specified redirect uri with the Access
+       Token and ID Token
+        * The `access_token` can be sent to Google to access the Google API
+        * The `id_token` is a [JWT](https://tools.ietf.org/html/rfc7519)
+          identifying the Resource Owner and is signed by Google.
+3. Authenticate and Authorize UIO
+    a. Using the `id_token` the Preferences Server authenticates the Resource Owner
+    b. Somehow the Preferences Server passes back the authorization to the Edge
+       Proxy
+    c. Somehow the Edge Proxy passes back the authorization to UIO
+4. Making Authorized Requests to the Preferences Server
+    a. Somehow, using the authorization, makes a local request to the
+       Preferences Server handled by the Edge Proxy. e.g. a GET request to
+       `/preferences`
+    b. Somehow, the Edge Proxy redirects this request to a Preferences Server
+       end point
+    c. Somehow, the Preferences Server validates the authorization of this
+       request
+    d. The Preferences Server responds to the Edge Proxy
+    e. The Edge Proxy responds to UIO
+
+## Questions
+
+1. How to best establish the state (anti-forgery token) (see: 1d, 3b)?
+2. After authenticating with Google how exactly does the Preferences Server
+   return the authorization to UIO (see: 5)?
+3. How does UIO pass along its authorization to the Preferences server with the
+   requests to Preferences Server API (see: 6a, 6b)?
+4. How does the Preferences Server verify UIO's authorization (see: 6c)?
+5. Can refresh tokens be used? How long will the `id_token` from Google be valid
+   and how long should the authorization of UIO with the Preferences Server be valid.
+
+
+## Single Sign On Workflow Details
+
+This section give more details regarding the portion of the static workflow that
+is specific to authorization with an SSO provider.
+
+```text
 In the following, the REQUIRED, OPTIONAL, and RECOMMENDED are as documented in
 the [OAuth2 specification](https://tools.ietf.org/html/rfc6749#section-4.1.1)
 
