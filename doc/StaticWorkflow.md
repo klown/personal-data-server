@@ -37,65 +37,66 @@ displayed, which was used to document some of the details.
 ## Workflow Description
 
 1. Open login
-    a. Trigger login to Preferences server from UIO
-    b. UIO makes a local request handled by the Edge Proxy. This is to prevent
+    1. Trigger login to Preferences server from UIO
+    2. UIO makes a local request handled by the Edge Proxy. This is to prevent
        cross origin requests. e.g. `/login/google`
-    c. The Edge Proxy redirects this request to the proper endpoint on the
+    3. The Edge Proxy redirects this request to the proper endpoint on the
        Preferences Server.
 2. The Preferences Server sends the [authentication request](https://developers.google.com/identity/protocols/oauth2/openid-connect#sendauthrequest)
    to Google.
-    a. the authentication request includes the following as query parameters:
-        * `client_id` identifying the Preferences Server to Google
-        * `response_type` which is usually `code`
-        * `scope` which would likely be `openid email`
-        * `redirect_uri` which is the endpoint on the Preferences Server that
+   1. the authentication request includes the following as query parameters:
+      - `client_id` identifying the Preferences Server to Google
+      - `response_type` which is usually `code`
+      - `scope` which would likely be `openid email`
+      - `redirect_uri` which is the endpoint on the Preferences Server that
            will receive the response from Google. It must match the authorized
-           redirect URI that was pre-regisitered with Google.
-        * `state`, the anti-forgery unique session token
-    b. Login and consent:  The Resource Owner may be presented with a login
-       screen by Google in their domain, and asked to consent the requested
-       scope.
-        * If the user is already logged into Google, they will be presented
-          with the consent dialog unless they have previously consented.  In
-          that case, Google automatically authorizes the user and retrieves
-          their consent.
-    c. The Resource Owner authenticates with Google and grants consent
-    d. [Authorization code and anti-forgery](https://developers.google.com/identity/protocols/oauth2/openid-connect#confirmxsrftoken):
-       Google responds to the Preferences Server at the `redirect_uri` including:
-        * `state` anti-forgery token from step 1d
-        * `code` the authentication code provided by Google
-        * `scope` the scopes that the user consented to at step 2.
-    e. The Preferences Server confirms that the `state` (anti-forgery token) is
-       valid by checking that it matches the value it sent to Google in step 1d.
-    f. [Exchange Authorization Code](https://developers.google.com/identity/protocols/oauth2/openid-connect#exchangecode):
-       The Preferences Server requests exchanging the Authorization Code for an
-       Access Token and ID Token. This includes the following:
-        * `code`, the Authorization Code sent from the previous response from
-           Google
-        * `client_id` for the Preferences Server (same value as steps 2a and 2d)
-        * `redirect_uri` which is the endpoint on the Preferences Server that
-          will receive the response from Google (same value as step 2a and 2d)
-        * `grant_type` which must be set to `authorization_code`
-    g. Google responds at the previously specified redirect uri with the Access
-       Token and ID Token
-        * The `access_token` can be sent to Google to access the Google API
-        * The `id_token` is a [JWT](https://tools.ietf.org/html/rfc7519)
-          identifying the Resource Owner and is signed by Google.
+           redirect URI that was pre-registered with Google.
+      - `state`, the anti-forgery unique session token
+   2. Login and consent:  The Resource Owner may be presented with a login
+      screen by Google in their domain, and asked to consent the requested
+      scope.
+      - If the user is already logged into Google, they will be presented
+        with the consent dialog.
+   3. The Resource Owner authenticates with Google and grants consent
+      - If the user has previously provided consent, Google will present no
+        dialog, but will retrieve the scopes that have the user's consent.
+   4. [Authorization code and anti-forgery](https://developers.google.com/identity/protocols/oauth2/openid-connect#confirmxsrftoken):
+      Google responds to the Preferences Server at the `redirect_uri` including:
+      - `state` anti-forgery token from step 2i
+      - `code` the authentication code provided by Google
+      - `scope` the scopes that the user consented to at step 2iii.
+   5. The Preferences Server confirms that the `state` (anti-forgery token) is
+      valid by checking that it matches the value it sent to Google in step 2i.
+   6. [Exchange Authorization Code](https://developers.google.com/identity/protocols/oauth2/openid-connect#exchangecode):
+      The Preferences Server requests exchanging the Authorization Code for an
+      Access Token and ID Token. This includes the following:
+      - `code`, the Authorization Code sent from the previous response from
+         Google
+      - `client_id` for the Preferences Server (same value as steps 2i)
+      - `redirect_uri` which is the endpoint on the Preferences Server that
+         will receive the response from Google (same value as step 2i)
+      - `grant_type` which must be set to `authorization_code`
+   7. Google responds at the previously specified redirect uri with the Access
+      Token and ID Token
+      - The `access_token` can be used by the Preferences Server to access the Google API
+      - The `id_token` is a [JWT](https://tools.ietf.org/html/rfc7519)
+        identifying the Resource Owner and is signed by Google.
 3. Authenticate and Authorize UIO
-    a. Using the `id_token` the Preferences Server authenticates the Resource Owner
-    b. Somehow the Preferences Server passes back the authorization to the Edge
-       Proxy
-    c. Somehow the Edge Proxy passes back the authorization to UIO
+   1. Using the `id_token` the Preferences Server authenticates the Resource
+      Owner
+   2. Somehow the Preferences Server passes back the authorization to the Edge
+      Proxy
+   3. Somehow the Edge Proxy passes back the authorization to UIO
 4. Making Authorized Requests to the Preferences Server
-    a. Somehow, using the authorization, makes a local request to the
-       Preferences Server handled by the Edge Proxy. e.g. a GET request to
-       `/preferences`
-    b. Somehow, the Edge Proxy redirects this request to a Preferences Server
-       end point
-    c. Somehow, the Preferences Server validates the authorization of this
-       request
-    d. The Preferences Server responds to the Edge Proxy
-    e. The Edge Proxy responds to UIO
+   1. Somehow, using the authorization, makes a local request to the
+      Preferences Server handled by the Edge Proxy. e.g. a GET request to
+      `/preferences`
+   2. Somehow, the Edge Proxy redirects this request to a Preferences Server
+      end point
+   3. Somehow, the Preferences Server validates the authorization of this
+      request
+   4. The Preferences Server responds to the Edge Proxy
+   5. The Edge Proxy responds to UIO
 
 ## Questions
 
@@ -106,147 +107,76 @@ displayed, which was used to document some of the details.
    requests to Preferences Server API (see: 6a, 6b)?
 4. How does the Preferences Server verify UIO's authorization (see: 6c)?
 5. Can refresh tokens be used? How long will the `id_token` from Google be valid
-   and how long should the authorization of UIO with the Preferences Server be valid.
+   and how long should the authorization of UIO with the Preferences Server be
+   valid.
 
+## Single Sign On Details
 
-## Single Sign On Workflow Details
+This section gives more details regarding step 2 above; the part of the static
+workflow that is specific to authorization with an SSO provider.
 
-This section give more details regarding the portion of the static workflow that
-is specific to authorization with an SSO provider.
+### Client Information From SSO Provider
+
+Prior to executing the SSO workflow, the client must be registered with the SSO
+provider, with the result that the provider generates a client id and a client
+secret that identifies the Preferences Server to the SSO provider.  This client
+id and secret need to be stored in the Preferences Server's database to use when
+it sends requests of the provider.
+
+In the following, the REQUIRED, OPTIONAL, and RECOMMENDED descriptions of the
+request parmeters are taken from the [OAuth2 specification](https://tools.ietf.org/html/rfc6749#section-4.1.1)
+
+**2i**. The workflow begins with the Preferences Server requesting authorization
+from the provider:
 
 ```text
-In the following, the REQUIRED, OPTIONAL, and RECOMMENDED are as documented in
-the [OAuth2 specification](https://tools.ietf.org/html/rfc6749#section-4.1.1)
-
-Line feeds in the URLs are for clarity and to avoid long lines that scroll
-horizontally.
-
 GET https://accounts.google.com/o/oauth2/auth
-    ?client_id=:clientId&redirect_uri=:redirectUri&scope=:scope
-    &response_type=code&state-:state&access_type=offline
+```
+
+#### Parameters
+
+| Name             | Type     | Description |
+| ---              | ---      | ---         |
+| `client_id`      | `String` | __Required__. The client id of the Preferences Server, stored in an [`ApplicationProvider` record](#application-provider-data-model) |
+| `redirect_uri`   | `String` | __Recommended__. The endpoint of the Preferences Server where the provider redirects to upon successful authorization |
+| `scope`          | `String` | __Optional__. The scope of the access to the user's information as stored with the provider.  `openId` and `email` will ask for the user's Google profile and email address |
+| `response_type`  | `String` | __Required__. The value `code` will request an access token to use to access the user's Google information |
+| `state`          | `String` | __Recommended__. Anti-forgery unique session token |
+| `access_type`    | `String`, one of [`offline`, `online`] | __Optional__. Whether to return a refresh token with the access token (`offline`), defaults to `online` |
+
 Payload: none
 
-"Google, authorize a user to access the preferences server."
+Notes:
 
-Parameter breakdown:
-- client_id
-  - REQUIRED
-  - Generated by Google during a prior manual registration process.
-  - Stored by the client in its database.
-  - Passed to Google by the client when making this /o/oauth2/auth/ request
-  - This is the client_id associated with the preferences server.
-  - Stored in the proxy server's database?
-- redirect_uri
-  - RECOMMENDED
-  - Decided on by the client and set during the manual Google registration
-    process.  It is stored in Google's database.
-  - Used by Google at the end of its authorization process to call back to the
-    client.  Thus it must be an endpoint implemented by the client.
-  - Can also be used as another way to confirm that the client *is* legitimate
-    since it is known to both parties and can be checked.
-  - But, passing a redirect_uri that Google does not have registered is allowed,
-    and is a way to have multiple callbacks.
-    - It may be that even if the endpoint is different, the callback's host
-      domain must be identical to one registered with Google -- this
-      requires further invesitigation. For example, the redirect registered with
-      Google might be "preferences.org/callback/", but on this request, it's set
-      to "preferences.org/anothercallback/".  Same server, different end point.
-  - If no redirect_uri is specified, Google will use the one in its database
-    that was set at manual registration.
-- scope
-  - OPTIONAL
-  - defines which information about the user is shared by this authorization
-  - the format of this parameter is defined by Google, e.g. "profile" for user's
-    name and email; "openId" to get an OpenID JWT.  Other OAuth2 providers may
-    define their scopes differently.
-- response_type
-  - REQUIRED
-  - one of [code, token, or an extended type], depending on the workflow.
-  - "code" means this is a request for an authorization code, and, ultimately,
-    an access token.  The rest of this document assumes "code", but the "token"
-    work flow might be more appropriate for the proxy server scenario -- this
-    needs further investigation.
-  - "token" is used in the "Implicate Grant" workflow
-    (https://tools.ietf.org/html/rfc6749#section-4.2).  Here, the resource owner
-    (who is that?) asks the authorization server (Google) to first check the
-    client_id and redirect_uri against its known clients (the preferences
-    server is the client).  If they match, Google will somehow authenticate the
-    resource owner.  If successful, Google will respond with an access token,
-    sending it to the client -- skip to step 5.
-  - an extended type is a mutually defined type known to the client and provider
-    See "Defining New Types" in the OAuth2 spec: https://tools.ietf.org/html/rfc6749#se
-- state
-  - RECOMMENDED
-  - generated by the client and passed back-and-forth between the client and
-    Google for the duration of the OAuth2 process.  Another way both parties
-    can confirm that the exchange is legitimate.
-  - needs to be stored somewhere by the client for use throughout the
-    authorization process (see final step 5 below -- the client stores it inside
-    the same record as the one containing the access token).
-- access_type
-  - OPTIONAL and specific to Google's implementation of this endpoint.
-  - One of [online, offline]
-  - "Offline" means to return a refresh token in addition to an access token at
-    the point in the process where Google sends the access token (Step 5 below),
-    and whenever reauthentication requests are made of Google.
-  - "Online" means to not issue a refresh token.
-  - Google must store the access_type value.
-  - Client will store this vaue in its database when it receives the access
-    token (Step 5 below)
-```
+- The `access_type` is specific to Google's SSO.
 
-3. The login UI redirects the user back to the consumer’s space, now including
-   an AUTHORIZATION CODE in the URL - Step 2. This can be read from the
-   consumer’s origin by client or server-side code.
+**2ii, 2iii**.  Login and consent:  Google SSO redirects back to the Resource
+Owner’s space for their login credentials (e.g., user name and password), and
+their consent.  Since this is entirely Google's domain, the specifics of it are
+not documented here.  Assuming the user successfully logs in and provides the
+required consent, Google redirects back to the Preferences Server, as documented
+in the next step.
 
-```
-Specification reference for this step: https://tools.ietf.org/html/rfc6749#section-4.1.2
+**2iv**. Google redirects to the Preferences Server using the `redirect_uri`,
+passing an authorization code:
 
+```text
 GET https://<callback_uri>/
-    ?state=:state&code=:code
-    &scope=email profile openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile
-    &authuser=0&prompt=consent
-Payload: none
-"Preferences Server, I (Google) have authorized this user; here's an
-authorization code".
-
-- callback_uri
-  - The callback_uri either passed at the previous step, or the callback_uri
-    stored by Google in its database when the client was registerd with Google.
-  - Used as the client's endpoint for Google to inform the client that the user
-    was successfully authorized.
-- code
-  - REQUIRED
-  - The authorization code (random characters) generated by the authorization
-    server (Google).
-- state
-  - REQUIRED IF SENT BY CLIENT AT PREVIOUS STEP
-  - The same value that the client generated and sent to Google at the previous
-    step and used to check the legitimacy of this request.
-  - If no state was generated at the previous step, Google does not send a
-    state value on this callback request.
-- scope
-  - NOT PART OF THE OAUTH2 SPEC
-  - Sent by Google using their format specifying the scope of the access to
-    information about the user stored on Google's site.  For example:
-    - email
-    - profile
-    - https://www.googleapis.com/auth/userinfo.email
-    - https://www.googleapis.com/auth/userinfo.profile
-- authuser=0
-  - NOT PART OF THE OAUTH2 SPEC
-  - Sent by Google indicating ??? -- not sure what this is.
-- prompt=consent
-  - NOT PART OF THE OAUTH2 SPEC
-  - Sent by Google indicating ??? -- guess -- that consent was asked of the user
-    and they agreed.
 ```
+#### Parameters
 
-Comment:  the above is how OAuth2 normally works.  The requirement for the Edge
-Proxy is for the redirection, the `redirect_uri`, to return to the consumer's
-space, passing it the authorization code -- "Consumer
-(static-site-with-prefs-editor), I (Google) have authorized this user; here is
-an authorization code".  Can this be done?
+| Name             | Type     | Description |
+| ---              | ---      | ---         |
+| `code`           | `String` | __Required__. The authorization code (random characters) generated by Google's authorization service |
+| `state`          | `String` | __Required__. Anti-forgery unique session token sent to Google by the Preferences Server in step 2i. |
+| `scope`          | `String` | The scope of access to the user's information as stored with Google. |
+
+Payload: None
+
+Notes:
+- Reference: [OAuth2 Specification](https://tools.ietf.org/html/rfc6749#section-4.1.2) of this step.
+
+**CONTINUE EDITING FROM HERE**
 
 4. Step 3 - this is then separately provided to the /access_token endpoint to
    exchange for an access token which can be used in further requests for
@@ -257,7 +187,7 @@ an authorization code".  Can this be done?
      maintained securely in its configuration and fished out when it receives a
      matching request from the edge server.
 
-```
+```text
 OAuth2: https://tools.ietf.org/html/rfc6749#section-4.1.3
 
 POST https://accounts.google.com/o/oauth2/token
@@ -310,7 +240,7 @@ Note that GPII stored the client_id and client_secret as part of the
      grant types have any implications at all for the implementation of the edge
      and proxy servers?
 
-```
+```text
 OAuth2: https://tools.ietf.org/html/rfc6749#section-4.1.4
 
 "Preferences Server, here is your access token."
