@@ -243,7 +243,7 @@ Notes:
 ## To Do
 
 * Document step 1 -- how does UIO and the Edge Proxy trigger the SSO workflow?
-  * might be as simple `GET https://<prefsServer>/google/login'
+  * might be as simple `GET https://<prefsServer>/google/login`
   * use a session id?
 * Document steps 3 and 4, after the SSO workflow is complete. What is exchanged
   between the Preferences Server and Edge Proxy, and between the Edge Proxy and UIO?
@@ -259,7 +259,8 @@ Notes:
 * Document the data model to support SSO -- in terms of what is stored in the Preferences Server database? Possibilities:
   * `AppAuthProvider` for at least the `client_id` and `client_secret` that is shared with Google SSO provider.
   * `User` for storing user particulars such as name, email, password, etc.
-  * `SsoAccount` foro profile and openID for SSO users; cross references to `user` and `appAuthProvider`.
+    * use same model as [fluid-express-user](https://github.com/fluid-project/fluid-express-user)
+  * `SsoAccount` for profile and openID for SSO users; cross references to `user` and `appAuthProvider`.
   * `AccessToken` for access to the user's Google data; cross references to `ssoAccount`, and `appAuthProvider`
   * `PrefsSafes` for storing user preferences, as per previous GPII model; cross references
     to `user`.
