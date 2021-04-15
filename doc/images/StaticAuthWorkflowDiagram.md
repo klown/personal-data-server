@@ -17,13 +17,13 @@ Resource Owner->Google (SSO): 2iii) login and grant consent
 Google (SSO)->Preferences Server: 2iv) state (anti-forgery token) and authorization code
 note left of Preferences Server: 2v) confirm state (anti-forgery token)
 Preferences Server->Google (SSO): 2vi) exchange authorization code
-Google (SSO)->Preferences Server: 2vii) access token and id token
-note left of Preferences Server: 3i) use id token to authenticate resource owner and grant authorization
-Preferences Server->Edge Proxy: 3ii) ?? pass authorization
-Edge Proxy->UIO: 3iii) ?? pass authorization
-UIO->Edge Proxy: 4i) make local authorized requets (e.g. /preferences)
+Google (SSO)->Preferences Server: 2vii) access token
+note left of Preferences Server: 3i) use session key to authenticate resource owner and grant authorization
+Preferences Server->Edge Proxy: 3ii) respond with session key authorization
+Edge Proxy->UIO: 3iii) pass session key authorization
+UIO->Edge Proxy: 4i) make local authorized requests (e.g. /preferences)
 Edge Proxy->Preferences Server: 4ii) redirect to prefs server resource
-note right of Preferences Server: 4iiiVerify authorization
+note right of Preferences Server: 4iii) Verify authorization
 Preferences Server->Edge Proxy: 4iv) return response
 Edge Proxy->UIO: 4v) return response
 ```
