@@ -1,9 +1,9 @@
 # Preferences Edge Proxy Workflow
 
-A workflow that the Personal Data Storage or Preferences Server supports,
-where a static site makes save/retrieve requests for the user's preferences.
-An example is where a user changes their UI Options (UIO) preferences and wants to
-save them.
+A workflow supported by the Personal Data Storage, or Preferences server, where
+the user makes save/retrieve requests for their preferences while on a static
+site. An example is where a user changes their UI Options (UIO) preferences and
+wants to save them.
 
 Included in this workflow is an OAuth2 authorization sequence where
 users are authenticated by a third party single sign on (SSO) provider, such as
@@ -26,17 +26,17 @@ of the SSO process.
 
 * **Resource Owner**: The user attempting to authorize UIO to use their
   preferences
-* **UIO**: An embedded instance of User Interface Options (UI Options);
+* **UIO**: An embedded instance of User Interface Options (UI Options)
   preferences editor/enactors
 * **Edge Proxy**: Lambda functions, server configuration, or light weight server
-  to handle redirects between UIO and the prefs server. To allow cross origin
+  to handle redirects between UIO and the Preferences server. To allow cross origin
   requests.
 * **SSO Client**: A client of an SSO provider, where the client uses the
   provider as a way of authenticating users.  The Preferences Server is a client
   in this context.
 * **SSO Provider**: An OAuth2 server that is used to authenticate users.  Google is
   an SSO provider.
-* **Preferences Server**: An instance of the Preferences Server. Stores
+* **Preferences Server**: An instance of the Personal Data Storage service. Stores
   preferences and authenticates with a single sign on (SSO) provider, e.g. Google.
 * **Google SSO**: Using Google as SSO provider. The examples are based on their
   API but others could be substituted.
@@ -358,7 +358,6 @@ Content-Type: application/json;charset=UTF-8
 | `refresh_token`  | `String` | __Optional__. Used to request new access tokens from Google when the current one expires |
 | `state`          | `String` | __Required__. The anti-forgery token sent by the Preferences Server to Google at step 2i |
 | `scope`          | `String` | The scope of access to the user's information as stored with Google that the user consented to.  Same value as step 2iv. |
-| `id_token`       | `String` | __Optional__. Serialized version of Google user's OpenID. |
 
 Notes:
 
