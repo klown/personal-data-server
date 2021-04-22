@@ -415,8 +415,11 @@ some trigger to indicate that the current access token has expired, and that a
 new one is needed to continue.  When so triggered, the Preferences Server makes
 the refresh request and stores the results.
 
+**5ii.** Refresh `access_token` using `/token` request
+
 ```text
 POST https://accounts.google.com/o/oauth2/token
+Header: Authorization: Bearer <access_token>
 ```
 
 ### Body of POST
@@ -434,7 +437,9 @@ POST https://accounts.google.com/o/oauth2/token
 The response is similar to the original access token response, but with a new
 access token and, optionally, a new refresh token.  The SSO provider decides
 when a given refresh token is no longer valid, and, if so, will also return a
-new refresh token for future use.
+new refresh token for subsequent refresh token requests.
+
+**5iv.** Return new access token
 
 ```text
 HTTP/1.1 200 OK
@@ -457,7 +462,7 @@ Content-Type: application/json;charset=UTF-8
 | `refresh_token`  | `String` | __Optional__. If the `refresh_token` used in the request is no longer valid, a new `refresh_token` is generated and returned by Google in the response |
 
 If Google's response contains a new `refresh_token` it replaces the one that the
-Preferences Server currently has in its database -- the refresh token is itsel
+Preferences Server currently has in its database -- the refresh token is itself
 refreshed.
 
 Notes:
@@ -467,27 +472,33 @@ Notes:
 #### Role of Refresh in Full Static Workflow
 
 It was noted in [step 3i](#step-3i) that the Edge Proxy's `loginToken` expired
-in concert with the Preferences Server's `access_token`.  We have just seen how
-the Preferences Server refreshes its `access_token`.  It can (will) refresh the
-`loginToken` at the same time, but there remains a problem of how to communicate
-that to the Edge Proxy server and out to UIO.
+in concert with the Preferences Server's `access_token`.  The previous section
+described how the Preferences Server refreshes its `access_token`.  It will
+refresh the Edge Proxy's `loginToken` at the same time, but how is that
+triggered?
 
-When the Edge Proxy makes any kind of request for user preferences, passing the
-`loginToken`, the Preferences Server checks if the corresponding `access_token`
-has expired.  If it has, it sends a refresh request to Google and gets a new
-`access_token`.  It generates a new `loginToken` at the same time, and it
-includes the new value as part of its response to the Edge Proxy.
+When the Edge Proxy makes any kind of request for user preferences, it passes
+the `loginToken` as its credentials.  As part of handling this request,
+the Preferences Server checks if the associated `access_token` has expired.
+If it has, the Preferences Server sends a refresh request to Google to get a new
+`access_token`.  It also generates a new `loginToken` at the same time, and it
+includes the new value as part of its response to the Edge Proxy.  This workflow
+is shown below.
+
+![Refresh Token Workflow](./images/RefreshTokenWorkflow.png)
 
 ## To Do
 
-* Figure out how to propagate the refresh of the `loginToken` from the Preferences Server back
-  to the Edge Proxy and to UIO.
-* Document the data model to support SSO -- in terms of what is stored in the Preferences Server database? Possibilities:
-  * `AppAuthProvider` for at least the `client_id` and `client_secret` that is shared with Google SSO provider.
+* Document the data model to support SSO -- in terms of what is stored in the
+  Preferences Server database? Possibilities:
+  * `AppAuthProvider` for at least the `client_id` and `client_secret` that is
+    shared with Google SSO provider.
   * `User` for storing user particulars such as name, email, password, etc.
     * cross reference to `PrefsSafe`.
     * use same model as [fluid-express-user](https://github.com/fluid-project/fluid-express-user)
-  * `SsoAccount` for profile and session key for SSO users; cross references to `user` and `appAuthProvider`.
-  * `AccessToken` for access to the user's Google data; cross references to `ssoAccount`, and `appAuthProvider`
-  * `PrefsSafes` for storing user preferences, as per previous GPII model; cross references
-    to `user`.
+  * `SsoAccount` for profile for SSO users; cross references to `user` and
+    `appAuthProvider`.
+  * `AccessToken` for `access_token`, `refresh_token`, and `loginToken`
+    * cross references to `ssoAccount`, and `appAuthProvider`
+  * `PrefsSafes` for storing user preferences, as per previous GPII model
+    * cross references to `user`.

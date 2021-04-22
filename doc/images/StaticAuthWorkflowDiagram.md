@@ -1,8 +1,10 @@
-# Editing the Protocol Diagram
+# Static Authorized Workflow Diagram
+
+## Editing the Protocol Diagram
 
 The Protocol Diagram was created using [Web Sequence Diagrams](https://www.websequencediagrams.com/)
 and can be edited by pasting in the following.  The resulting diagram is
-downloaded and save as "StaticAuthWorkflow.png".
+downloaded and saved as "StaticAuthWorkflow.png".
 
 ```text
 title Preferences OpenID Connect Flow
