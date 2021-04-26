@@ -27,7 +27,7 @@
         "infusion": "3.0.0-dev.20200326T173810Z.24ddb2718",
         "eslint-config-fluid": "2.0.0",
         "eslint-plugin-jsdoc": "32.3.0",
-        "fluid-lint-all": "1.0.4",
+        "fluid-lint-all": "1.1.0",
         "node-jqunit": "1.1.8",
         "nyc": "15.1.0"
     },
