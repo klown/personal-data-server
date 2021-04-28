@@ -47,15 +47,28 @@ fluid.tests.postgresdb.utils.testSqlArray = function (postgresOps, tableNames, i
 };
 
 /**
- * Run SQL statement.
+ * Run SQL statement(s).
  *
  * @param {Object} pgOps - Postgres operations instance.
  * @param {String} sql - SQL statement.
  * @param {Array} values - Optional values for any parameters in `sql`.
- * @return {Promise} Result of running the statment.
+ * @return {Promise} Result of running the statment(s).
  */
 fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql, values) {
     return pgOps.runSql(sql, values);
+};
+
+/**
+ * Run SQL statement(s) fetched from a file.
+ *
+ * @param {Object} pgOps - Postgres operations instance.
+ * @param {String} sqlFile - Path to file containing SQL statements.
+ * @return {Promise} Result of running the statment(s).
+ */
+
+fluid.tests.postgresdb.utils.runSQLfile = function (pgOps, sqlFile) {
+    fluid.log("SQLFILE: " + sqlFile);
+    return pgOps.runSqlFile(sqlFile);
 };
 
 /**
@@ -73,10 +86,10 @@ fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql, values) {
  */
 fluid.tests.postgresdb.utils.testResults = function (results, numStatements, command) {
     jqUnit.assertNotNull("Check for null result", results);
-    jqUnit.assertEquals("Check number of queries", numStatements, results.length);
+    jqUnit.assertEquals("Check number of commands", numStatements, results.length);
     if (command) {
         fluid.each(results, function (aResult) {
-            jqUnit.assertEquals("Check query command", command, aResult.command);
+            jqUnit.assertEquals("Check SQL command", command, aResult.command);
         });
     }
 };

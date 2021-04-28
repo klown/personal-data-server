@@ -89,6 +89,7 @@ fluid.defaults("fluid.tests.postgresdb.operations", {
         true, {}, fluid.tests.postgresdb.anotherUserToInsertJSON,
         { userId: "some.new.id", verified: false, email: "carla@globalhost" }
     ),
+    sqlFile: __dirname + "/data/createInsertPrefs.sql",
     members: {
         postgresOps: new postgresdb.PostgresRequest(fluid.tests.postgresdb.databaseConfig),
         tableData: fluid.tests.postgresdb.testTableData,
@@ -363,10 +364,26 @@ fluid.defaults("fluid.tests.postgresdb.operations.testCaseHolder", {
                     "{arguments}.0.rowCount", 1
                 ]
             }, {
+                // Run sql from a file.
+                task: "fluid.tests.postgresdb.utils.runSQLfile",
+                args: ["{pgTestOps}.postgresOps","{pgTestOps}.options.sqlFile"],
+                resolve: "fluid.tests.postgresdb.utils.testResults",
+                resolveArgs: ["{arguments}.0", 3]
+            }, {
+                // Run sql from a non-existent file -- should fail
+                task: "fluid.tests.postgresdb.utils.runSQLfile",
+                args: ["{pgTestOps}.postgresOps", "/no/such/file.sql"],
+                reject: "jqUnit.assertEquals",
+                rejectArgs: [
+                    "Check running sql when file access failure",
+                    "{arguments}.0.message",
+                    "ENOENT: no such file or directory, open '/no/such/file.sql'"
+                ]
+            }, {
                 // Delete all records from one table using TRUNCATE.  Note that
                 // TRUNCATE returns nothing so it either resolved or rejected.
                 // The test that follows this TRUNCATE test checks that all of
-                // the reoords were deleted.
+                // the records were deleted.
                 task: "fluid.tests.postgresdb.utils.runSQL",
                 args: ["{pgTestOps}.postgresOps", "TRUNCATE massive;"],
                 resolve: "fluid.identity",

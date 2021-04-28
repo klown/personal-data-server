@@ -81,7 +81,7 @@ CREATE TABLE "prefsSafes" (
     preferences JSONB NOT NULL DEFAULT '{}'
 );
 INSERT INTO "prefsSafes" ("prefsSafesId", "safeType", name, password, email)
-    VALUES ('prefsSafe-1', user, 'carla', 'null', 'someone@somewhere.com')
+    VALUES ('prefsSafe-1', 'user', 'carla', 'null', 'someone@somewhere.com')
     RETURNING *
 ;
 
@@ -117,6 +117,16 @@ While there is no constraint on the order of the SQL statements in the input
 array, this function can be used to define a logical sequence of database
 requests, where the order of the commands is defined by their position in the
 array.
+
+##### `async runSqlFile(sqlFile)`
+
+- `sqlFile {String}` Path to a file containing a set of SQL statements.
+- Returns: `{Promise}` whose value is the result(s) of running the SQL
+statement(s) in `sqlFile`.
+
+Run SQL commands fetched from a file.  The file is constrained to contain any
+number of well formed SQL statements.  Its contents are read asynchronously
+and then executed.
 
 ##### `async loadFromJSON(tableName, jsonArray)`
 

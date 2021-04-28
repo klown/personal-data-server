@@ -12,7 +12,8 @@
 
 "use strict";
 
-var pg      = require("pg"),
+var fs      = require("fs").promises,
+    pg      = require("pg"),
     format  = require("pg-format");
 
 class PostgresRequest extends pg.Pool {
@@ -76,6 +77,20 @@ class PostgresRequest extends pg.Pool {
     };
 
     /**
+     * Run SQL commands fetched from a file.  The file is expected to contain
+     * nothing but properly formed SQL statements.  Its contents are read and
+     * then executed.
+     *
+     * @param {String} sqlFile - Path to the file.
+     * @return {Promise} A promise whose values are the results of running the
+     *                   sequence of SQL statements in the `sqlFile`.
+     */
+    async runSqlFile(sqlFile) {
+        var sql = await fs.readFile(sqlFile);
+        return this.runSql(sql.toString());
+    };
+
+    /**
      * Utility to insert a set of records into a table given an array of JSON
      * objects.
      *
@@ -112,6 +127,7 @@ class PostgresRequest extends pg.Pool {
                 "INSERT INTO %I (%I) VALUES (%s)",
                 tableName, Object.keys(aRecord), tableValues
             );
+            console.log(insertSql);
             insertions.push(insertSql);
         });
         return this.runSqlArray(insertions);

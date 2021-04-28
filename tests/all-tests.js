@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Inclusive Design Research Centre, OCAD University
+ * Copyright 2020-2021 Inclusive Design Research Centre, OCAD University
  * All rights reserved.
  *
  * Licensed under the New BSD license. You may not use this file except in
@@ -9,12 +9,10 @@
 
 "use strict";
 
-var fluid = require("infusion");
-
 var testIncludes = [
-    "%preferencesServer/src/database/src/test/all-tests.js"
+    "../src/database/src/test/all-tests.js"
 ];
 
-fluid.each(testIncludes, function (path) {
-    fluid.require(path);
+testIncludes.forEach(function (path) {
+    require(path);
 });
