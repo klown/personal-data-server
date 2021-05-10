@@ -529,10 +529,10 @@ samples of user records in the most up-to-date document structure.
 | derived_key       | String  | __Required__ | None    | The encrypted version of the password for login |
 | verification_code | String  | __Required__ | None    | The code sent to a user for verifying the email address |
 | salt              | String  | __Required__ | None    | The securely-generated random bytes that are supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) when producing the derived_key |
-| iterations        | String  | Required  | None    | The count of iterations that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. |
-| email             | String  | Required  | None    | The email provided by the user when signing up a new account. |
-| roles             | Array   | Required  | None    | The user roles. Each user can have more than one role. Currently, [fluid-express-user](https://github.com/fluid-project/fluid-express-user) only supports the role of "user". |
-| verified          | Boolean | Required  | false   | Whether the user has verified their email address. |
+| iterations        | String  | __Required__ | None    | The count of iterations that is supplied as an input parameter to [the PBKDF2 algorithm](https://cryptobook.nakov.com/mac-and-key-derivation/pbkdf2) for producing the derived key. |
+| email             | String  | __Required__ | None    | The email provided by the user when signing up a new account. |
+| roles             | Array   | __Required__ | None    | The user roles. Each user can have more than one role. Currently, [fluid-express-user](https://github.com/fluid-project/fluid-express-user) only supports the role of "user". |
+| verified          | Boolean | __Required__ | false   | Whether the user has verified their email address. |
 
 
 SQL:
@@ -568,7 +568,7 @@ These records store the information about the user as returned by the SSO provid
 ```sql
 CREATE TABLE "SsoAccount" (
     "ssoAccountId" SERIAL NOT NULL PRIMARY KEY,
-    "user" VARCHAR(64) NOT NULL REFERENCES "User" ("userId") DEFERRABLE INITIALLY DEFERRED, 
+    "user" VARCHAR(64) NOT NULL REFERENCES "User" ("userId") DEFERRABLE INITIALLY DEFERRED,
     "provider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") DEFERRABLE INITIALLY DEFERRED,
     "userInfo" JSONB NOT NULL
 );
@@ -594,7 +594,7 @@ The access token returned by the SSO Provider that is used for access to the use
 ```sql
 CREATE TABLE "AccessToken" (
     "id" SERIAL NOT NULL PRIMARY KEY,
-    "ssoAccount" INTEGER NOT NULL REFERENCES "SsoAccount" ("ssoAccountId") DEFERRABLE INITIALLY DEFERRED, 
+    "ssoAccount" INTEGER NOT NULL REFERENCES "SsoAccount" ("ssoAccountId") DEFERRABLE INITIALLY DEFERRED,
     "ssoProvider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") DEFERRABLE INITIALLY DEFERRED,
     "accessToken" TEXT NOT NULL,
     "expiresIn" INTEGER NOT NULL,
