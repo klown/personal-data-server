@@ -18,7 +18,13 @@
         "node": ">=10.15.0"
     },
     "dependencies": {
+        "express": "^4.17.1",
         "json5": "2.1.3",
+        "cookie-parser": "~1.4.4",
+        "debug": "~2.6.9",
+        "http-errors": "~1.6.3",
+        "jade": "~1.11.0",
+        "morgan": "~1.9.1",
         "pg": "8.5.1",
         "pg-format": "1.0.4",
         "uuid": "8.3.2"
@@ -29,12 +35,17 @@
         "eslint-plugin-jsdoc": "32.3.0",
         "fluid-lint-all": "1.1.0",
         "node-jqunit": "1.1.8",
-        "nyc": "15.1.0"
+        "nyc": "15.1.0",
+        "noddemon": "^2.0.7"
     },
     "scripts": {
         "test": "(export PGDATABASE=prefs_testdb PGPORT=5433; npm run startTestServer && node node_modules/nyc/bin/nyc.js node tests/all-tests.js && npm run dropTestDatabase)",
+        "testNoDrop": "(export PGDATABASE=prefs_testdb PGPORT=5433; npm run startTestServer && node node_modules/nyc/bin/nyc.js node tests/all-tests.js)",
         "startTestServer": "./src/database/scripts/startDockerPostgres.sh",
         "dropTestDatabase": "./src/database/scripts/dropDockerTestDatabase.sh",
-        "lint": "fluid-lint-all"
+        "lint": "fluid-lint-all",
+        "startPersonalData": "node src/personalData/bin/www",
+        "startDevPersonalData": "nodemon src/personalData/bin/www",
+        "startDebugPersonalData": "DEBUG=personalData:* npm run startDevPersonalData"
     }
 }
