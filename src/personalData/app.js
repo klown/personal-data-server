@@ -29,7 +29,6 @@ app.set('view engine', 'jade');
 
 // Endpoints
 app.use('/', indexRouter);
-debugger;
 app.use("/sso", ssoRouter);
 
 // TODO:  Move to testing
