@@ -11,24 +11,24 @@
 
 "use strict";
 
-const createError = require('http-errors');
-const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
+const createError = require("http-errors");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
 
 var indexRouter = require("./routes/index");
 var ssoRouter = require("./routes/sso");
 
 const app = express();
-app.use(logger('dev'));
+app.use(logger("dev"));
 
 // Views
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "jade");
 
 // Endpoints
-app.use('/', indexRouter);
+app.use("/", indexRouter);
 app.use("/sso", ssoRouter);
 
 // TODO:  Move to testing

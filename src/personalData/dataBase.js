@@ -30,9 +30,10 @@ var dbRequest = new postgresdb.PostgresRequest(dbConfg);
  * retrieving the 'public' tables from the database and checking for one
  * named "AppSsoProvider".
  *
- * @return true if connection to the database succeeds at the configured host,
- *         port, user, and password, and there is an "AppSsoProvider" table;
- *         false otherwise
+ * @return {Boolean} true -     If the connection to the database succeeds at
+ *                              the configured host, port, user, and password,
+ *                              and there is an "AppSsoProvider" table; false
+ *                              otherwise.
  */
 dbRequest.isReady = async function () {
     try {
@@ -47,6 +48,32 @@ dbRequest.isReady = async function () {
         console.error("Error accessing database, ", error);
         return false;
     }
-}
+};
+
+/**
+ * Retrieve, from the database, the clientId and secret for this app as provided
+ * by Google.
+ *
+ * @param {String} provider -   The SSO provider, e.g, google, github, or some
+ *                              other.
+ * @return {Object}             The client information record for the given
+ *                              provider.  Null is returned if there is no
+ *                              such provider.
+ */
+dbRequest.getSsoClientInfo = async function (provider) {
+    try {
+        const clientInfo = await dbRequest.runSql(`
+            SELECT * FROM "AppSsoProvider" WHERE provider='${provider}';
+        `);
+        if (clientInfo.rowCount !== 0) {
+            return clientInfo.rows[0];
+        } else {
+            throw new Error(`No such provider as ${provider}`);
+        }
+    } catch (error) {
+        console.error(`Error retrieving ${provider} provider info: `, error);
+        throw error;
+    }
+};
 
 module.exports = dbRequest;

@@ -11,26 +11,26 @@
 
 "use strict";
 
-var express = require('express');
+var express = require("express");
 var router = express.Router();
 const dbRequest = require("../dataBase.js");
 
 // GET home page.
-router.get('/', function(req, res, next) {
-  res.render("index", { title: "Personal Data Server" });
+router.get("/", function (req, res) {
+    res.render("index", { title: "Personal Data Server" });
 });
 
-// '/health' end point -- if the server is running at all, it will execute this
+// "/health" end point -- if the server is running at all, it will execute this
 // and is considered healthy
-router.get("/health", function(req, res, next) {
-  res.json({ isHealthy: true });
+router.get("/health", function (req, res) {
+    res.json({ isHealthy: true });
 });
 
-// '/ready' end point -- if server is healthy and the database is ready.
-router.get("/ready", function (req, res, next) {
+// "/ready" end point -- if server is healthy and the database is ready.
+router.get("/ready", function (req, res) {
     dbRequest.isReady().then(
         (ready) => { res.json({ isReady: ready }); },
-        (error) => { res.json({ isReady: false }); }
+        (err) => { res.json({ isReady: false, error: err.message }); }
     );
 });
 

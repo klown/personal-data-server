@@ -13,6 +13,7 @@
  * You may obtain a copy of the License at
  * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
  */
+/* eslint-disable no-console */
 
 "use strict";
 
@@ -21,18 +22,17 @@ var router = express.Router();
 const dbRequest = require("../dataBase.js");
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
+router.get("/", function (req, res) {
     var pageHtml = "<html><head><title>Users:</title></head><body><h1>Users:</h1>";
     appendUserList(pageHtml).then((thePage) => {
-            thePage += "</body></html>";
-            res.send(thePage);
-        }
-    );
+        thePage += "</body></html>";
+        res.send(thePage);
+    });
 });
 
 // Append a <dl> and set of <dt>/<dd> definition list items of users and their
 // emails to the given markup.
-async function appendUserList (content) {
+async function appendUserList(content) {
     const dbUsers = await getUsers();
     content += "<dl>\n";
     if (dbUsers.rowCount === 0) {
@@ -47,8 +47,8 @@ async function appendUserList (content) {
     return content;
 };
 
-async function getUsers () {
-    var users = await dbRequest.runSql('SELECT * FROM "User";');
+async function getUsers() {
+    var users = await dbRequest.runSql("SELECT * FROM \"User\";");
     console.log("Database users count: ", users.rowCount);
     return users;
 };

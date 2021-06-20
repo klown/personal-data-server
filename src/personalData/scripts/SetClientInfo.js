@@ -21,7 +21,7 @@
 "use strict";
 
 async function main() {
-    if (process.argv.length != 5) {
+    if (process.argv.length !== 5) {
         console.log("Usage: node SetClientInfo.js provider clientId clientSecret");
         process.exit(1);
     }
