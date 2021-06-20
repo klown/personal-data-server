@@ -21,24 +21,24 @@ const fetch = require("node-fetch");
 const dbRequest = require("../dataBase.js");
 
 const router = express.Router();
+require("json5/lib/register");
 
 // Anti-forgery state parameter
 // TODO:  generate `state` on demand.
 const state = "03X6PS5fZ6e4";
-const GOOGLE_CALLBACK_URI = "http://localhost:3000/sso/google/login/callback";
-const ENCODED_GOOGLE_CALLBACK_URI = encodeURIComponent(GOOGLE_CALLBACK_URI);
-const GOOGLE_ACCESS_TOKEN_URI = "https://accounts.google.com/o/oauth2/token";
+const googleOptions = require("./googleSso.json5");
+googleOptions.encodedRedirectUri = encodeURIComponent(googleOptions.redirectUri);
 
 // SSO "home" page.
 router.get("/", function(req, res, next) {
-  res.render("index", { title: "Personal Data Server" });
+  res.render("index", { title: "Personal Data Server", message: "This paragraph intentionally left blank." });
 });
 
 // Trigger Google SSO
 router.get("/google", function(req, res, next) {
-    dbRequest.getSsoClientInfo("google").then(
+    dbRequest.getSsoClientInfo(googleOptions.provider).then(
         (clientInfo) => {
-            res.redirect(`https://accounts.google.com/o/oauth2/auth?client_id=${clientInfo.client_id}&redirect_uri=${ENCODED_GOOGLE_CALLBACK_URI}&scope=openid+profile+email&response_type=code&state=${state}&access_type=offline`);
+            res.redirect(`${googleOptions.authorizeUri}?client_id=${clientInfo.client_id}&redirect_uri=${googleOptions.encodedRedirectUri}&scope=openid+profile+email&response_type=code&state=${state}&access_type=${googleOptions.accessType}`);
         },
         (error) => {
             console.error(error);
@@ -55,13 +55,13 @@ router.get("/google/login/callback", function(req, res, next) {
     if (req.query.state === state) {
         // First response from Google is with a `code` parameter.
         if (req.query.code) {
-            fetchAccessToken(GOOGLE_ACCESS_TOKEN_URI, "google", req.query.code).then(
+            fetchAccessToken(googleOptions, req.query.code).then(
                 (accessToken) => {
                     console.log("Access token: ", JSON.stringify(accessToken, null, 2));
-                    res.render("index", { title: "Access token", messsage: JSON.stringify(accessToken, null, 2) });
+                    res.render("index", { title: "Access token", message: JSON.stringify(accessToken, null, 2) });
                 },
                 (error) => {
-                    console.error("Error requesting access token: ", err);
+                    console.error("Error requesting access token: ", error);
                     renderErrorResponse(res, error);
                 }
             );
@@ -121,22 +121,24 @@ dbRequest.getSsoClientInfo = async function (provider) {
  * for the SSO user.
  * See: https://github.com/node-fetch/node-fetch#common-usage
  *
- * @param {String} accessTokenUri The URI to use to make the access token
- *                                request of the SSO provider.
- * @param {String} provider  The SSO provider, e.g, google, github, or some
- *                           other.
- * @param {String} code  The key code result of the authorization request sent
- *                       to the provider.
+ * @param {Object} options Provider information
+ * @param {String} options.accessTokenUri The URI to use to make the access
+ *                                        token request of the SSO provider.
+ * @param {String} options.provider The SSO provider, e.g, google, github, etc.
+ * @param {String} options.redirectUri The Personal Data Server URI that the
+ *                                     provider calls back to.
+ * @param {String} code The key code result of the authorization request sent
+ *                      to the provider.
  * @return {Object} The access token, if the request is successful.
  */
-async function fetchAccessToken (accessTokenUri, provider, code) {
-    const clientInfo = await dbRequest.getSsoClientInfo(provider);
-    const response = await fetch(accessTokenUri, {
+async function fetchAccessToken (options, code) {
+    const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
+    const response = await fetch(options.accessTokenUri, {
         method: "post",
         body: JSON.stringify({
             grant_type: "authorization_code",
             code: `${code}`,
-            redirect_uri: `${GOOGLE_CALLBACK_URI}`,
+            redirect_uri: `${options.redirectUri}`,
             client_id: `${clientInfo.client_id}`,
             client_secret: `${clientInfo.client_secret}`
         }),

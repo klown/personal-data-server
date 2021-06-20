@@ -1,0 +1,40 @@
+/*
+ * Copyright 2021 Inclusive Design Research Centre, OCAD University
+ * All rights reserved.
+ *
+ * Handles endpoints:
+ * /sso/
+ * /sso/google - trigger SSO for Google OAuth2 provider
+ * /sso/google/login/callback - handle OAuth2 callback from Google
+ *
+ * Licensed under the New BSD license. You may not use this file except in
+ * compliance with this License.
+ *
+ * You may obtain a copy of the License at
+ * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
+ */
+
+{
+    // Google authorization endpoint to start their authorization workflow.
+    authorizeUri: "https://accounts.google.com/o/oauth2/auth",
+
+    // Google "get access token" and "refresh access token" endpoint.
+    accessTokenUri: "https://accounts.google.com/o/oauth2/token",
+    accessType: "offline",
+
+    // Google user endpoints.
+    emailUri: "https://www.googleapis.com/auth/userinfo.email",
+    profileUri: "https://www.googleapis.com/auth/userinfo.profile",
+
+    // Google "use access token endpoint"
+    credentialsUri: "https://oauth2.googleapis.com/token",
+
+    // URI that Google uses to call back to the Personal Data Server.
+    redirectUri: "http://localhost:3000/sso/google/login/callback",
+
+    // SQL to retrieve the client information (e.g. id and secret) for the
+    // Personal Data Server database.
+    provider: "google",
+    clientInfoSql: "SELECT * FROM \"AppSsoProvider\" WHERE provider='google'"
+}
+
