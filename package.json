@@ -37,7 +37,7 @@
         "fluid-lint-all": "1.1.0",
         "node-jqunit": "1.1.8",
         "nyc": "15.1.0",
-        "noddemon": "^2.0.7"
+        "nodemon": "^2.0.7"
     },
     "scripts": {
         "test": "(export PGDATABASE=prefs_testdb PGPORT=5433; npm run startTestServer && node node_modules/nyc/bin/nyc.js node tests/all-tests.js && npm run dropTestDatabase)",

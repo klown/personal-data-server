@@ -59,6 +59,16 @@ router.get("/google/login/callback", function (req, res) {
                 (accessToken) => {
                     // TODO: store the access token in the database
                     console.log("Access token: ", JSON.stringify(accessToken, null, 2));
+
+                    googleSso.fetchUserInfo(accessToken, googleSso.options).then(
+                        (userInfo) => {
+                            console.log("User info: ", JSON.stringify(userInfo));
+                        },
+                        (error) => {
+                            console.error("Error requesting user info: ", error);
+                            renderErrorResponse(res, error);
+                        }
+                    );
                     res.render("index", { title: "Access token", message: JSON.stringify(accessToken, null, 2) });
                 },
                 (error) => {

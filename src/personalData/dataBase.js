@@ -30,10 +30,9 @@ var dbRequest = new postgresdb.PostgresRequest(dbConfg);
  * retrieving the 'public' tables from the database and checking for one
  * named "AppSsoProvider".
  *
- * @return {Boolean} true -     If the connection to the database succeeds at
- *                              the configured host, port, user, and password,
- *                              and there is an "AppSsoProvider" table; false
- *                              otherwise.
+ * @return {Boolean} true - If the connection to the database succeeds at the
+ *                          configured host, port, user, and password, and there
+ *                          is an "AppSsoProvider" table; false otherwise.
  */
 dbRequest.isReady = async function () {
     try {
@@ -52,13 +51,13 @@ dbRequest.isReady = async function () {
 
 /**
  * Retrieve, from the database, the clientId and secret for this app as provided
- * by Google.
+ * by given provider.
  *
- * @param {String} provider -   The SSO provider, e.g, google, github, or some
- *                              other.
- * @return {Object}             The client information record for the given
- *                              provider.  Null is returned if there is no
- *                              such provider.
+ * @param {String} provider - The SSO provider, e.g, google, github, or some
+ *                            other.
+ * @return {Object}           The client information record for the given
+ *                            provider.  Null is returned if there is no such
+ *                            provider.
  */
 dbRequest.getSsoClientInfo = async function (provider) {
     try {
