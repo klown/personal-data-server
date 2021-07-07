@@ -80,4 +80,3 @@ INSERT INTO "AccessToken" ("ssoAccount", "ssoProvider", "accessToken", "expiresI
         '1//04jXyLbMMuTMXCgYIARAAGAQSNwF-L9IrSvHAGg3dikYtllivLrmRlrLFoyKKdjCMQiCdTmDRJT0F3gzm9gSSeBIrTo0KTRHuP1Q',
         'ln29.n0NsU6FZO38hz4wMPbfnNFZzqIntx-926x6yr7nVCljb0bLau3FjGuS8zmoQy_0__p5MqWZq2vyW_tH5yu0UqiB_oAXLjBnPKuhOVp7AIcKat2NtpaOcUW_xHmkovSkbJw_KS11u4XfBu-ucdMTj91-rsx1e0F'
 );
-

@@ -2,11 +2,6 @@
  * Copyright 2021 Inclusive Design Research Centre, OCAD University
  * All rights reserved.
  *
- * Handles endpoints:
- * /sso/
- * /sso/google - trigger SSO for Google OAuth2 provider
- * /sso/google/login/callback - handle OAuth2 callback from Google
- *
  * Licensed under the New BSD license. You may not use this file except in
  * compliance with this License.
  *
@@ -16,6 +11,8 @@
 
 "use strict";
 
+const crypto = require("crypto");
+
 /**
  * Create a unpredicatable random string of the given length.  This can be used
  * to create nonce and other such tokens.
@@ -23,12 +20,7 @@
  * @return {String} a random set of characters.
  */
 function generateRandomToken(length) {
-    var token = "";
-    const charset = "ABCDEFGHIJKLMMOPQRSTUVWXYZabcdefghijklmmopqrstuvwxyz01234567890_.-";
-    for (var i = 0; i < length; i++) {
-        token += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    return token;
+    return crypto.randomBytes(length).toString("base64");
 };
 
 module.exports = generateRandomToken;

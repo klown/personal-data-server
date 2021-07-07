@@ -32,7 +32,6 @@ const addUserSql = `
 
 class DataBaseRequest extends postgresdb.PostgresRequest {
 
-
     /**
      * Check that the database is ready to accept requests.  The check involves
      * retrieving the 'public' tables from the database and checking for one
@@ -98,6 +97,8 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
      *                                   defaults to "email",
      * @param {String} constraint.value - Value of the field to filter by,
      *                                    defaults to the form "name@host.com".
+     * @return {Object} The User record that matches the `userInfo` and
+     *                  `constraints`
      */
     async addUser(userInfo, constraint) {
         // Check if user already exists and create one if none.
@@ -116,7 +117,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
                 iterations: 0,
                 username: userInfo.email,
                 name: userInfo.name,
-                roles: ['user'],
+                roles: ["user"],
                 derived_key: generateToken(255),
                 verification_code: generateToken(255),
                 salt: generateToken(255),
@@ -232,12 +233,12 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
         // No existing access token in the database for this user. Insert a new
         // one
         } else {
-           var accessTokenJSON = {
-                    ssoAccount: accountRecords.ssoAccount.ssoAccountId,
-                    ssoProvider: accountRecords.appSsoProvider.providerId,
-                    accessToken: accessToken.access_token,
-                    expiresIn: accessToken.expires_in,
-                    loginToken: generateToken(128)
+            var accessTokenJSON = {
+                ssoAccount: accountRecords.ssoAccount.ssoAccountId,
+                ssoProvider: accountRecords.appSsoProvider.providerId,
+                accessToken: accessToken.access_token,
+                expiresIn: accessToken.expires_in,
+                loginToken: generateToken(128)
             };
             if (accessToken.refresh_token) {
                 accessTokenJSON.refreshToken = accessToken.refresh_token;

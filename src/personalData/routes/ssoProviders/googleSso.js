@@ -64,22 +64,6 @@ const googleSso = {
     },
 
     /**
-     * Fetch an access token and the user's information from google, then
-     * store them in the database.
-     *
-     * @param {Object} req - Express request for this SSO workflow
-     * @param {Object} dbRequest - Database access for retrieving from and
-     *                             storing to the database.
-     * @param {Object} options - Options specific to Google SSO.
-     */
-    fetchAndStoreTokenAndUser: async function (req, dbRequest, options) {
-        const accessToken = await fetchAccessToken(req.code, dbRequest, options);
-        const userInfo = await fetchUserInfo(accessToken, options);
-        const storeResult = await dbRequest.addUserAndAccessToken(options.provider, userInfo, accessToken);
-        return storeResult;
-    },
-
-    /**
      * Request an access token from Google SSO.
      *
      * @param {String} code - The code provided by Gogole to exchange for the
@@ -144,10 +128,10 @@ const googleSso = {
      *                               the user's access.
      * @param {Object} dbRequest - Database access for storing the user, access
      *                             token, and related records.
-     * @param {Object} options - Other options specific to Google SSO.
-     *
+     * @return {Object} Object that has the User, SsoAccount, and AccessToken
+     *                  records.
      */
-    addUserAndAccessToken: async function (userInfo, accessToken, dbRequest, options) {
+    addUserAndAccessToken: async function (userInfo, accessToken, dbRequest) {
         // Use Google's identifier as the userId field for the User record.
         const userRecord = await dbRequest.addUser(
             userInfo, {name: "userId", value: userInfo.id}

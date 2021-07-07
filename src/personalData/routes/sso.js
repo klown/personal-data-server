@@ -25,7 +25,7 @@ const googleSso = require("./ssoProviders/googleSso.js");
 
 const router = express.Router();
 
-// SSO "home" page.
+// SSO page.
 router.get("/", function (req, res) {
     res.render("index", {
         title: "Personal Data Server",
@@ -35,7 +35,7 @@ router.get("/", function (req, res) {
 
 // Trigger Google SSO
 router.get("/google", function (req, res) {
-    req.session.secret = generateNonce(16);
+    req.session.secret = generateNonce(12);
     dbRequest.getSsoClientInfo(googleSso.options.provider).then(
         (clientInfo) => {
             googleSso.authorize(req, res, clientInfo, req.session.secret, googleSso.options);
@@ -57,7 +57,7 @@ router.get("/google/login/callback", function (req, res) {
                 (accessToken) => {
                     googleSso.fetchUserInfo(accessToken, googleSso.options).then(
                         (userInfo) => {
-                            googleSso.addUserAndAccessToken(userInfo, accessToken, dbRequest, googleSso.options).then(
+                            googleSso.addUserAndAccessToken(userInfo, accessToken, dbRequest).then(
                                 (accountInfo) => { req.session.accountInfo = accountInfo; }
                             );
                         },
