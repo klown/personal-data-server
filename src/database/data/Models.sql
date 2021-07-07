@@ -69,7 +69,7 @@ CREATE TABLE "AccessToken" (
     "ssoProvider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") DEFERRABLE INITIALLY DEFERRED,
     "accessToken" TEXT NOT NULL,
     "expiresIn" INTEGER NOT NULL,
-    "refreshToken" TEXT NOT NULL,
+    "refreshToken" TEXT DEFAULT NULL,
     "loginToken" TEXT NOT NULL
 );
 INSERT INTO "AccessToken" ("ssoAccount", "ssoProvider", "accessToken", "expiresIn", "refreshToken", "loginToken")

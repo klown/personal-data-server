@@ -46,7 +46,8 @@ const googleSso = {
 
     /**
      * Execute the first step in the SSO workflow, making an authorize request
-     * to Google
+     * to Google.
+     *
      * @param {Object} req - The express request that triggered the workflow
      * @param {Object} res - The express response used to redirect to Google
      * @param {Object} clientInfo - The client id and secret of the personal data server
@@ -58,11 +59,29 @@ const googleSso = {
      *
      */
     authorize: function (req, res, clientInfo, state, options) {
+        console.log("Google /authorize request: ", `${options.authorizeUri}?client_id=${clientInfo.client_id}&redirect_uri=${options.encodedRedirectUri}&scope=openid+profile+email&response_type=code&state=${state}&access_type=${options.accessType}`);
         res.redirect(`${options.authorizeUri}?client_id=${clientInfo.client_id}&redirect_uri=${options.encodedRedirectUri}&scope=openid+profile+email&response_type=code&state=${state}&access_type=${options.accessType}`);
     },
 
     /**
-     * Request an access token from Google SSO
+     * Fetch an access token and the user's information from google, then
+     * store them in the database.
+     *
+     * @param {Object} req - Express request for this SSO workflow
+     * @param {Object} dbRequest - Database access for retrieving from and
+     *                             storing to the database.
+     * @param {Object} options - Options specific to Google SSO.
+     */
+    fetchAndStoreTokenAndUser: async function (req, dbRequest, options) {
+        const accessToken = await fetchAccessToken(req.code, dbRequest, options);
+        const userInfo = await fetchUserInfo(accessToken, options);
+        const storeResult = await dbRequest.addUserAndAccessToken(options.provider, userInfo, accessToken);
+        return storeResult;
+    },
+
+    /**
+     * Request an access token from Google SSO.
+     *
      * @param {String} code - The code provided by Gogole to exchange for the
      *                        access token
      * @param {Object} dbRequest - Database access for retrieving client id and
@@ -76,6 +95,7 @@ const googleSso = {
      */
     fetchAccessToken: async function (code, dbRequest, options) {
         // TODO:  error handling for each await.
+        debugger;
         const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
         const response = await fetch(options.accessTokenUri, {
             method: "post",
@@ -84,11 +104,13 @@ const googleSso = {
                 code: code,
                 redirect_uri: options.redirectUri,
                 client_id: clientInfo.client_id,
-                client_secret: clientInfo.client_secret
+                client_secret: clientInfo.client_secret,
+                access_type: options.access_type
             }),
             header: { "Content-type": "application/json" }
         });
         const accessToken = await response.json();
+        console.debug("Acess token for %s: %O", options.provider, accessToken);
         return accessToken;
     },
 
@@ -111,6 +133,28 @@ const googleSso = {
         const userInfo = response.json();
         console.log("USER INFO: ", JSON.stringify(userInfo, null, 2));
         return userInfo;
+    },
+
+    /**
+     * Create and persist user, access token, and SSO account records based
+     * on the given information.
+     *
+     * @param {Object} userInfo - The informatino to use to create the user record.
+     * @param {Object} accessToken - The access token provided by the provider for
+     *                               the user's access.
+     * @param {Object} dbRequest - Database access for storing the user, access
+     *                             token, and related records.
+     * @param {Object} options - Other options specific to Google SSO.
+     *
+     */
+    addUserAndAccessToken: async function (userInfo, accessToken, dbRequest, options) {
+        // Use Google's identifier as the userId field for the User record.
+        const userRecord = await dbRequest.addUser(
+            userInfo, {name: "userId", value: userInfo.id}
+        );
+        var accountInfo = await dbRequest.addSsoAccount(userRecord, userInfo, 'google');
+        accountInfo = await dbRequest.refreshAccessToken(accountInfo, accessToken);
+        return accountInfo;
     }
 };
 

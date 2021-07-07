@@ -18,14 +18,12 @@
 "use strict";
 
 const express = require("express");
+const session = require("express-session");
 const dbRequest = require("../dataBase.js");
+const generateNonce = require("../generateRandomToken.js");
 const googleSso = require("./ssoProviders/googleSso.js");
 
 const router = express.Router();
-
-// Anti-forgery state parameter
-// TODO:  generate `state` on demand.
-const state = "03X6PS5fZ6e4";
 
 // SSO "home" page.
 router.get("/", function (req, res) {
@@ -37,9 +35,10 @@ router.get("/", function (req, res) {
 
 // Trigger Google SSO
 router.get("/google", function (req, res) {
+    req.session.secret = generateNonce(16);
     dbRequest.getSsoClientInfo(googleSso.options.provider).then(
         (clientInfo) => {
-            googleSso.authorize(req, res, clientInfo, state, googleSso.options);
+            googleSso.authorize(req, res, clientInfo, req.session.secret, googleSso.options);
         },
         (error) => {
             console.error(error);
@@ -51,25 +50,29 @@ router.get("/google", function (req, res) {
 // Handle the callback from Google
 router.get("/google/login/callback", function (req, res) {
     console.log("Callback from Google:");
-    console.log(JSON.stringify(req.query, null, 2));
     // Check the anti-forgery token (state)
-    if (req.query.state === state) {
+    if (req.query.state === req.session.secret) {
         if (req.query.code) {
             googleSso.fetchAccessToken(req.query.code, dbRequest, googleSso.options).then(
                 (accessToken) => {
-                    // TODO: store the access token in the database
-                    console.log("Access token: ", JSON.stringify(accessToken, null, 2));
-
                     googleSso.fetchUserInfo(accessToken, googleSso.options).then(
                         (userInfo) => {
-                            console.log("User info: ", JSON.stringify(userInfo));
+                            googleSso.addUserAndAccessToken(userInfo, accessToken, dbRequest, googleSso.options).then(
+                                (accountInfo) => { req.session.accountInfo = accountInfo; }
+                            );
                         },
                         (error) => {
                             console.error("Error requesting user info: ", error);
                             renderErrorResponse(res, error);
                         }
                     );
-                    res.render("index", { title: "Access token", message: JSON.stringify(accessToken, null, 2) });
+                    // Finished SSO, forget state secret (needed?)
+                    req.session.secret = "shhhh";
+                    debugger;
+                    res.render("index", {
+                        title: "Access token",
+                        message: JSON.stringify(accessToken, null, 2)
+                    });
                 },
                 (error) => {
                     console.error("Error requesting access token: ", error);

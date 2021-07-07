@@ -124,7 +124,7 @@ class PostgresRequest extends pg.Pool {
                 }
             });
             var insertSql = format(
-                "INSERT INTO %I (%I) VALUES (%s)",
+                "INSERT INTO %I (%I) VALUES (%s) RETURNING *;",
                 tableName, Object.keys(aRecord), tableValues
             );
             console.log(insertSql);

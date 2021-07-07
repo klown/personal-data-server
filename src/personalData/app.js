@@ -13,6 +13,7 @@
 
 const createError = require("http-errors");
 const express = require("express");
+const session = require("express-session");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -22,6 +23,7 @@ var ssoRouter = require("./routes/sso");
 
 const app = express();
 app.use(logger("dev"));
+app.use(session({ secret: "shhhh", resave: false, saveUninitialized: true }));
 
 // Views
 app.set("views", path.join(__dirname, "views"));
