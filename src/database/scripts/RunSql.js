@@ -76,10 +76,9 @@ function main() {
 };
 
 function logResult(result) {
-    console.log(
-        result.command, " ",
-        ( result.rowCount === null ? "" : result.rowCount )
-    );
+    result.rows.forEach((row) => {
+        console.log("%O", row);
+    });
 };
 
 main();
