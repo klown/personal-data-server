@@ -72,11 +72,11 @@ CREATE TABLE "AccessToken" (
     "refreshToken" TEXT DEFAULT NULL,
     "loginToken" TEXT NOT NULL
 );
-INSERT INTO "AccessToken" ("ssoAccount", "ssoProvider", "accessToken", "expiresIn", "refreshToken", "loginToken")
+INSERT INTO "AccessToken" ("ssoAccount", "ssoProvider", "accessToken", "expiresAt", "refreshToken", "loginToken")
     VALUES (
         '1', 1,
         'ya29.a0AfH6SMB38um4jZCosaASMmdVagk-926k6le7aIPywo0oYnh3SwThF8mzbDl_0__c5ZdJMd2ilJ_gU5lh0HdvO_bNKYwOaCXhuBIc7NVpXng2AgcnBpHJ_kUzxbiFxoWj_XF11h4KsOh-hpqZGw91-efk1r0S',
-        3600,
+        '2021-10-19 10:23:54+02',
         '1//04jXyLbMMuTMXCgYIARAAGAQSNwF-L9IrSvHAGg3dikYtllivLrmRlrLFoyKKdjCMQiCdTmDRJT0F3gzm9gSSeBIrTo0KTRHuP1Q',
         'ln29.n0NsU6FZO38hz4wMPbfnNFZzqIntx-926x6yr7nVCljb0bLau3FjGuS8zmoQy_0__p5MqWZq2vyW_tH5yu0UqiB_oAXLjBnPKuhOVp7AIcKat2NtpaOcUW_xHmkovSkbJw_KS11u4XfBu-ucdMTj91-rsx1e0F'
 );

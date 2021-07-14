@@ -15,18 +15,25 @@ var express = require("express");
 var router = express.Router();
 const dbRequest = require("../dataBase.js");
 
-// GET home page.
+/**
+ * Home page.
+ */
 router.get("/", function (req, res) {
     res.render("index", { title: "Personal Data Server" });
 });
 
-// "/health" end point -- if the server is running at all, it will execute this
-// and is considered healthy
+/**
+ * "/health" end point -- if the server is running at all, it will respond that
+ * it is healthy.  This does not necessarily mean the database is ready -- see
+ * below.
+ */
 router.get("/health", function (req, res) {
     res.json({ isHealthy: true });
 });
 
-// "/ready" end point -- if server is healthy and the database is ready.
+/**
+ * "/ready" end point -- if server is healthy and the database is ready.
+ */
 router.get("/ready", function (req, res) {
     dbRequest.isReady().then(
         (ready) => { res.json({ isReady: ready }); },

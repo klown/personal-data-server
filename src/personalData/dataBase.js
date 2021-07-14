@@ -24,22 +24,15 @@ const dbConfig = {
     password: process.env.POSTGRES_PASSWORD || "asecretpassword"
 };
 
-const addUserSql = `
-    INSERT in users ("userId"", iterations, username, name, email, roles, derived_key, salt, verification_code, verified)
-    VALUES ($1, $2, $3, $4, $5, 'user', $6, $7, $8, $9 )
-    RETURNING *;
-`;
-
 class DataBaseRequest extends postgresdb.PostgresRequest {
 
     /**
      * Check that the database is ready to accept requests.  The check involves
-     * retrieving the 'public' tables from the database and checking for one
-     * named "AppSsoProvider".
+     * retrieving the 'public' tables for one named "AppSsoProvider".
      *
-     * @return {Boolean} true - If the connection to the database succeeds at the
-     *                          configured host, port, user, and password, and there
-     *                          is an "AppSsoProvider" table; false otherwise.
+     * @return {Boolean} - True if the connection to the database succeeds at
+     *                     the configured host, port, user, and password, and
+     *                     there is an "AppSsoProvider" table; false otherwise.
      */
     async isReady() {
         try {
@@ -63,8 +56,9 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
      * @param {String} provider - The SSO provider, e.g, google, github, or some
      *                            other.
      * @return {Object}           The client information record for the given
-     *                            provider.  Null is returned if there is no such
-     *                            provider.
+     *                            provider.  Otherwise, an error is thrown;
+     *                            either a "No such provider..." error, or a
+     *                            database error.
      */
     async getSsoClientInfo(provider) {
         try {
@@ -83,7 +77,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
     };
 
     /**
-     * Create and persist a User, or find an exising User.  The default way to
+     * Create a User record, or find an exising one.  The default way to
      * identify a User is by their email whose value is given in the first
      * argument `userInfo`.  Another way to identify the user can be provided
      * by the caller using the `constraint` argument, e.g.
@@ -98,19 +92,20 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
      * @param {String} constraint.value - Value of the field to filter by,
      *                                    defaults to the form "name@host.com".
      * @return {Object} The User record that matches the `userInfo` and
-     *                  `constraints`
+     *                  `constraint`.
      */
     async addUser(userInfo, constraint) {
-        // Check if user already exists and create one if none.
         const filter = constraint || {
             name: "email",
             value: userInfo.email
         };
+        // Check if user already exists and create one if none.
         var userRecords = await this.runSql(
             `SELECT * FROM "User" WHERE "${filter.name}"='${filter.value}';`
         );
-        // TODO: derived_key, verification_code, and salt are meaningless in an
-        // SSO scenario, but consider creating actual values for them.
+        // TODO: derived_key, verification_code, and salt are meaningless in
+        // an SSO scenario.  Is it nonetheless necessary to create actual
+        // values?  Using `generateToken()` for now.
         if (userRecords.rowCount === 0) {
             const newUser = {
                 userId: userInfo.id,
@@ -130,8 +125,9 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
     };
 
     /**
-     * Create and persist an SsoAccount record associated with the given User
-     * records, or update an exising SsoAccount.
+     * Create an SsoAccount record associated with the given User record, or
+     * update an exising SsoAccount.  Return an object consisting of the
+     * associate User, SsoAccount, and AppSsoProvider records.
      *
      * @param {Object} userRecord - The User record in the database associated
      *                              with this account.
@@ -173,14 +169,16 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
 
     /**
      * Create and persist an AccessToken record, or update an exising one.
+     * Add the new or updated AccessToken record to the `accountRecords`
+     * object.
      *
-     * @param {Object} accountRecords - Object containing the assoicated User,
+     * @param {Object} accountRecords - Object containing the associated User,
      *                                  AppSsoProvider, and SsoAccount records.
      * @param {Object} accessToken - Access token associated with the User as
      *                               provided by the SSO provider.
-     * @return {Object} An object consisting of the User record, the
-     *                  AppSsoProvider record, and the SsoAccount record, and the
-     *                  AccessToken record.
+     * @return {Object} An object consisting of the User record, and the
+     *                  associated SsoAccount, AccessToken, and AppSsoProvider
+     *                  records.
      */
     async refreshAccessToken(accountRecords, accessToken) {
         var accessTokenRecords = await this.runSql(`
@@ -190,64 +188,57 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
         `);
         // If there is an access token record in the database, update it with
         // the new incoming access token, expiry, and possible refresh token.
-        // If there is no incoming refresh token, leave whatever refrehs token
-        // is in the database as is.
-        debugger;
+        const expiryTimestamp = new Date(Date.now() + (accessToken.expires_in * 1000));
         var newTokenRecords;
         if (accessTokenRecords.rowCount > 0) {
+            const accessTokenRecord = accessTokenRecords.rows[0];
+
+            // If the value of the incoming access token is new, create a new
+            // loginToken at the same time.
+            var loginToken;
+            if (accessTokenRecord.accessToken !== accessToken.access_token) {
+                loginToken = generateToken(128);
+            } else {
+                loginToken = accessTokenRecord.loginToken;
+            }
+            // If there is a new incoming refresh token, update the database
+            // with it; otherwise, leave it as is.
             if (accessToken.refresh_token) {
-                // TODO: remove console -- for debugging.
-                console.log(`
-                    UPDATE "AccessToken" SET
-                      "accessToken" = '${accessToken.access_token}',
-                      "expiresIn" =  ${accessToken.expires_in},
-                      "refreshToken" = '${accessToken.refresh_token}'
-                      WHERE id=${accessTokenRecords.rows[0].id}
-                      RETURNING *;
-                `);
                 newTokenRecords = await this.runSql(`
                     UPDATE "AccessToken" SET
                       "accessToken" = '${accessToken.access_token}',
-                      "expiresIn" =  ${accessToken.expires_in},
-                      "refreshToken" = '${accessToken.refresh_token}'
-                      WHERE id=${accessTokenRecords.rows[0].id}
+                      "expiresAt" =  '${expiryTimestamp.toISOString()}',
+                      "refreshToken" = '${accessToken.refresh_token}',
+                      "loginToken" = '$(loginToken)'
+                      WHERE id=${accessTokenRecord.id}
                       RETURNING *;
                 `);
             } else {
-                // TODO: remove console -- for debugging.
-                console.log(`
-                    UPDATE "AccessToken" SET
-                      "accessToken" = '${accessToken.access_token}',
-                      "expiresIn" = ${accessToken.expires_in}
-                      WHERE id=${accessTokenRecords.rows[0].id}
-                      RETURNING *;
-                `);
                 newTokenRecords = await this.runSql(`
                     UPDATE "AccessToken" SET
                       "accessToken" = '${accessToken.access_token}',
-                      "expiresIn" = ${accessToken.expires_in}
+                      "expiresAt" = '${expiryTimestamp.toISOString()}'
+                      "loginToken" = '$(loginToken)'
                       WHERE id=${accessTokenRecords.rows[0].id}
                       RETURNING *;
                 `);
             }
         // No existing access token in the database for this user. Insert a new
-        // one
+        // one.
         } else {
             var accessTokenJSON = {
                 ssoAccount: accountRecords.ssoAccount.ssoAccountId,
                 ssoProvider: accountRecords.appSsoProvider.providerId,
                 accessToken: accessToken.access_token,
-                expiresIn: accessToken.expires_in,
+                expiresAt: expiryTimestamp.toISOString(),
                 loginToken: generateToken(128)
             };
             if (accessToken.refresh_token) {
                 accessTokenJSON.refreshToken = accessToken.refresh_token;
             }
-            // TODO: remove console -- for debugging.
             console.debug("Access Token JSON: %O", accessTokenJSON);
             newTokenRecords = await this.loadFromJSON("AccessToken", [accessTokenJSON]);
         }
-        debugger;
         accountRecords.accessToken = newTokenRecords.rows[0];
         return accountRecords;
     };

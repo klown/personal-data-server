@@ -18,14 +18,14 @@
 "use strict";
 
 const express = require("express");
-const session = require("express-session");
 const dbRequest = require("../dataBase.js");
-const generateNonce = require("../generateRandomToken.js");
 const googleSso = require("./ssoProviders/googleSso.js");
 
 const router = express.Router();
 
-// SSO page.
+/**
+ * Trigger the single sign on workflow where Google is the OAuth2 provider.
+ */
 router.get("/", function (req, res) {
     res.render("index", {
         title: "Personal Data Server",
@@ -33,63 +33,50 @@ router.get("/", function (req, res) {
     });
 });
 
-// Trigger Google SSO
+
+/**
+ * Trigger the single sign on workflow where Google is the OAuth2 provider.
+ */
 router.get("/google", function (req, res) {
-    req.session.secret = generateNonce(12);
-    dbRequest.getSsoClientInfo(googleSso.options.provider).then(
-        (clientInfo) => {
-            googleSso.authorize(req, res, clientInfo, req.session.secret, googleSso.options);
-        },
-        (error) => {
-            console.error(error);
-            renderErrorResponse(res, error);
-        }
-    );
+    // Redirects to Google's `/authorize` endpoint
+    googleSso.authorize(req, res, dbRequest, googleSso.options)
+    .catch((error) => {
+        console.error(error);
+        // TODO: replace with non-ui response, likely json with a meaningful
+        // status code.
+        renderErrorResponse(res, error);
+    });
 });
 
-// Handle the callback from Google
+/**
+ * Handle the OAuth2 redirect callback from Google.
+ */
 router.get("/google/login/callback", function (req, res) {
-    console.log("Callback from Google:");
-    // Check the anti-forgery token (state)
-    if (req.query.state === req.session.secret) {
-        if (req.query.code) {
-            googleSso.fetchAccessToken(req.query.code, dbRequest, googleSso.options).then(
-                (accessToken) => {
-                    googleSso.fetchUserInfo(accessToken, googleSso.options).then(
-                        (userInfo) => {
-                            googleSso.addUserAndAccessToken(userInfo, accessToken, dbRequest).then(
-                                (accountInfo) => { req.session.accountInfo = accountInfo; }
-                            );
-                        },
-                        (error) => {
-                            console.error("Error requesting user info: ", error);
-                            renderErrorResponse(res, error);
-                        }
-                    );
-                    // Finished SSO, forget state secret (needed?)
-                    req.session.secret = "shhhh";
-                    debugger;
-                    res.render("index", {
-                        title: "Access token",
-                        message: JSON.stringify(accessToken, null, 2)
-                    });
-                },
-                (error) => {
-                    console.error("Error requesting access token: ", error);
-                    renderErrorResponse(res, error);
-                }
-            );
-        } else {
-            const error = new Error("Unknown request");
-            console.error(error.message);
-            renderErrorResponse(res, error);
-        }
-    // Mismatch with anti-forgery `state` parameter -- bail.
-    } else {
+    if (req.query.state !== req.session.secret) {
         const error = new Error("Mismatched anti-forgery parameter");
         console.error(error.message);
         renderErrorResponse(res, error);
     }
+    // Anti-forgery check passed -- handle the callback from Google.
+    googleSso.handleCallback(req, res, dbRequest, googleSso.options)
+    .then((loginToken) => {
+        // Finished SSO, forget state secret (needed?)
+        req.query.state = "shhhh";
+        req.session.staticToken = loginToken;
+
+        // TODO: Need some sort of response here, but Google isn't expecting
+        // anything.
+        res.render("index", {
+            title: "Login Token:",
+            message: JSON.stringify(req.session.staticToken, null, 2)
+        });
+    })
+    .catch((error) => {
+        console.log(error);
+        // TODO: replace with non-ui response, likely json with a meaningful
+        // status code.
+        renderErrorResponse(res, error);
+    });
 });
 
 /**
