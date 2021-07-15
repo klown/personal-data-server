@@ -209,7 +209,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
                       "accessToken" = '${accessToken.access_token}',
                       "expiresAt" =  '${expiryTimestamp.toISOString()}',
                       "refreshToken" = '${accessToken.refresh_token}',
-                      "loginToken" = '$(loginToken)'
+                      "loginToken" = '${loginToken}'
                       WHERE id=${accessTokenRecord.id}
                       RETURNING *;
                 `);
@@ -217,8 +217,8 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
                 newTokenRecords = await this.runSql(`
                     UPDATE "AccessToken" SET
                       "accessToken" = '${accessToken.access_token}',
-                      "expiresAt" = '${expiryTimestamp.toISOString()}'
-                      "loginToken" = '$(loginToken)'
+                      "expiresAt" = '${expiryTimestamp.toISOString()}',
+                      "loginToken" = '${loginToken}'
                       WHERE id=${accessTokenRecords.rows[0].id}
                       RETURNING *;
                 `);
