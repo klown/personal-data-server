@@ -40,12 +40,12 @@ router.get("/", function (req, res) {
 router.get("/google", function (req, res) {
     // Redirects to Google's `/authorize` endpoint
     googleSso.authorize(req, res, dbRequest, googleSso.options)
-    .catch((error) => {
-        console.error(error);
-        // TODO: replace with non-ui response, likely json with a meaningful
-        // status code.
-        renderErrorResponse(res, error);
-    });
+        .catch((error) => {
+            console.error(error);
+            // TODO: replace with non-ui response, likely json with a meaningful
+            // status code.
+            renderErrorResponse(res, error);
+        });
 });
 
 /**
@@ -59,24 +59,24 @@ router.get("/google/login/callback", function (req, res) {
     }
     // Anti-forgery check passed -- handle the callback from Google.
     googleSso.handleCallback(req, res, dbRequest, googleSso.options)
-    .then((loginToken) => {
-        // Finished SSO, forget state secret (needed?)
-        req.query.state = "shhhh";
-        req.session.staticToken = loginToken;
+        .then((loginToken) => {
+            // Finished SSO, forget state secret (needed?)
+            req.query.state = "shhhh";
+            req.session.staticToken = loginToken;
 
-        // TODO: Need some sort of response here, but Google isn't expecting
-        // anything.
-        res.render("index", {
-            title: "Login Token:",
-            message: JSON.stringify(req.session.staticToken, null, 2)
+            // TODO: Need some sort of response here, but Google isn't expecting
+            // anything.
+            res.render("index", {
+                title: "Login Token:",
+                message: JSON.stringify(req.session.staticToken, null, 2)
+            });
+        })
+        .catch((error) => {
+            console.log(error);
+            // TODO: replace with non-ui response, likely json with a meaningful
+            // status code.
+            renderErrorResponse(res, error);
         });
-    })
-    .catch((error) => {
-        console.log(error);
-        // TODO: replace with non-ui response, likely json with a meaningful
-        // status code.
-        renderErrorResponse(res, error);
-    });
 });
 
 /**

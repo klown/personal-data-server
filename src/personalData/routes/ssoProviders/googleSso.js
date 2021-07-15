@@ -96,6 +96,7 @@ const googleSso = {
             console.debug(accountInfo);
             return accountInfo.accessToken.loginToken;
         }
+        // TODO:  if all catch() does in re-throw, is the try/catch necessary?
         catch (error) {
             throw error;
         }
@@ -116,7 +117,6 @@ const googleSso = {
      * @return {Object} an access token as json.
      */
     fetchAccessToken: async function (code, dbRequest, options) {
-        debugger;
         const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
         const response = await fetch(options.accessTokenUri, {
             method: "post",

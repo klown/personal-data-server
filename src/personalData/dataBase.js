@@ -45,7 +45,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
         }
         catch (error) {
             console.error("Error accessing database, ", error);
-            return false;
+            throw error;
         }
     };
 

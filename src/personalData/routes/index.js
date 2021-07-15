@@ -37,7 +37,10 @@ router.get("/health", function (req, res) {
 router.get("/ready", function (req, res) {
     dbRequest.isReady().then(
         (ready) => { res.json({ isReady: ready }); },
-        (err) => { res.json({ isReady: false, error: err.message }); }
+        () => {
+            res.status(503);
+            res.json({ isError: true, message: "Database is not ready" });
+        }
     );
 });
 
