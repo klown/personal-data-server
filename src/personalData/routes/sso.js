@@ -37,10 +37,10 @@ router.get("/", function (req, res) {
 /**
  * Trigger the single sign on workflow where Google is the OAuth2 provider.
  */
-router.get("/google", function (req, res) {
+router.get("/google", function (req, res, next) {
     // Redirects to Google's `/authorize` endpoint
     googleSso.authorize(req, res, dbRequest, googleSso.options)
-        .catch((error) => {
+        .then(null, (error) => {
             console.error(error);
             // TODO: replace with non-ui response, likely json with a meaningful
             // status code.

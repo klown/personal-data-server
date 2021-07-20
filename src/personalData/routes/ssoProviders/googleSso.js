@@ -96,7 +96,7 @@ const googleSso = {
             console.debug(accountInfo);
             return accountInfo.accessToken.loginToken;
         }
-        // TODO:  if all catch() does in re-throw, is the try/catch necessary?
+        // TODO:  if all catch() does is re-throw, is the try/catch necessary?
         catch (error) {
             throw error;
         }
@@ -131,7 +131,7 @@ const googleSso = {
             header: { "Content-type": "application/json" }
         });
         const accessToken = await response.json();
-        console.debug("Acess token for %s: %O", options.provider, accessToken);
+        console.debug("Status: %s: Access token for %s: %O", response.status, options.provider, accessToken);
         return accessToken;
     },
 
