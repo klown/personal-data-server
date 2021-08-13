@@ -20,31 +20,34 @@ const generateNonce = require("../../generateRandomToken.js");
 
 const REDIRECT_URI = "http://localhost:3000/sso/google/login/callback";
 
-// TODO:  make this a class?
-const googleSso = {
-    options: {
-        // Google authorization endpoint to start their authorization workflow.
-        authorizeUri: "https://accounts.google.com/o/oauth2/auth",
+const options = {
+    // Google authorization endpoint to start their authorization workflow.
+    authorizeUri: "https://accounts.google.com/o/oauth2/auth",
 
-        // Google "get access token" and "refresh access token" endpoints.
-        accessTokenUri: "https://accounts.google.com/o/oauth2/token",
-        accessType: "offline",
+    // Google "get access token" and "refresh access token" endpoints.
+    accessTokenUri: "https://accounts.google.com/o/oauth2/token",
+    accessType: "offline",
 
-        // Google user endpoints.
-        userInfoUri: "https://www.googleapis.com/oauth2/v2/userinfo",
+    // Google user endpoints.
+    userInfoUri: "https://www.googleapis.com/oauth2/v2/userinfo",
 
-        // Google "use access token endpoint"
-        credentialsUri: "https://oauth2.googleapis.com/token",
+    // Google "use access token endpoint"
+    credentialsUri: "https://oauth2.googleapis.com/token",
 
-        // URI that Google uses to call back to the Personal Data Server for
-        // logging in.
-        redirectUri: REDIRECT_URI,
-        encodedRedirectUri: encodeURIComponent(REDIRECT_URI),
+    // URI that Google uses to call back to the Personal Data Server for
+    // logging in.
+    redirectUri: REDIRECT_URI,
+    encodedRedirectUri: encodeURIComponent(REDIRECT_URI),
 
-        // Identifier for retrieving the client information (e.g. id and secret)
-        // for the Personal Data Server database.
-        provider: "google"
-    },
+    // Identifier for retrieving the client information (e.g. id and secret)
+    // for the Personal Data Server database.
+    provider: "google"
+};
+
+class GoogleSso {
+
+    get REDIRECT_URI() { return REDIRECT_URI; };
+    get options() { return options; };
 
     /**
      * Execute the first step in the SSO workflow, making an authorize request
@@ -61,13 +64,13 @@ const googleSso = {
      * @param {String} options.accessType - The type of access to Google needed for SSO
      *
      */
-    authorize: async function (req, res, dbRequest, options) {
-        const clientInfo = await dbRequest.getSsoClientInfo(googleSso.options.provider);
+    async authorize (req, res, dbRequest, options) {
+        const clientInfo = await dbRequest.getSsoClientInfo(this.options.provider);
         req.session.secret = generateNonce(12);
         const authRequest = `${options.authorizeUri}?client_id=${clientInfo.client_id}&redirect_uri=${options.encodedRedirectUri}&scope=openid+profile+email&response_type=code&state=${req.session.secret}&access_type=${options.accessType}`;
         console.debug("Google /authorize request: ", authRequest);
         res.redirect(authRequest);
-    },
+    };
 
     /**
      * Handle the redirect callback from Google:
@@ -85,14 +88,14 @@ const googleSso = {
      * @param {Object} options - Other options specific to Google SSO
      * @return {String} - The login token generated for static workflow clients.
      */
-    handleCallback: async function (req, res, dbRequest, options) {
+    async handleCallback (req, res, dbRequest, options) {
         try {
             if (!req.query.code) {
                 throw new Error("Unknown request");
             }
-            const accessToken = await googleSso.fetchAccessToken(req.query.code, dbRequest, options);
-            const userInfo = await googleSso.fetchUserInfo(accessToken, options);
-            const accountInfo = await googleSso.storeUserAndAccessToken(userInfo, accessToken, dbRequest);
+            const accessToken = await this.fetchAccessToken(req.query.code, dbRequest, options);
+            const userInfo = await this.fetchUserInfo(accessToken, options);
+            const accountInfo = await this.storeUserAndAccessToken(userInfo, accessToken, dbRequest);
             console.debug(accountInfo);
             return accountInfo.accessToken.loginToken;
         }
@@ -100,7 +103,7 @@ const googleSso = {
         catch (error) {
             throw error;
         }
-    },
+    };
 
     /**
      * Request an access token from Google SSO.
@@ -116,7 +119,7 @@ const googleSso = {
      *                                          endpoint.
      * @return {Object} an access token as json.
      */
-    fetchAccessToken: async function (code, dbRequest, options) {
+    async fetchAccessToken (code, dbRequest, options) {
         const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
         const response = await fetch(options.accessTokenUri, {
             method: "post",
@@ -133,7 +136,7 @@ const googleSso = {
         const accessToken = await response.json();
         console.debug("Status: %s: Access token for %s: %O", response.status, options.provider, accessToken);
         return accessToken;
-    },
+    };
 
     /**
      * Request the SSO users's email and profile from Google.
@@ -143,7 +146,7 @@ const googleSso = {
      * @param {Object} options.userInfoUri - URI to Google's user profile end point.
      * @return {Object} user profile information as json.
      */
-    fetchUserInfo: async function (accessToken, options) {
+    async fetchUserInfo (accessToken, options) {
         const fullUri = `${options.userInfoUri}?` + new URLSearchParams({
             access_token: accessToken.access_token,
             alt: "json"
@@ -154,7 +157,7 @@ const googleSso = {
         const userInfo = response.json();
         console.debug("USER INFO: ", JSON.stringify(userInfo, null, 2));
         return userInfo;
-    },
+    };
 
     /**
      * Create and persist user, access token, and SSO account records based
@@ -168,7 +171,7 @@ const googleSso = {
      * @return {Object} Object that has the User, SsoAccount, and AccessToken
      *                  records.
      */
-    storeUserAndAccessToken: async function (userInfo, accessToken, dbRequest) {
+    async storeUserAndAccessToken (userInfo, accessToken, dbRequest) {
         // Use Google's identifier as the userId field for the User record.
         const userRecord = await dbRequest.addUser(
             userInfo, {name: "userId", value: userInfo.id}
@@ -176,7 +179,7 @@ const googleSso = {
         var accountInfo = await dbRequest.addSsoAccount(userRecord, userInfo, "google");
         accountInfo = await dbRequest.refreshAccessToken(accountInfo, accessToken);
         return accountInfo;
-    }
+    };
 };
 
-module.exports = googleSso;
+module.exports = new GoogleSso();
