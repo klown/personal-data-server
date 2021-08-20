@@ -16,7 +16,7 @@ const fluid = require("infusion"),
 
 fluid.registerNamespace("fluid.tests.personalData");
 
-fluid.tests.personalData.serverUrl = "http://localhost:3000";
+fluid.tests.personalData.serverUrl = "http://localhost:3001";
 fluid.tests.personalData.postgresContainer = "postgresdb";
 fluid.tests.personalData.postgresImage = "postgres:13.1-alpine";
 
@@ -25,11 +25,16 @@ const DELAY = 2000; // msec
 
 fluid.tests.personalData.initEnvironmentVariables = function () {
     console.debug("- Initializing shell environment variables");
+
+    // Database
     process.env.PGDATABASE = "prefs_testdb";
     process.env.PGHOST = "localhost";
     process.env.PGPORT = 5433;
     process.env.PGUSER = "admin";
     process.env.POSTGRES_PASSWORD = "asecretpassword";
+
+    // Personal data server (used by express's startup script)
+    process.env.PORT = 3001
 };
 
 fluid.tests.personalData.sleep = async function (delay) {
@@ -37,9 +42,8 @@ fluid.tests.personalData.sleep = async function (delay) {
 };
 
 /**
- * Start the personal data server, waiting until is up and running.  Once the
- * process is started, the given url is requested either until a successful
- * response, or after ten attempts.
+ * Check if the personal data server is running using the given url.  If not
+ * running, start it.  If it does not start after ten attempts, give up.
  *
  * @param {String} execCmd - Command passed to `exec()` to start the server.
  * @param {String} url - The url to GET to test if the server is running.
@@ -49,6 +53,14 @@ fluid.tests.personalData.sleep = async function (delay) {
  */
 fluid.tests.personalData.startServer = async function (execCmd, url) {
     var resp = {};
+    console.debug(`Checking if server is running using ${url}`);
+    try {
+        resp = await fetch(url);
+        return { status: resp.status, process: null, wasRunning: true };
+    }
+    catch (error) { ; }
+
+    // Server needs to be started
     console.debug(`Starting server at ${url}`);
     const pdServerProcess = exec(execCmd);
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
@@ -57,16 +69,18 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
             resp = await fetch(url);
         }
         catch (error) {
+            console.debug(`... attempt ${i} error: ${error.message}`);
             resp.status = 503;
         }
         if (resp.status === 200) {
             break;
         } else {
+            console.debug(`... attempt ${i} going to sleep`);
             await fluid.tests.personalData.sleep(DELAY);
         }
     }
     console.debug(`Attempt to start server, result:  ${resp.status}`);
-    return { status: resp.status, process: pdServerProcess };
+    return { status: resp.status, process: pdServerProcess, wasRunning: false };
 };
 
 /**
