@@ -53,8 +53,8 @@ INSERT INTO "User" (
 -- SSO Account
 CREATE TABLE "SsoAccount" (
     "ssoAccountId" SERIAL NOT NULL PRIMARY KEY,
-    "user" VARCHAR(64) NOT NULL REFERENCES "User" ("userId") DEFERRABLE INITIALLY DEFERRED,
-    "provider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") DEFERRABLE INITIALLY DEFERRED,
+    "user" VARCHAR(64) NOT NULL REFERENCES "User" ("userId") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
+    "provider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     "userInfo" JSONB NOT NULL
 );
 INSERT INTO "SsoAccount" ("user", "provider", "userInfo")
@@ -65,8 +65,8 @@ INSERT INTO "SsoAccount" ("user", "provider", "userInfo")
 -- Access Token from SSO Provider
 CREATE TABLE "AccessToken" (
     "id" SERIAL NOT NULL PRIMARY KEY,
-    "ssoAccount" INTEGER NOT NULL REFERENCES "SsoAccount" ("ssoAccountId") DEFERRABLE INITIALLY DEFERRED,
-    "ssoProvider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") DEFERRABLE INITIALLY DEFERRED,
+    "ssoAccount" INTEGER NOT NULL REFERENCES "SsoAccount" ("ssoAccountId") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+    "ssoProvider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     "accessToken" TEXT NOT NULL,
     "expiresIn" INTEGER NOT NULL,
     "refreshToken" TEXT DEFAULT NULL,

@@ -24,9 +24,10 @@ const crypto = require("crypto");
 function generateRandomToken(length) {
     return crypto.randomBytes(length)
         .toString("base64")
-        .replace(/\+/g, "-") // make it url safe: plus becomes minus,
-        .replace(/\//g, "_") // slash becomes underscore,
-        .replace(/=*$/, ""); // and trailing equals are removed
+        .replace(/\+/g, "-")        // make it url safe: plus becomes minus,
+        .replace(/\//g, "_")        // slash becomes underscore,
+        .replace(/=*$/, "")         // and trailing equals are removed
+        .substring(0, length - 1);  // ensure `length`
 };
 
 module.exports = generateRandomToken;

@@ -37,14 +37,12 @@ router.get("/", function (req, res) {
 /**
  * Trigger the single sign on workflow where Google is the OAuth2 provider.
  */
-router.get("/google", function (req, res, next) {
+router.get("/google", function (req, res) {
     // Redirects to Google's `/authorize` endpoint
     googleSso.authorize(req, res, dbRequest, googleSso.options)
         .then(null, (error) => {
-            console.error(error);
-            // TODO: replace with non-ui response, likely json with a meaningful
-            // status code.
-            renderErrorResponse(res, error);
+            console.log(error);
+            res.status(403).json({"isError": true, "message": error.message});
         });
 });
 
@@ -53,44 +51,25 @@ router.get("/google", function (req, res, next) {
  */
 router.get("/google/login/callback", function (req, res) {
     if (req.query.state !== req.session.secret) {
-        const error = new Error("Mismatched anti-forgery parameter");
-        console.error(error.message);
-        renderErrorResponse(res, error);
+        const msg = "Mismatched anti-forgery parameter";
+        console.log(`${msg}: expected: '%s', actual: '%s'`, req.session.secret, req.query.state);
+        res.status(403).json({"isError": true, "message": msg});
     }
     // Anti-forgery check passed -- handle the callback from Google.
-    googleSso.handleCallback(req, res, dbRequest, googleSso.options)
+    googleSso.handleCallback(req, dbRequest, googleSso.options)
         .then((loginToken) => {
             // Finished SSO, forget state secret (needed?)
             req.query.state = "shhhh";
             req.session.staticToken = loginToken;
 
-            // TODO: Need some sort of response here, but Google isn't expecting
-            // anything.
-            res.render("index", {
-                title: "Login Token:",
-                message: JSON.stringify(req.session.staticToken, null, 2)
-            });
+            // TODO: The response here is just for debugging/testing. Replace
+            // with a simple 200 status code, with no payload (?)
+            res.json({"loginToken": JSON.stringify(req.session.staticToken, null, 2)});
         })
         .catch((error) => {
             console.log(error);
-            // TODO: replace with non-ui response, likely json with a meaningful
-            // status code.
-            renderErrorResponse(res, error);
+            res.status(403).json({"isError": true, "message": error.message});
         });
 });
-
-/**
- * Render an error response
- *
- * @param {Object}  response - An express response object
- * @param {Error}   err      - An error instance
- */
-function renderErrorResponse(response, err) {
-    response.render("error", {
-        title: err.message,
-        message: err.message,
-        error: err
-    });
-};
 
 module.exports = router;

@@ -119,7 +119,8 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
                 email: userInfo.email,
                 verified: true
             };
-            userRecords = await this.loadFromJSON("User", [newUser])[0];
+            const results =  await this.loadFromJSON("User", [newUser]);
+            userRecords = results[0];
         }
         return userRecords.rows[0];
     };
@@ -144,11 +145,12 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
             `SELECT * FROM "SsoAccount" WHERE "user"='${userRecord.userId}';`
         );
         if (ssoAccountRecords.rowCount === 0) {
-            ssoAccountRecords = await this.loadFromJSON("SsoAccount", [{
+            const results = await this.loadFromJSON("SsoAccount", [{
                 user: userRecord.userId,
                 provider: clientInfo.providerId,
                 userInfo: userInfo
-            }])[0];
+            }]);
+            ssoAccountRecords = results[0];
         } else {
             // TODO: consider adding updateFromJSON().
             const accountId = ssoAccountRecords.rows[0].ssoAccountId;
@@ -236,8 +238,8 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
             if (accessToken.refresh_token) {
                 accessTokenJSON.refreshToken = accessToken.refresh_token;
             }
-            console.debug("Access Token JSON: %O", accessTokenJSON);
-            newTokenRecords = await this.loadFromJSON("AccessToken", [accessTokenJSON]);
+            const results = await this.loadFromJSON("AccessToken", [accessTokenJSON]);
+            newTokenRecords = results[0];
         }
         accountRecords.accessToken = newTokenRecords.rows[0];
         return accountRecords;

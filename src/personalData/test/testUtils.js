@@ -34,7 +34,7 @@ fluid.tests.personalData.initEnvironmentVariables = function () {
     process.env.POSTGRES_PASSWORD = "asecretpassword";
 
     // Personal data server (used by express's startup script)
-    process.env.PORT = 3001
+    process.env.PORT = 3001;
 };
 
 fluid.tests.personalData.sleep = async function (delay) {
@@ -53,7 +53,7 @@ fluid.tests.personalData.sleep = async function (delay) {
  */
 fluid.tests.personalData.startServer = async function (execCmd, url) {
     var resp = {};
-    console.debug(`Checking if server is running using ${url}`);
+    console.debug(`- Checking if server is running using ${url}`);
     try {
         resp = await fetch(url);
         return { status: resp.status, process: null, wasRunning: true };
@@ -61,7 +61,7 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
     catch (error) { ; }
 
     // Server needs to be started
-    console.debug(`Starting server at ${url}`);
+    console.debug(`- Starting server at ${url}`);
     const pdServerProcess = exec(execCmd);
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
@@ -79,21 +79,30 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
             await fluid.tests.personalData.sleep(DELAY);
         }
     }
-    console.debug(`Attempt to start server, result:  ${resp.status}`);
+    console.debug(`- Attempt to start server, result:  ${resp.status}`);
     return { status: resp.status, process: pdServerProcess, wasRunning: false };
 };
 
 /**
- * Stop the personal data server.  Given a ChildProcess instance, checks its
- * exit status and, if it has not exited, invokes its `kill()` method.
+ * Stop the personal data server, if it was started by this testing sequence.
+ * If it was started in order to run the tests, the `childProcess` argument will
+ * have a non-null ChildProcess instance and a `wasRunning` flag set to false.
+ * If so, check the ChildProcess's exit status and, if it has not exited, invoke
+ * its `kill()` method.
  *
- * @param {Object} childProcess - ChildProcess for the server job.
- * @param {String} url - The url to GET to test if the server is running.
+ * @param {Object} childProcessInfo - Information about the server's process
+ * @param {Object} childProcessInfo.wasRunning - True if the server was already
+ *                                               running.
+ * @param {Object} childProcessInfo.process - ChildProcess instance `wasRunning`
+ *                                            created if the server was not
+ *                                            running.
+ * @param {String} url - Url to use to check if the ChildProcess has been killed.
  */
-fluid.tests.personalData.stopServer = async function (childProcess, url) {
-    console.debug(`Stopping server at ${url}`);
-    if (childProcess && childProcess.exitCode === null) {
-        childProcess.kill();
+fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
+    console.debug(`- Stopping server at ${url}`);
+    if (childProcessInfo.wasRunning === false && childProcessInfo.process &&
+        childProcessInfo.process.exitCode === null) {
+        childProcessInfo.process.kill();
     }
     // Wait for the childProcess to fully exit
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
@@ -104,6 +113,7 @@ fluid.tests.personalData.stopServer = async function (childProcess, url) {
         catch (error) {
             break;
         }
+        await fluid.tests.personalData.sleep(DELAY);
     }
 };
 
@@ -120,10 +130,10 @@ fluid.tests.personalData.stopServer = async function (childProcess, url) {
  *                  or `null` if it failed to start.
  */
 fluid.tests.personalData.dockerStartDatabase = async function (container, image) {
-    var retVal = {};
+    var dbStatus = {};
     var execOutput;
 
-    console.debug(`Starting database container ${container}`);
+    console.debug(`- Starting database container ${container}`);
     // Try starting a stopped container.  If no such container, the command
     // will throw.
     try {
@@ -135,7 +145,7 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
 
     if (execOutput !== container) {
         // Start a new container from the given image
-        retVal.wasPaused = false;
+        dbStatus.wasPaused = false;
         try {
             execOutput = execSync(
                 `docker run -d --name="${container}"
@@ -149,11 +159,11 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
             execOutput = error.message;
         }
     } else {
-        retVal.wasPaused = true;
+        dbStatus.wasPaused = true;
     }
 
     // Loop to check that the database is ready.
-    retVal.pgReady = false;
+    dbStatus.pgReady = false;
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
         console.debug(`... attempt ${i}`);
         try {
@@ -165,34 +175,41 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
             execOutput = error.message;
         }
         if (execOutput.indexOf("accepting connections") !== -1) {
-            retVal.pgReady = true;
+            dbStatus.pgReady = true;
             break;
         } else {
             await fluid.tests.personalData.sleep(DELAY);
         }
     }
-    console.debug(`Attempt to start database, result:  ${retVal.pgReady}`);
-    return retVal;
+    console.debug(`- Attempt to start database, result:  ${dbStatus.pgReady}`);
+    return dbStatus;
 };
 
 /**
- * Stop the database docker container and, if it was not running to begin with
- * remove it from the container list; otherwise, leave it in a paused state.
+ * Disconnect the database client from the database and stop the database docker
+ * container.  If the container was simply paused at the beginning of testing,
+ * leave it in a paused state, but, if the container was created for testing,
+ * remove it from the container list.
  *
  * @param {String} container - Name of the docker container.
- * @param {Object} databaseStatus - Property `wasPaused` indicates whether the
- *                                  container was previously.
+ * @param {Object} dbRequest - The PostGresOperations object to disconnect from
+ *                             the database.
+ * @param {Object} wasPaused - Whether the database docker container was paused
+ *                            at the start of testing.
+ * @return {Object} result of disconnecting `dbRequest` from the database.
  */
-fluid.tests.personalData.dockerStopDatabase = function (container, databaseStatus) {
-    console.debug(`Stopping database container ${container}`);
+fluid.tests.personalData.dockerStopDatabase = async function (container, dbRequest, wasPaused) {
+    console.debug(`- Stopping database container ${container}`);
+    await dbRequest.end();
     try {
         execSync(`docker stop ${container}`);
-        if (!databaseStatus.wasPaused) {
+        if (!wasPaused) {
             console.log("WOULD COMPLETELY DESTROY THE DATABASE");
             // execSync(`docker rm ${container}`);
         }
     }
     catch (error) {
-        console.debug(`Failed to stop/remove ${container}: ${error.message}`);
+        console.debug(`- Failed to stop/remove ${container}: ${error.message}`);
+
     }
 };
