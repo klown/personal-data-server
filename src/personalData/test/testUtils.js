@@ -192,15 +192,17 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
  * remove it from the container list.
  *
  * @param {String} container - Name of the docker container.
- * @param {Object} dbRequest - The PostGresOperations object to disconnect from
- *                             the database.
  * @param {Object} wasPaused - Whether the database docker container was paused
  *                            at the start of testing.
+ * @param {Object} dbRequest - Optional: the PostGresOperations object to
+ *                             disconnect from the database.
  * @return {Object} result of disconnecting `dbRequest` from the database.
  */
-fluid.tests.personalData.dockerStopDatabase = async function (container, dbRequest, wasPaused) {
+fluid.tests.personalData.dockerStopDatabase = async function (container, wasPaused, dbRequest) {
     console.debug(`- Stopping database container ${container}`);
-    await dbRequest.end();
+    if (dbRequest) {
+        await dbRequest.end();
+    }
     try {
         execSync(`docker stop ${container}`);
         if (!wasPaused) {

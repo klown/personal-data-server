@@ -40,7 +40,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
     pdServerStartCmd: "node src/personalData/bin/www",
     members: {
         // These are assigned during the test sequence
-        pdServerProcess: null,
+        pdServerProcess: null,     // { status, process, wasRunning }
         databaseStatus: null
     },
     modules: [{
@@ -92,7 +92,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
                 resolveArgs: ["{arguments}.0", 200, { isReady: true }, "/ready (should succeed)"]
             }, {
                 funcName: "fluid.tests.personalData.dockerStopDatabase",
-                args: [fluid.tests.personalData.postgresContainer, "{that}.databaseStatus"]
+                args: [fluid.tests.personalData.postgresContainer, "{that}.databaseStatus.wasPaused"]
             }, {
                 funcName: "fluid.tests.personalData.stopServer",
                 args: ["{that}.pdServerProcess", "{that}.options.pdServerUrl"]
@@ -103,7 +103,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
 
 fluid.tests.healthReady.testProcessStarted = function (result, testCase) {
     console.debug("- Checking process started, ", testCase.options.pdServerStartCmd);
-    testCase.pdServerProcess = result.process;
+    testCase.pdServerProcess = result;
     jqUnit.assertNotNull("Check process exists", result.process);
     jqUnit.assertEquals("Check server active", 200, result.status);
 };

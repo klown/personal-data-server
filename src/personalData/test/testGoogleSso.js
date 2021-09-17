@@ -179,8 +179,8 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
                 funcName: "fluid.tests.personalData.dockerStopDatabase",
                 args: [
                     fluid.tests.personalData.postgresContainer,
-                    "{that}.options.dbRequest",
-                    "{that}.databaseStatus.wasPaused"
+                    "{that}.databaseStatus.wasPaused",
+                    "{that}.options.dbRequest"
                 ]
             }]
         }]
@@ -308,7 +308,7 @@ fluid.tests.googleSso.fetchUserInfo = function (googleSso, accessToken, options,
     const userInfoURL = new url.URL(options.userInfoUri);
     nock(userInfoURL.origin)
         .get(userInfoURL.pathname)
-        .query(true) //.query((payload) => { return true; })
+        .query(true)
         .reply(mockResponse.status, mockResponse.body);
 
     console.debug("- Calling googleSso.fetchUserInfo(/userInfo)");

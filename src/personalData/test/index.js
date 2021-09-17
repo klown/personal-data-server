@@ -9,6 +9,7 @@
 "use strict";
 
 var allTests = [
+    "./testHealthReady.js",
     "./testGoogleSso.js"
 ];
 
