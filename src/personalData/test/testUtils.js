@@ -33,7 +33,7 @@ fluid.tests.personalData.initEnvironmentVariables = function () {
     process.env.PGUSER = "admin";
     process.env.POSTGRES_PASSWORD = "asecretpassword";
 
-    // Personal data server (used by express's startup script)
+    // Personal data server port (used by express's startup script)
     process.env.PORT = 3001;
 };
 
@@ -125,11 +125,16 @@ fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
  *
  * @param {String} container - Name of the docker container.
  * @param {String} image - Name of the associated docker image.
- * @return {Object} An object that has the status of the last request regardless
- *                  of success, and the node ChildProcess started by `exec()`
- *                  or `null` if it failed to start.
+ * @param {String} dbConfig - Parameters for creating a database within the
+ (*                           `container` or to check if one already exists.
+ * @param {String} dbConfig.user - Adminstrative user of the database.
+ * @param {String} dbConfig.password - Adminstrator's password.
+ * @param {String} dbConfig.port - Port for database requests.
+ * @return {Object} An object containing two flags, `wasPaused` if the container
+ *                  was restarted from a paused state and `pg_ready` to indicate
+ *                  if the database in the container is ready.
  */
-fluid.tests.personalData.dockerStartDatabase = async function (container, image) {
+fluid.tests.personalData.dockerStartDatabase = async function (container, image, dbConfig) {
     var dbStatus = {};
     var execOutput;
 
@@ -143,11 +148,15 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
         execOutput = error.message;
     }
 
-    if (execOutput !== container) {
+    // If the above re-started a paused container, the output of `exectSync()`
+    // is the `container` name.
+    if (execOutput === container) {
+        dbStatus.wasPaused = true;
+    } else {
         // Start a new container from the given image
         dbStatus.wasPaused = false;
         try {
-            execOutput = execSync(
+            execSync(
                 `docker run -d --name="${container}"
                 -e POSTGRES_USER=${process.env.PGUSER}
                 -e POSTGRES_PASSWORD=${process.env.POSTGRES_PASSWORD}
@@ -156,23 +165,25 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
             `).toString().trim();
         }
         catch (error) {
-            execOutput = error.message;
+            console.debug(`Error starting database container: ${error}.message`);
+            dbStatus.pgReady = false;
+            return dbStatus;
         }
-    } else {
-        dbStatus.wasPaused = true;
     }
 
-    // Loop to check that the database is ready.
+    // Loop to check that PostgresDB is ready.
+    console.debug("Checking that PostgresDB is ready...");
     dbStatus.pgReady = false;
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
         console.debug(`... attempt ${i}`);
         try {
             execOutput = execSync(
-                `docker exec --user postgres ${container} pg_isready -p ${process.env.PGPORT}`
+                `docker exec --user postgres ${container} pg_isready -p ${dbConfig.port}`
             ).toString().trim();
         }
         catch (error) {
             execOutput = error.message;
+            console.debug(`... error ${execOutput}`);
         }
         if (execOutput.indexOf("accepting connections") !== -1) {
             dbStatus.pgReady = true;
@@ -182,6 +193,26 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image)
         }
     }
     console.debug(`- Attempt to start database, result:  ${dbStatus.pgReady}`);
+    if (dbStatus.pgReady === false) {
+        return dbStatus;    // bail
+    }
+
+    // Container and PostgresDB running, create the actual database to use for
+    // the Postgres tables
+    console.debug(`Creating (or checking existence of) ${dbConfig.database} ...`);
+    try {
+        execOutput = execSync(
+            `docker exec ${container} createdb -p ${dbConfig.port} -U ${dbConfig.user} --echo ${dbConfig.database}`
+        ).toString().trim();
+    }
+    catch (error) {
+        // "Database already exists" not an error in this case.
+        if (error.message.indexOf(`database "${dbConfig.database}" already exists`) !== -1) {
+            dbStatus.pgReady = true;
+        } else {
+            console.debug(`... error ${error.message}`);
+        }
+    }
     return dbStatus;
 };
 

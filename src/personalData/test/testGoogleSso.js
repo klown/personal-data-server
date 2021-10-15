@@ -82,7 +82,11 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
             }, {
                 // Start the database
                 task: "fluid.tests.personalData.dockerStartDatabase",
-                args: [fluid.tests.personalData.postgresContainer, fluid.tests.personalData.postgresImage],
+                args: [
+                    fluid.tests.personalData.postgresContainer,
+                    fluid.tests.personalData.postgresImage,
+                    "{that}.options.dbRequest.dbConfig"
+                ],
                 resolve: "fluid.tests.googleSso.testDatabaseStarted",
                 resolveArgs: ["{that}", true, "{arguments}.0"]  // database status
             }, {

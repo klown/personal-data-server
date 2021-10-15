@@ -14,7 +14,10 @@ const fluid = require("infusion"),
     fetch = require("node-fetch"),
     jqUnit = require("node-jqunit");
 
+// Sets up environment variables for the database parameeters, such as database
+// name, host, port, etc. for use in thses tests.
 require("./testUtils.js");
+fluid.tests.personalData.initEnvironmentVariables();
 
 jqUnit.module("Personal Data Server /health and /ready tests.");
 
@@ -38,6 +41,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
     gradeNames: ["fluid.test.testCaseHolder"],
     pdServerUrl: fluid.tests.personalData.serverUrl,
     pdServerStartCmd: "node src/personalData/bin/www",
+    dbConfig: require("../dataBase.js").dbConfig,
     members: {
         // These are assigned during the test sequence
         pdServerProcess: null,     // { status, process, wasRunning }
@@ -48,8 +52,6 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
         tests: [{
             name: "/health and /ready end points",
             sequence: [{
-                funcName: "fluid.tests.personalData.initEnvironmentVariables"
-            }, {
                 // Start with server off -- "/health" should fail
                 task: "fluid.tests.healthReady.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/health"],
@@ -81,7 +83,11 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
             }, {
                 // ... start the database
                 task: "fluid.tests.personalData.dockerStartDatabase",
-                args: [fluid.tests.personalData.postgresContainer, fluid.tests.personalData.postgresImage],
+                args: [
+                    fluid.tests.personalData.postgresContainer,
+                    fluid.tests.personalData.postgresImage,
+                    "{that}.options.dbConfig"
+                ],
                 resolve: "fluid.tests.healthReady.testDatabaseStarted",
                 resolveArgs: ["{that}", true, "{arguments}.0"]
             }, {

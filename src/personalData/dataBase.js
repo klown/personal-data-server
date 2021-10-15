@@ -26,6 +26,8 @@ const dbConfig = {
 
 class DataBaseRequest extends postgresdb.PostgresRequest {
 
+    get dbConfig() { return Object.assign({}, dbConfig); };
+
     /**
      * Check that the database is ready to accept requests.  The check involves
      * retrieving the 'public' tables for one named "AppSsoProvider".
@@ -132,7 +134,6 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
      *
      * @param {Object} userRecord - The User record in the database associated
      *                              with this account.
-     *                            User record or create a new one.
      * @param {Object} userInfo - The user information provided by the SSO
      *                            provider.
      * @param {String} provider - The SSO provider.
