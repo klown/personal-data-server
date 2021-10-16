@@ -46,7 +46,7 @@ CREATE TABLE "AccessToken" (
     "ssoAccount" INTEGER NOT NULL REFERENCES "SsoAccount" ("ssoAccountId") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     "ssoProvider" INTEGER NOT NULL REFERENCES "AppSsoProvider" ("providerId") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     "accessToken" TEXT NOT NULL,
-    "expiresIn" INTEGER NOT NULL,
+    "expiresAt" TIMESTAMPTZ NULL,
     "refreshToken" TEXT DEFAULT NULL,
     "loginToken" TEXT NOT NULL
 );
