@@ -14,9 +14,11 @@ const fluid = require("infusion"),
     fetch = require("node-fetch"),
     nock = require("nock"),
     url = require("url"),
+
     jqUnit = require("node-jqunit");
 
 require("./testUtils.js");
+fluid.tests.personalData.initEnvironmentVariables();
 
 fluid.logObjectRenderChars = 4096;
 
@@ -66,6 +68,11 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
     dbRequest: require("../dataBase.js"),
     pdServerUrl: fluid.tests.personalData.serverUrl,
     pdServerStartCmd: "node src/personalData/bin/www",
+    sqlFiles: {
+        flush: __dirname + "/flushDatabase.sql",
+        tableDefs: "/Users/clown/Development/GeneralPreferences/preferencesServer/src/database/data/Models.sql",
+        loadTestData: __dirname + "/GoogleSsoProvider.sql"
+    },
     members: {
         // These are assigned during the test sequence
         pdServerProcess: null,   // { status, process, wasRunning }
@@ -78,8 +85,6 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
         tests: [{
             name: "Google SSO end points",
             sequence: [{
-                funcName: "fluid.tests.personalData.initEnvironmentVariables"
-            }, {
                 // Start the database
                 task: "fluid.tests.personalData.dockerStartDatabase",
                 args: [
@@ -96,6 +101,12 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
                 resolve: "fluid.tests.googleSso.testProcessStarted",
                 resolveArgs: ["{arguments}.0", "{that}"]        // ChildProcess
             }, {
+                // Flush the data base.
+                task: "fluid.tests.personalData.initDataBase",
+                args: ["{that}.options.dbRequest", "{that}.options.sqlFiles"],
+                resolve: "jqUnit.assertTrue",
+                resolveArgs: ["{arguments}.0", "check intialize database"]
+            },  {
                 // Test "/ready".
                 task: "fluid.tests.googleSso.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/ready"],

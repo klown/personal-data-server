@@ -246,3 +246,30 @@ fluid.tests.personalData.dockerStopDatabase = async function (container, wasPaus
 
     }
 };
+
+/**
+ * Initialize a test database and set up its tables, if it/they do not already
+ * exist, and load some test data records.
+ *
+ * @param {Object} dbRequest - The PostGresOperations object to use to interact
+ *                             with the database.
+ * @param {Object} sqlFiles - SQL files to use to flush the database
+ * @return {Boolean} true if no error with initialization; false otherwise.
+ */
+fluid.tests.personalData.initDataBase = async function (dbRequest, sqlFiles) {
+    var togo;
+    try {
+        console.debug("- Emptying test database...");
+        await dbRequest.runSqlFile(sqlFiles.flush);
+        console.debug("- ... defining the tables");
+        await dbRequest.runSqlFile(sqlFiles.tableDefs);
+        console.debug("- ... adding initial test records");
+        await dbRequest.runSqlFile(sqlFiles.loadTestData);
+        togo = true;
+    }
+    catch (error) {
+        console.debug(`Error iniitalizing test database: ${error.message}`);
+        togo = false;
+    }
+    return togo;
+};
