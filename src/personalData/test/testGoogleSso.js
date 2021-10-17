@@ -14,7 +14,7 @@ const fluid = require("infusion"),
     fetch = require("node-fetch"),
     nock = require("nock"),
     url = require("url"),
-
+    path = require("path"),
     jqUnit = require("node-jqunit");
 
 require("./testUtils.js");
@@ -70,7 +70,7 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
     pdServerStartCmd: "node src/personalData/bin/www",
     sqlFiles: {
         flush: __dirname + "/flushDatabase.sql",
-        tableDefs: "/Users/clown/Development/GeneralPreferences/preferencesServer/src/database/data/Models.sql",
+        tableDefs: path.join(__dirname, "../SsoModels.sql"),
         loadTestData: __dirname + "/GoogleSsoProvider.sql"
     },
     members: {
