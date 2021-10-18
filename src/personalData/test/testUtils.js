@@ -254,6 +254,13 @@ fluid.tests.personalData.dockerStopDatabase = async function (container, wasPaus
  * @param {Object} dbRequest - The PostGresOperations object to use to interact
  *                             with the database.
  * @param {Object} sqlFiles - SQL files to use to flush the database
+ * @param {String} sqlFiles.flush - Path to file containing SQL to intialize the
+ *                                  database to a state for starting the test
+ *                                  sequence.
+ * @param {String} sqlFiles.tableDefs - Path to SQL file with commands to create
+ *                                      the database tables.
+ * @param {String} sqlFiles.loadTestData - Path to SQL file to load records into
+ *                                         the tables.
  * @return {Boolean} true if no error with initialization; false otherwise.
  */
 fluid.tests.personalData.initDataBase = async function (dbRequest, sqlFiles) {
