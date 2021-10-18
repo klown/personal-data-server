@@ -16,7 +16,7 @@ DO $$
         END IF;
     END
 $$;
-CREATE TABLE "prefsSafes" (
+CREATE TABLE IF NOT EXISTS "prefsSafes" (
     "prefsSafesId" VARCHAR(36) PRIMARY KEY NOT NULL,
     "safeType" "prefsSafesType" NOT NULL,
     name VARCHAR(64),
