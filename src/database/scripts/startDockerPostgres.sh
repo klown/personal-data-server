@@ -13,21 +13,12 @@
 POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"postgresdb"}
 PGPORT=${PGPORT:-5432}
 POSTGRES_USER=${PGUSER:-"admin"}
-PGDATABASE=${PGDATABASE:-"fluid_prefsdb"}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-"asecretpassword"}
-POSTGRES_IMAGE=${POSTGRES_IMAGE:-"postgres:13.1-alpine"}
+PGDATABASE=${PGDATABASE:-"fluid_prefsdb"}
+POSTGRES_IMAGE=${POSTGRES_IMAGE:-"postgres:14.0-alpine"}
 
 log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
-}
-
-run() {
-docker run -d \
-    --name="$POSTGRES_MAIN_CONTAINER" \
-    -e POSTGRES_USER=$POSTGRES_USER \
-    -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-    -p $PGPORT:$PGPORT \
-    -d $POSTGRES_IMAGE postgres -p $PGPORT
 }
 
 log "POSTGRES_MAIN_CONTAINER: $POSTGRES_MAIN_CONTAINER"
@@ -46,7 +37,7 @@ if [[ $? != 0 ]]; then
         -e POSTGRES_USER=$POSTGRES_USER \
         -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
         -p $PGPORT:$PGPORT \
-        -d $POSTGRES_IMAGE postgres -p $PGPORT
+        $POSTGRES_IMAGE postgres -p $PGPORT
 fi
 
 log "Checking that PostgresDB is ready..."
