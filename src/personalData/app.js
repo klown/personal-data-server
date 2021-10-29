@@ -11,11 +11,9 @@
 
 "use strict";
 
-const createError = require("http-errors");
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
-const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 
 var indexRouter = require("./routes/index");
@@ -36,7 +34,7 @@ app.use("/sso", ssoRouter);
 // TODO:  Move to testing
 var usersRouter = require("./routes/users");
 app.use("/users", usersRouter); // test getting and displaying a list of users
-app.use(express["static"](path.join(__dirname, "public"))); // test serve static files under /public
+app.use(express.static(path.join(__dirname, "public"))); // test serve static files under /public
 
 // General endpoint for 404s
 app.use(function (req, res, next) {

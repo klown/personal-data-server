@@ -5,6 +5,9 @@
         "es6": true
     },
     "parserOptions": {
-        "ecmaVersion": 8
+        "ecmaVersion": 2019
+    },
+    "rules": {
+        "dot-notation": ["error", { "allowKeywords": true }]
     }
 }

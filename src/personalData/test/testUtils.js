@@ -18,7 +18,7 @@ fluid.registerNamespace("fluid.tests.personalData");
 
 fluid.tests.personalData.serverUrl = "http://localhost:3001";
 fluid.tests.personalData.postgresContainer = "postgresdb";
-fluid.tests.personalData.postgresImage = "postgres:13.1-alpine";
+fluid.tests.personalData.postgresImage = "postgres:14.0-alpine";
 
 const NUM_CHECK_REQUESTS = 10;
 const DELAY = 2000; // msec
@@ -157,12 +157,12 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image,
         dbStatus.wasPaused = false;
         try {
             execSync(
-                `docker run -d --name="${container}"
-                -e POSTGRES_USER=${process.env.PGUSER}
-                -e POSTGRES_PASSWORD=${process.env.POSTGRES_PASSWORD}
-                -p $PGPORT:${process.env.PGPORT}
-                -d ${image} postgres -p ${process.env.PGPORT})
-            `).toString().trim();
+                `docker run -d --name="${container}" \
+                -e POSTGRES_USER=${process.env.PGUSER} \
+                -e POSTGRES_PASSWORD=${process.env.POSTGRES_PASSWORD} \
+                -p $PGPORT:${process.env.PGPORT} \
+                ${image} postgres -p ${process.env.PGPORT}`
+            ).toString().trim();
         }
         catch (error) {
             console.debug(`Error starting database container: ${error}.message`);

@@ -14,7 +14,7 @@ const fluid = require("infusion"),
     fetch = require("node-fetch"),
     jqUnit = require("node-jqunit");
 
-// Sets up environment variables for the database parameeters, such as database
+// Sets up environment variables for the database parameters, such as database
 // name, host, port, etc. for use in thses tests.
 require("./testUtils.js");
 fluid.tests.personalData.initEnvironmentVariables();
