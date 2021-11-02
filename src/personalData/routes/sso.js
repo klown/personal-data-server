@@ -66,7 +66,6 @@ router.get("/google/login/callback", function (req, res) {
             // with a simple 200 status code, with no payload (?)
             res.json({"loginToken": JSON.stringify(req.session.staticToken, null, 2)});
         }).catch((error) => {
-            console.log(error);
             res.status(403).json({"isError": true, "message": error.message});
         });
 });

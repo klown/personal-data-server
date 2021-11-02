@@ -15,7 +15,7 @@
 
 "use strict";
 
-const fetch = require("node-fetch");
+const axios = require("axios");
 const generateNonce = require("../../generateRandomToken.js");
 
 const REDIRECT_URI = "http://localhost:3000/sso/google/login/callback";
@@ -96,21 +96,21 @@ class GoogleSso {
             if (accessTokenResponse.status !== 200) {
                 return accessTokenResponse;
             }
-            const accessToken = await accessTokenResponse.json();
+            const accessToken = await accessTokenResponse.data;
             console.debug("ACCESS TOKEN: ", JSON.stringify(accessToken, null, 2));
             const userInfoResponse = await this.fetchUserInfo(accessToken, options);
             if (userInfoResponse.status !== 200) {
                 return userInfoResponse;
             }
-            const userInfo = await userInfoResponse.json();
+            const userInfo = userInfoResponse.data;
             console.debug("USER INFO: ", JSON.stringify(userInfo, null, 2));
             const accountInfo = await this.storeUserAndAccessToken(userInfo, accessToken, dbRequest, options);
             console.debug(accountInfo);
             return accountInfo.accessToken.loginToken;
         }
         // TODO:  if all catch() does is re-throw, is the try/catch necessary?
-        catch (error) {
-            throw error;
+        catch (e) {
+            throw e;
         }
     };
 
@@ -131,21 +131,26 @@ class GoogleSso {
      *                  response.
      */
     async fetchAccessToken(code, dbRequest, options) {
-        const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
-        const response = await fetch(options.accessTokenUri, {
-            method: "post",
-            body: JSON.stringify({
-                grant_type: "authorization_code",
-                code: code,
-                redirect_uri: options.redirectUri,
-                client_id: clientInfo.client_id,
-                client_secret: clientInfo.client_secret,
-                access_type: options.access_type
-            }),
-            header: { "Content-type": "application/json" }
-        });
-        console.debug("Status: %s: access token for %s", response.status, options.provider);
-        return response;
+        try {
+            const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
+            const response = await axios({
+                method: "post",
+                url: options.accessTokenUri,
+                data: {
+                    grant_type: "authorization_code",
+                    code: code,
+                    redirect_uri: options.redirectUri,
+                    client_id: clientInfo.client_id,
+                    client_secret: clientInfo.client_secret,
+                    access_type: options.access_type
+                },
+                "Content-type": "application/json"
+            });
+            console.debug("Status: %s: access token for %s", response.status, options.provider);
+            return response;
+        } catch (e) {
+            return e.response;
+        }
     };
 
     /**
@@ -164,9 +169,13 @@ class GoogleSso {
             access_token: accessToken.access_token,
             alt: "json"
         });
-        const response = await fetch(fullUri);
-        console.debug("Status: %s: user profile for %s", response.status, options.provider);
-        return response;
+        try {
+            const response = await axios.get(fullUri);
+            console.debug("Status: %s: user profile for %s", response.status, options.provider);
+            return response;
+        } catch (e) {
+            return e.response;
+        }
     };
 
     /**

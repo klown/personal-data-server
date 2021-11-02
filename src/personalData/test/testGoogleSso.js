@@ -11,7 +11,7 @@
 "use strict";
 
 const fluid = require("infusion"),
-    fetch = require("node-fetch"),
+    axios = require("axios"),
     nock = require("nock"),
     url = require("url"),
     path = require("path"),
@@ -108,7 +108,7 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
                 resolveArgs: ["{arguments}.0", "check intialize database"]
             },  {
                 // Test "/ready".
-                task: "fluid.tests.googleSso.sendRequest",
+                task: "fluid.tests.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/ready"],
                 resolve: "fluid.tests.googleSso.testResponse",
                 resolveArgs: ["{arguments}.0", 200, { isReady: true }, "/ready (should succeed)"]
@@ -171,7 +171,7 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
                 resolveArgs: ["{that}.accountInfo", "googleSso.storeUserAndAccessToken()", "{that}.options.googleSso.options"]
             }, {
                 // Test failure of "/sso/google/login/callback" -- missing authorization code parameter.
-                task: "fluid.tests.googleSso.sendRequest",
+                task: "fluid.tests.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/sso/google/login/callback"],
                 resolve: "fluid.tests.googleSso.testResponse",
                 resolveArgs: [
@@ -217,8 +217,7 @@ fluid.tests.googleSso.testResponse = async function (res, expectedStatus, expect
     jqUnit.assertEquals("Check '" + endPoint + "' response status", expectedStatus, res.status);
     jqUnit.assertNotNull("Check '" + endPoint + "' non-null response", res);
 
-    const value = await res.json();
-    fluid.tests.googleSso.testResult(value, expected, endPoint);
+    fluid.tests.googleSso.testResult(res.data, expected, endPoint);
 };
 
 fluid.tests.googleSso.testResult = function (result, expected, testPoint) {
@@ -261,12 +260,7 @@ fluid.tests.personalData.testDeleteTestUser = function (deleteResponse, userId) 
     jqUnit.assertNotNull(`Checking deletion of mock user ${userId}`, deleteResponse);
 };
 
-fluid.tests.googleSso.sendRequest = function (url, endpoint) {
-    console.debug("- Sending '%s' request", endpoint);
-    return fetch(url + endpoint);
-};
-
-fluid.tests.googleSso.sendAuthRequest = function (testCase, endpoint) {
+fluid.tests.googleSso.sendAuthRequest = async function (testCase, endpoint) {
     // Mock Google's OAuth2 endpoint.  The request payload is stored in
     // `testCase.authPayload` for subsequent tests.
     nock("https://accounts.google.com")
@@ -278,7 +272,11 @@ fluid.tests.googleSso.sendAuthRequest = function (testCase, endpoint) {
         .reply(200, {});
 
     console.debug("- Sending '%s'", endpoint);
-    return fetch(testCase.options.pdServerUrl + endpoint);
+    try {
+        return await axios.get(testCase.options.pdServerUrl + endpoint);
+    } catch (e) {
+        return e.response;
+    }
 };
 
 fluid.tests.googleSso.fetchAccessToken = function (googleSso, code, dbRequest, options, responseStatus) {
@@ -338,7 +336,7 @@ fluid.tests.googleSso.storeUserAndAccessToken = async function (testCase, userIn
         );
     }
     catch (error) {
-        console.debug (error.message);
+        console.debug(error.message);
     }
     return testCase.accountInfo;
 };

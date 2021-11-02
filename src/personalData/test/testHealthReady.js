@@ -11,7 +11,6 @@
 "use strict";
 
 const fluid = require("infusion"),
-    fetch = require("node-fetch"),
     jqUnit = require("node-jqunit");
 
 // Sets up environment variables for the database parameters, such as database
@@ -22,11 +21,6 @@ fluid.tests.personalData.initEnvironmentVariables();
 jqUnit.module("Personal Data Server /health and /ready tests.");
 
 fluid.registerNamespace("fluid.tests.healthReady");
-
-fluid.tests.healthReady.sendRequest = function (url, endpoint) {
-    console.debug("- Sending '%s' request", endpoint);
-    return fetch(url + endpoint);
-};
 
 fluid.defaults("fluid.tests.healthReady.environment", {
     gradeNames: ["fluid.test.testEnvironment"],
@@ -53,10 +47,10 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
             name: "/health and /ready end points",
             sequence: [{
                 // Start with server off -- "/health" should fail
-                task: "fluid.tests.healthReady.sendRequest",
+                task: "fluid.tests.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/health"],
-                reject: "fluid.tests.healthReady.testHealthFail",
-                rejectArgs: ["{arguments}.0"] // error
+                resolve: "fluid.tests.healthReady.testHealthFail",
+                resolveArgs: ["{arguments}.0"] // error
             }, {
                 // Start server, but not the database.
                 task: "fluid.tests.personalData.startServer",
@@ -65,13 +59,13 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
                 resolveArgs: ["{arguments}.0", "{that}"]
             }, {
                 // "/health" request should now succeed ...
-                task: "fluid.tests.healthReady.sendRequest",
+                task: "fluid.tests.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/health"],
                 resolve: "fluid.tests.healthReady.testResult",
                 resolveArgs: ["{arguments}.0", 200, { isHealthy: true }, "/health (should succeed)"]
             }, {
                 //  ... but "/ready" should fail
-                task: "fluid.tests.healthReady.sendRequest",
+                task: "fluid.tests.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/ready"],
                 resolve: "fluid.tests.healthReady.testResult",
                 resolveArgs: [
@@ -92,7 +86,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
                 resolveArgs: ["{that}", true, "{arguments}.0"]
             }, {
                 // "/ready" should now work.
-                task: "fluid.tests.healthReady.sendRequest",
+                task: "fluid.tests.sendRequest",
                 args: ["{that}.options.pdServerUrl", "/ready"],
                 resolve: "fluid.tests.healthReady.testResult",
                 resolveArgs: ["{arguments}.0", 200, { isReady: true }, "/ready (should succeed)"]
@@ -116,10 +110,7 @@ fluid.tests.healthReady.testProcessStarted = function (result, testCase) {
 
 fluid.tests.healthReady.testHealthFail = function (error) {
     jqUnit.assertNotNull("Check '/health' error", error);
-    jqUnit.assertEquals(
-        "Check '/health' error code",
-        "ECONNREFUSED", error.code
-    );
+    jqUnit.assertTrue("Check '/health' error code", error.toString().includes("ECONNREFUSED"));
 };
 
 fluid.tests.healthReady.testDatabaseStarted = function (testCase, expected, actual) {
@@ -130,8 +121,7 @@ fluid.tests.healthReady.testDatabaseStarted = function (testCase, expected, actu
 fluid.tests.healthReady.testResult = async function (res, expectedStatus, expected, endPoint) {
     jqUnit.assertNotNull("Check '" + endPoint + "' non-null response", res);
     jqUnit.assertEquals("Check '" + endPoint + "' response status", expectedStatus, res.status);
-    const value = await res.json();
-    jqUnit.assertDeepEq("Check '" + endPoint + "' response", expected, value);
+    jqUnit.assertDeepEq("Check '" + endPoint + "' response", expected, res.data);
 };
 
 fluid.test.runTests("fluid.tests.healthReady.environment");

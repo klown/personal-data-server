@@ -11,7 +11,7 @@
 "use strict";
 
 const fluid = require("infusion"),
-    fetch = require("node-fetch"),
+    axios = require("axios"),
     { exec, execSync } = require("child_process");
 
 fluid.registerNamespace("fluid.tests.personalData");
@@ -55,7 +55,7 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
     var resp = {};
     console.debug(`- Checking if server is running using ${url}`);
     try {
-        resp = await fetch(url);
+        resp = await axios(url);
         return { status: resp.status, process: null, wasRunning: true };
     }
     catch (error) { ; }
@@ -66,7 +66,7 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
-            resp = await fetch(url);
+            resp = await axios(url);
         }
         catch (error) {
             console.debug(`... attempt ${i} error: ${error.message}`);
@@ -108,7 +108,7 @@ fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
     for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
-            await fetch(url);
+            await axios(url);
         }
         catch (error) {
             break;
@@ -279,4 +279,23 @@ fluid.tests.personalData.initDataBase = async function (dbRequest, sqlFiles) {
         togo = false;
     }
     return togo;
+};
+
+/**
+ * Initialize a test database and set up its tables, if it/they do not already
+ * exist, and load some test data records.
+ *
+ * @param {String} serverDomain - The server domain.
+ * @param {String} endpoint - The end point supported by the server.
+ * @return {Object} The response object containing the response code and message.
+ */
+fluid.tests.sendRequest = async function (serverDomain, endpoint) {
+    console.debug("- Sending '%s' request", endpoint);
+    try {
+        return await axios.get(serverDomain + endpoint);
+    } catch (e) {
+        // Return e.response when the server responds with an error.
+        // Return e when the server endpoint doesn't exist.
+        return e.response ? e.response : e;
+    }
 };
