@@ -21,14 +21,14 @@ log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
-run() {
-docker run -d \
-    --name="$POSTGRES_MAIN_CONTAINER" \
-    -e POSTGRES_USER=$POSTGRES_USER \
-    -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-    -p $PGPORT:$PGPORT \
-    -d $POSTGRES_IMAGE postgres -p $PGPORT
-}
+# run() {
+# docker run -d \
+#     --name="$POSTGRES_MAIN_CONTAINER" \
+#     -e POSTGRES_USER=$POSTGRES_USER \
+#     -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+#     -p $PGPORT:$PGPORT \
+#     -d $POSTGRES_IMAGE postgres -p $PGPORT
+# }
 
 log "POSTGRES_MAIN_CONTAINER: $POSTGRES_MAIN_CONTAINER"
 log "PGPORT: $PGPORT"
