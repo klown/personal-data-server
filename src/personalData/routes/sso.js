@@ -18,7 +18,7 @@
 "use strict";
 
 const express = require("express");
-const dbRequest = require("../dataBase.js");
+const dbRequest = require("../ssoDbOps.js");
 const googleSso = require("./ssoProviders/googleSso.js");
 
 const router = express.Router();

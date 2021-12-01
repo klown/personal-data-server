@@ -13,7 +13,7 @@
 
 var express = require("express");
 var router = express.Router();
-const dbRequest = require("../dataBase.js");
+const dbRequest = require("../ssoDbOps.js");
 
 /**
  * Home page.

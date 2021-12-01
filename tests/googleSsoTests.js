@@ -17,8 +17,13 @@ const fluid = require("infusion"),
     path = require("path"),
     jqUnit = require("node-jqunit");
 
-require("./testUtils.js");
-fluid.tests.personalData.initEnvironmentVariables();
+require("../src/shared/initDbUtils.js");
+require("./utilsSso.js");
+
+fluid.personalData.initEnvironmentVariables({
+    dbName: "prefs_testdb",
+    dbPort: 5433
+});
 
 fluid.logObjectRenderChars = 4096;
 
@@ -64,14 +69,14 @@ fluid.defaults("fluid.tests.googleSso.environment", {
 
 fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
     gradeNames: ["fluid.test.testCaseHolder"],
-    googleSso: require("../routes/ssoProviders/googleSso.js"),
-    dbRequest: require("../dataBase.js"),
+    googleSso: require("../src/personalData/routes/ssoProviders/googleSso.js"),
+    dbRequest: require("../src/personalData/ssoDbOps.js"),
     pdServerUrl: fluid.tests.personalData.serverUrl,
-    pdServerStartCmd: "node src/personalData/bin/www",
+    pdServerStartCmd: "node index.js",
     sqlFiles: {
-        flush: __dirname + "/flushDatabase.sql",
-        tableDefs: path.join(__dirname, "../SsoModels.sql"),
-        loadTestData: __dirname + "/GoogleSsoProvider.sql"
+        flush: __dirname + "/../dataModel/dropTables.sql",
+        tableDefs: path.join(__dirname, "/../dataModel/SsoTables.sql"),
+        loadTestData: __dirname + "/../dataModel/SsoProvidersData.sql"
     },
     members: {
         // These are assigned during the test sequence
@@ -86,7 +91,7 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
             name: "Google SSO end points",
             sequence: [{
                 // Start the database
-                task: "fluid.tests.personalData.dockerStartDatabase",
+                task: "fluid.personalData.dockerStartDatabase",
                 args: [
                     fluid.tests.personalData.postgresContainer,
                     fluid.tests.personalData.postgresImage,
@@ -96,13 +101,13 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
                 resolveArgs: ["{that}", true, "{arguments}.0"]  // database status
             }, {
                 // Start server
-                task: "fluid.tests.personalData.startServer",
+                task: "fluid.personalData.startServer",
                 args: ["{that}.options.pdServerStartCmd", "{that}.options.pdServerUrl"],
                 resolve: "fluid.tests.googleSso.testProcessStarted",
                 resolveArgs: ["{arguments}.0", "{that}"]        // ChildProcess
             }, {
                 // Flush the data base.
-                task: "fluid.tests.personalData.initDataBase",
+                task: "fluid.personalData.initDataBase",
                 args: ["{that}.options.dbRequest", "{that}.options.sqlFiles"],
                 resolve: "jqUnit.assertTrue",
                 resolveArgs: ["{arguments}.0", "check intialize database"]
@@ -188,10 +193,10 @@ fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
                 resolve: "fluid.tests.personalData.testDeleteTestUser",
                 resolveArgs: ["{arguments}.0", fluid.tests.googleSso.mockUserInfo.id]
             }, {
-                funcName: "fluid.tests.personalData.stopServer",
+                funcName: "fluid.personalData.stopServer",
                 args: ["{that}.pdServerProcess", "{that}.options.pdServerUrl"]
             }, {
-                funcName: "fluid.tests.personalData.dockerStopDatabase",
+                funcName: "fluid.personalData.dockerStopDatabase",
                 args: [
                     fluid.tests.personalData.postgresContainer,
                     "{that}.databaseStatus.wasPaused",

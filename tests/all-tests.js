@@ -10,7 +10,13 @@
 "use strict";
 
 var testIncludes = [
-    "../src/database/src/test/all-tests.js"
+    // Test DB operations
+    // "../src/database/src/test/all-tests.js",
+    // Test Google single sign on
+    "./googleSsoTests.js",
+    // Test endpoints provided by personal data server
+    "./healthReadyTests.js"
+
 ];
 
 testIncludes.forEach(function (path) {

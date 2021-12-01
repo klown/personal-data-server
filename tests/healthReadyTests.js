@@ -13,10 +13,15 @@
 const fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
+require("../src/shared/initDbUtils.js");
+require("./utilsSso.js");
+
 // Sets up environment variables for the database parameters, such as database
 // name, host, port, etc. for use in thses tests.
-require("./testUtils.js");
-fluid.tests.personalData.initEnvironmentVariables();
+fluid.personalData.initEnvironmentVariables({
+    dbName: "prefs_testdb",
+    dbPort: 5433
+});
 
 jqUnit.module("Personal Data Server /health and /ready tests.");
 
@@ -34,8 +39,8 @@ fluid.defaults("fluid.tests.healthReady.environment", {
 fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
     gradeNames: ["fluid.test.testCaseHolder"],
     pdServerUrl: fluid.tests.personalData.serverUrl,
-    pdServerStartCmd: "node src/personalData/bin/www",
-    dbConfig: require("../dataBase.js").dbConfig,
+    pdServerStartCmd: "node index.js",
+    dbConfig: require("../src/personalData/ssoDbOps.js").dbConfig,
     members: {
         // These are assigned during the test sequence
         pdServerProcess: null,     // { status, process, wasRunning }
@@ -53,7 +58,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
                 resolveArgs: ["{arguments}.0"] // error
             }, {
                 // Start server, but not the database.
-                task: "fluid.tests.personalData.startServer",
+                task: "fluid.personalData.startServer",
                 args: ["{that}.options.pdServerStartCmd", "{that}.options.pdServerUrl"],
                 resolve: "fluid.tests.healthReady.testProcessStarted",
                 resolveArgs: ["{arguments}.0", "{that}"]
@@ -76,7 +81,7 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
                 ]
             }, {
                 // ... start the database
-                task: "fluid.tests.personalData.dockerStartDatabase",
+                task: "fluid.personalData.dockerStartDatabase",
                 args: [
                     fluid.tests.personalData.postgresContainer,
                     fluid.tests.personalData.postgresImage,
@@ -91,10 +96,10 @@ fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
                 resolve: "fluid.tests.healthReady.testResult",
                 resolveArgs: ["{arguments}.0", 200, { isReady: true }, "/ready (should succeed)"]
             }, {
-                funcName: "fluid.tests.personalData.dockerStopDatabase",
+                funcName: "fluid.personalData.dockerStopDatabase",
                 args: [fluid.tests.personalData.postgresContainer, "{that}.databaseStatus.wasPaused"]
             }, {
-                funcName: "fluid.tests.personalData.stopServer",
+                funcName: "fluid.personalData.stopServer",
                 args: ["{that}.pdServerProcess", "{that}.options.pdServerUrl"]
             }]
         }]

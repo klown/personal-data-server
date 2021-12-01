@@ -14,30 +14,38 @@ const fluid = require("infusion"),
     axios = require("axios"),
     { exec, execSync } = require("child_process");
 
-fluid.registerNamespace("fluid.tests.personalData");
-
-fluid.tests.personalData.serverUrl = "http://localhost:3001";
-fluid.tests.personalData.postgresContainer = "postgresdb";
-fluid.tests.personalData.postgresImage = "postgres:14.0-alpine";
+fluid.registerNamespace("fluid.personalData");
 
 const NUM_CHECK_REQUESTS = 10;
 const DELAY = 2000; // msec
 
-fluid.tests.personalData.initEnvironmentVariables = function () {
+/**
+ * An object that contains configs for setting up the database.
+ * @typedef {Object} config
+ * @param {String} dbName - The database name.
+ * @param {String} dbHost - The host of the database.
+ * @param {Number} dbPort - The port number used for accessing the database.
+ * @param {String} dbUser - The default admin user created when initializing the database.
+ * @param {String} dbPassword - The password for the default admin users created when initializing the database.
+ */
+
+/**
+ * Initialize environment variables required for setting up the the database.
+ *
+ * @param {Object} config - The server config
+ */
+fluid.personalData.initEnvironmentVariables = function (config) {
     console.debug("- Initializing shell environment variables");
 
     // Database
-    process.env.PGDATABASE = "prefs_testdb";
-    process.env.PGHOST = "localhost";
-    process.env.PGPORT = 5433;
-    process.env.PGUSER = "admin";
-    process.env.POSTGRES_PASSWORD = "asecretpassword";
-
-    // Personal data server port (used by express's startup script)
-    process.env.PORT = 3001;
+    process.env.PGDATABASE = config.dbName || "prefs_testdb";
+    process.env.PGHOST = config.dbHost || "localhost";
+    process.env.PGPORT = config.dbPort || 5433;
+    process.env.PGUSER = config.dbUser || "admin";
+    process.env.POSTGRES_PASSWORD = config.dbPassword || "asecretpassword";
 };
 
-fluid.tests.personalData.sleep = async function (delay) {
+fluid.personalData.sleep = async function (delay) {
     return new Promise((resolve) => setTimeout(resolve, delay));
 };
 
@@ -51,7 +59,7 @@ fluid.tests.personalData.sleep = async function (delay) {
  *                  of success, and the node ChildProcess started by `exec()`
  *                  or `null` if it failed to start.
  */
-fluid.tests.personalData.startServer = async function (execCmd, url) {
+fluid.personalData.startServer = async function (execCmd, url) {
     var resp = {};
     console.debug(`- Checking if server is running using ${url}`);
     try {
@@ -76,7 +84,7 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
             break;
         } else {
             console.debug(`... attempt ${i} going to sleep`);
-            await fluid.tests.personalData.sleep(DELAY);
+            await fluid.personalData.sleep(DELAY);
         }
     }
     console.debug(`- Attempt to start server, result:  ${resp.status}`);
@@ -98,7 +106,7 @@ fluid.tests.personalData.startServer = async function (execCmd, url) {
  *                                            running.
  * @param {String} url - Url to use to check if the ChildProcess has been killed.
  */
-fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
+fluid.personalData.stopServer = async function (childProcessInfo, url) {
     console.debug(`- Stopping server at ${url}`);
     if (childProcessInfo.wasRunning === false && childProcessInfo.process &&
         childProcessInfo.process.exitCode === null) {
@@ -113,7 +121,7 @@ fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
         catch (error) {
             break;
         }
-        await fluid.tests.personalData.sleep(DELAY);
+        await fluid.personalData.sleep(DELAY);
     }
 };
 
@@ -121,7 +129,7 @@ fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
  * Start the database using Docker.  This checks whether the docker container
  * is already running, and if not, attempts to start it.  Note that this assumes
  * that the image/container is set up such that the environment variables are
- * as defined in `fluid.tests.personalData.initEnvironmentVariables()`.
+ * as defined in `fluid.personalData.initEnvironmentVariables()`.
  *
  * @param {String} container - Name of the docker container.
  * @param {String} image - Name of the associated docker image.
@@ -134,7 +142,7 @@ fluid.tests.personalData.stopServer = async function (childProcessInfo, url) {
  *                  was restarted from a paused state and `pg_ready` to indicate
  *                  if the database in the container is ready.
  */
-fluid.tests.personalData.dockerStartDatabase = async function (container, image, dbConfig) {
+fluid.personalData.dockerStartDatabase = async function (container, image, dbConfig) {
     var dbStatus = {};
     var execOutput;
 
@@ -189,7 +197,7 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image,
             dbStatus.pgReady = true;
             break;
         } else {
-            await fluid.tests.personalData.sleep(DELAY);
+            await fluid.personalData.sleep(DELAY);
         }
     }
     console.debug(`- Attempt to start database, result:  ${dbStatus.pgReady}`);
@@ -229,7 +237,7 @@ fluid.tests.personalData.dockerStartDatabase = async function (container, image,
  *                             disconnect from the database.
  * @return {Object} result of disconnecting `dbRequest` from the database.
  */
-fluid.tests.personalData.dockerStopDatabase = async function (container, wasPaused, dbRequest) {
+fluid.personalData.dockerStopDatabase = async function (container, wasPaused, dbRequest) {
     console.debug(`- Stopping database container ${container}`);
     if (dbRequest) {
         await dbRequest.end();
@@ -263,7 +271,7 @@ fluid.tests.personalData.dockerStopDatabase = async function (container, wasPaus
  *                                         the tables.
  * @return {Boolean} true if no error with initialization; false otherwise.
  */
-fluid.tests.personalData.initDataBase = async function (dbRequest, sqlFiles) {
+fluid.personalData.initDataBase = async function (dbRequest, sqlFiles) {
     var togo;
     try {
         console.debug("- Emptying test database...");
@@ -279,23 +287,4 @@ fluid.tests.personalData.initDataBase = async function (dbRequest, sqlFiles) {
         togo = false;
     }
     return togo;
-};
-
-/**
- * Initialize a test database and set up its tables, if it/they do not already
- * exist, and load some test data records.
- *
- * @param {String} serverDomain - The server domain.
- * @param {String} endpoint - The end point supported by the server.
- * @return {Object} The response object containing the response code and message.
- */
-fluid.tests.sendRequest = async function (serverDomain, endpoint) {
-    console.debug("- Sending '%s' request", endpoint);
-    try {
-        return await axios.get(serverDomain + endpoint);
-    } catch (e) {
-        // Return e.response when the server responds with an error.
-        // Return e when the server endpoint doesn't exist.
-        return e.response ? e.response : e;
-    }
 };
