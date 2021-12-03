@@ -20,14 +20,15 @@ const fluid = require("infusion"),
 require("../src/shared/initDbUtils.js");
 require("./utilsSso.js");
 
+const googleSso = require("../src/personalData/routes/ssoProviders/googleSso.js");
+const dbRequest = require("../src/personalData/ssoDbOps.js");
+
 fluid.personalData.initEnvironmentVariables({
     dbName: "prefs_testdb",
     dbPort: 5433
 });
 
-fluid.logObjectRenderChars = 4096;
-
-jqUnit.module("Personal Data Server Google SSO tests.");
+jqUnit.module("Personal Data Server Google SSO Tests");
 
 fluid.registerNamespace("fluid.tests.googleSso");
 
@@ -58,176 +59,83 @@ fluid.tests.googleSso.mockUserInfo = {
     verified_email: true
 };
 
-fluid.defaults("fluid.tests.googleSso.environment", {
-    gradeNames: ["fluid.test.testEnvironment"],
-    components: {
-        testCaseHolder: {
-            type: "fluid.tests.googleSso.testCaseHolder"
-        }
+const pdServerUrl = fluid.tests.personalData.serverUrl;
+const pdServerStartCmd = "node index.js";
+const sqlFiles = {
+    flush: __dirname + "/../dataModel/dropTables.sql",
+    tableDefs: path.join(__dirname, "/../dataModel/SsoTables.sql"),
+    loadTestData: __dirname + "/../dataModel/SsoProvidersData.sql"
+};
+
+// Keep track of the payload returned by the auth request for consequent tests
+let authPayload;
+
+jqUnit.test("Google SSO tests", async function () {
+    jqUnit.expect(36);
+    try {
+        // Start the database
+        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.personalData.postgresContainer,
+            fluid.tests.personalData.postgresImage,
+            dbRequest.dbConfig);
+        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+
+        // Start the server
+        const serverInstance = await fluid.personalData.startServer(pdServerStartCmd, pdServerUrl);
+        jqUnit.assertEquals("Check server active", 200, serverInstance.status);
+
+        // Flush the database
+        const loadDataStatus = await fluid.personalData.initDataBase(dbRequest, sqlFiles);
+        jqUnit.assertTrue("The database has been initiated", loadDataStatus);
+
+        // Test "/ready" to ensure the server is up and running
+        let response = await fluid.tests.sendRequest(pdServerUrl, "/ready");
+        fluid.tests.googleSso.testResponse(response, 200, { isReady: true }, "/ready (should succeed)");
+
+        // Test "/sso/google"
+        response = await fluid.tests.googleSso.sendAuthRequest(pdServerUrl, "/sso/google");
+        fluid.tests.googleSso.testResponse(response, 200, {}, "/sso/google");
+
+        // Test successful GoogleSso.fetchAccessToken() with mock /token endpoint
+        response = await fluid.tests.googleSso.fetchAccessToken(googleSso, authPayload.code, dbRequest, googleSso.options, 200);
+        fluid.tests.googleSso.testResponse(response, 200, fluid.tests.googleSso.mockAccessToken, "googleSso.fetchAccessToken(/token)");
+
+        // Test failure of GoogleSso.fetchAccessToken()
+        response = await fluid.tests.googleSso.fetchAccessToken(googleSso, authPayload.code, dbRequest, googleSso.options, 400);
+        fluid.tests.googleSso.testResponse(response, 400, fluid.tests.googleSso.mockErrorResponse, "googleSso.fetchAccessToken(/token)");
+
+        // Test successful GoogleSso.fetchUserInfo() with mock /userInfo endpoint
+        response = await fluid.tests.googleSso.fetchUserInfo(googleSso, fluid.tests.googleSso.mockAccessToken, googleSso.options, 200);
+        fluid.tests.googleSso.testResponse(response, 200, fluid.tests.googleSso.mockUserInfo, "googleSso.fetchUserInfo(/userInfo)");
+
+        // Test failure GoogleSso.fetchUserInfo() with mock /userInfo endpoint
+        response = await fluid.tests.googleSso.fetchUserInfo(googleSso, fluid.tests.googleSso.mockAccessToken, googleSso.options, 400);
+        fluid.tests.googleSso.testResponse(response, 400, fluid.tests.googleSso.mockErrorResponse, "googleSso.fetchUserInfo(/userInfo)");
+
+        // Test googleSso.storeUserAndAccessToken()
+        response = await fluid.tests.googleSso.storeUserAndAccessToken(googleSso, dbRequest, fluid.tests.googleSso.mockUserInfo, fluid.tests.googleSso.mockAccessToken);
+        fluid.tests.googleSso.testStoreUserAndAccessToken(response, "googleSso.storeUserAndAccessToken()", googleSso.options);
+
+        // Test failure of "/sso/google/login/callback" -- missing authorization code parameter
+        response = await fluid.tests.sendRequest(pdServerUrl, "/sso/google/login/callback");
+        fluid.tests.googleSso.testResponse(response, 403, {"isError": true, "message": "Request missing authorization code"}, "/sso/google/login/callback");
+
+        // Delete the test user -- this will cascade and delete the associated SsoAccount and AccessToken.
+        response = await fluid.tests.personalData.deleteTestUser(fluid.tests.googleSso.mockUserInfo.id, dbRequest);
+        jqUnit.assertNotNull(`Checking deletion of mock user ${fluid.tests.googleSso.mockUserInfo.id}`, response);
+
+        // Stop the server
+        await fluid.personalData.stopServer(serverInstance, pdServerUrl);
+
+        // Stop the docker container for the database
+        await fluid.personalData.dockerStopDatabase(fluid.tests.personalData.postgresContainer, dbStatus, dbRequest);
+    } catch (error) {
+        jqUnit.fail("Google SSO tests fails with this error: ", error);
     }
 });
 
-fluid.defaults("fluid.tests.googleSso.testCaseHolder", {
-    gradeNames: ["fluid.test.testCaseHolder"],
-    googleSso: require("../src/personalData/routes/ssoProviders/googleSso.js"),
-    dbRequest: require("../src/personalData/ssoDbOps.js"),
-    pdServerUrl: fluid.tests.personalData.serverUrl,
-    pdServerStartCmd: "node index.js",
-    sqlFiles: {
-        flush: __dirname + "/../dataModel/dropTables.sql",
-        tableDefs: path.join(__dirname, "/../dataModel/SsoTables.sql"),
-        loadTestData: __dirname + "/../dataModel/SsoProvidersData.sql"
-    },
-    members: {
-        // These are assigned during the test sequence
-        pdServerProcess: null,   // { status, process, wasRunning }
-        databaseStatus: null,    // { wasPaused, pgReady }
-        authPayload: null,
-        accountInfo: null
-    },
-    modules: [{
-        name: "Google SSO tests",
-        tests: [{
-            name: "Google SSO end points",
-            sequence: [{
-                // Start the database
-                task: "fluid.personalData.dockerStartDatabase",
-                args: [
-                    fluid.tests.personalData.postgresContainer,
-                    fluid.tests.personalData.postgresImage,
-                    "{that}.options.dbRequest.dbConfig"
-                ],
-                resolve: "fluid.tests.googleSso.testDatabaseStarted",
-                resolveArgs: ["{that}", true, "{arguments}.0"]  // database status
-            }, {
-                // Start server
-                task: "fluid.personalData.startServer",
-                args: ["{that}.options.pdServerStartCmd", "{that}.options.pdServerUrl"],
-                resolve: "fluid.tests.googleSso.testProcessStarted",
-                resolveArgs: ["{arguments}.0", "{that}"]        // ChildProcess
-            }, {
-                // Flush the data base.
-                task: "fluid.personalData.initDataBase",
-                args: ["{that}.options.dbRequest", "{that}.options.sqlFiles"],
-                resolve: "jqUnit.assertTrue",
-                resolveArgs: ["{arguments}.0", "check intialize database"]
-            },  {
-                // Test "/ready".
-                task: "fluid.tests.sendRequest",
-                args: ["{that}.options.pdServerUrl", "/ready"],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: ["{arguments}.0", 200, { isReady: true }, "/ready (should succeed)"]
-            }, {
-                // Test "/sso/google".
-                task: "fluid.tests.googleSso.sendAuthRequest",
-                args: ["{that}", "/sso/google"],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: ["{arguments}.0", 200, {}, "/sso/google"]
-            }, {
-                // Test successful GoogleSso.fetchAccessToken() with mock /token endpoint
-                task: "fluid.tests.googleSso.fetchAccessToken",
-                args: [
-                    "{that}.options.googleSso",
-                    "{that}.authPayload.code",
-                    "{that}.options.dbRequest",
-                    "{that}.options.googleSso.options",
-                    200
-                ],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: ["{arguments}.0", 200, fluid.tests.googleSso.mockAccessToken, "googleSso.fetchAccessToken(/token)"]
-            }, {
-                // Test failure of GoogleSso.fetchAccessToken()
-                task: "fluid.tests.googleSso.fetchAccessToken",
-                args: [
-                    "{that}.options.googleSso",
-                    "{that}.authPayload.code",
-                    "{that}.options.dbRequest",
-                    "{that}.options.googleSso.options",
-                    400
-                ],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: ["{arguments}.0", 400, fluid.tests.googleSso.mockErrorResponse, "googleSso.fetchAccessToken(/token)"]
-            }, {
-                // Test successful GoogleSso.fetchUserInfo() with mock /userInfo endpoint
-                task: "fluid.tests.googleSso.fetchUserInfo",
-                args: [
-                    "{that}.options.googleSso",
-                    fluid.tests.googleSso.mockAccessToken,
-                    "{that}.options.googleSso.options",
-                    200
-                ],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: ["{arguments}.0", 200, fluid.tests.googleSso.mockUserInfo, "googleSso.fetchUserInfo(/userInfo)"]
-            }, {
-                // Test failure GoogleSso.fetchUserInfo() with mock /userInfo endpoint
-                task: "fluid.tests.googleSso.fetchUserInfo",
-                args: [
-                    "{that}.options.googleSso",
-                    fluid.tests.googleSso.mockAccessToken,
-                    "{that}.options.googleSso.options",
-                    400
-                ],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: ["{arguments}.0", 400, fluid.tests.googleSso.mockErrorResponse, "googleSso.fetchUserInfo(/userInfo)"]
-            }, {
-                task: "fluid.tests.googleSso.storeUserAndAccessToken",
-                args: ["{that}", fluid.tests.googleSso.mockUserInfo, fluid.tests.googleSso.mockAccessToken],
-                resolve: "fluid.tests.googleSso.testStoreUserAndAccessToken",
-                resolveArgs: ["{that}.accountInfo", "googleSso.storeUserAndAccessToken()", "{that}.options.googleSso.options"]
-            }, {
-                // Test failure of "/sso/google/login/callback" -- missing authorization code parameter.
-                task: "fluid.tests.sendRequest",
-                args: ["{that}.options.pdServerUrl", "/sso/google/login/callback"],
-                resolve: "fluid.tests.googleSso.testResponse",
-                resolveArgs: [
-                    "{arguments}.0",    // Response
-                    403,
-                    {"isError": true, "message": "Request missing authorization code"},
-                    "/sso/google/login/callback"
-                ]
-            }, {
-                // Delete the test user -- this will cascade and delete the
-                // associated SsoAccount and AccessToken.
-                task: "fluid.tests.personalData.deleteTestUser",
-                args: [fluid.tests.googleSso.mockUserInfo.id, "{that}.options.dbRequest"],
-                resolve: "fluid.tests.personalData.testDeleteTestUser",
-                resolveArgs: ["{arguments}.0", fluid.tests.googleSso.mockUserInfo.id]
-            }, {
-                funcName: "fluid.personalData.stopServer",
-                args: ["{that}.pdServerProcess", "{that}.options.pdServerUrl"]
-            }, {
-                funcName: "fluid.personalData.dockerStopDatabase",
-                args: [
-                    fluid.tests.personalData.postgresContainer,
-                    "{that}.databaseStatus.wasPaused",
-                    "{that}.options.dbRequest"
-                ]
-            }]
-        }]
-    }]
-});
-
-fluid.tests.googleSso.testProcessStarted = function (result, testCase) {
-    console.debug("- Checking process started, ", testCase.options.pdServerStartCmd);
-    testCase.pdServerProcess = result;
-    jqUnit.assertEquals("Check server active", 200, testCase.pdServerProcess.status);
-};
-
-fluid.tests.googleSso.testDatabaseStarted = function (testCase, expected, actual) {
-    testCase.databaseStatus = actual;
-    jqUnit.assertEquals("Check that database started", expected, actual.pgReady);
-};
-
-fluid.tests.googleSso.testResponse = async function (res, expectedStatus, expected, endPoint) {
-    jqUnit.assertEquals("Check '" + endPoint + "' response status", expectedStatus, res.status);
-    jqUnit.assertNotNull("Check '" + endPoint + "' non-null response", res);
-
-    fluid.tests.googleSso.testResult(res.data, expected, endPoint);
-};
-
-fluid.tests.googleSso.testResult = function (result, expected, testPoint) {
-    jqUnit.assertNotNull("Check '" + testPoint + "' non-null result", result);
-    jqUnit.assertDeepEq("Check '" + testPoint + "' result", expected, result);
+fluid.tests.googleSso.testResponse = function (response, expectedStatus, expected, endPoint) {
+    jqUnit.assertEquals("Check '" + endPoint + "' response status", expectedStatus, response.status);
+    jqUnit.assertDeepEq("Check '" + endPoint + "' result", expected, response.data);
 };
 
 fluid.tests.googleSso.testStoreUserAndAccessToken = function (accountInfo, testPoint, ssoOptions) {
@@ -261,24 +169,19 @@ fluid.tests.googleSso.testStoreUserAndAccessToken = function (accountInfo, testP
     jqUnit.assertNotNull(`${checkPrefix} AccessToken loginToken`, accountInfo.accessToken.loginToken);
 };
 
-fluid.tests.personalData.testDeleteTestUser = function (deleteResponse, userId) {
-    jqUnit.assertNotNull(`Checking deletion of mock user ${userId}`, deleteResponse);
-};
-
-fluid.tests.googleSso.sendAuthRequest = async function (testCase, endpoint) {
-    // Mock Google's OAuth2 endpoint.  The request payload is stored in
-    // `testCase.authPayload` for subsequent tests.
+fluid.tests.googleSso.sendAuthRequest = async function (pdServerUrl, endpoint) {
+    // Mock Google's OAuth2 endpoint.  The request payload is stored in `authPayload` for subsequent tests.
     nock("https://accounts.google.com")
         .get("/o/oauth2/auth")
         .query(function (payload) {
-            testCase.authPayload = payload;
+            authPayload = payload;
             return true;
         })
         .reply(200, {});
 
     console.debug("- Sending '%s'", endpoint);
     try {
-        return await axios.get(testCase.options.pdServerUrl + endpoint);
+        return await axios.get(pdServerUrl + endpoint);
     } catch (e) {
         return e.response;
     }
@@ -333,17 +236,16 @@ fluid.tests.googleSso.fetchUserInfo = function (googleSso, accessToken, options,
     return googleSso.fetchUserInfo(accessToken, options);
 };
 
-fluid.tests.googleSso.storeUserAndAccessToken = async function (testCase, userInfo, accessToken) {
+fluid.tests.googleSso.storeUserAndAccessToken = async function (googleSso, dbRequest, userInfo, accessToken) {
     try {
         console.debug("- Calling googleSso.storeUserAndAccessToken()");
-        testCase.accountInfo = await testCase.options.googleSso.storeUserAndAccessToken(
-            userInfo, accessToken, testCase.options.dbRequest, testCase.options.googleSso.options
+        return await googleSso.storeUserAndAccessToken(
+            userInfo, accessToken, dbRequest, googleSso.options
         );
     }
     catch (error) {
         console.debug(error.message);
     }
-    return testCase.accountInfo;
 };
 
 fluid.tests.personalData.deleteTestUser = async function (userId, dbRequest) {
@@ -351,5 +253,3 @@ fluid.tests.personalData.deleteTestUser = async function (userId, dbRequest) {
     const deleteResult = await dbRequest.runSql(`DELETE FROM "User" WHERE "userId"='${userId}' RETURNING *`);
     return deleteResult;
 };
-
-fluid.test.runTests("fluid.tests.googleSso.environment");

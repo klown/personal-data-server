@@ -27,106 +27,52 @@ jqUnit.module("Personal Data Server /health and /ready tests.");
 
 fluid.registerNamespace("fluid.tests.healthReady");
 
-fluid.defaults("fluid.tests.healthReady.environment", {
-    gradeNames: ["fluid.test.testEnvironment"],
-    components: {
-        testCaseHolder: {
-            type: "fluid.tests.healthReady.testCaseHolder"
-        }
+const pdServerUrl = fluid.tests.personalData.serverUrl;
+const pdServerStartCmd = "node index.js";
+const dbConfig = require("../src/personalData/ssoDbOps.js").dbConfig;
+
+jqUnit.test("Health and Ready end point tests", async function () {
+    jqUnit.expect(13);
+    try {
+        // Start with server off -- "/health" should fail
+        let response = await fluid.tests.sendRequest(pdServerUrl, "/health");
+        // console.log("=== response: ", response);
+        jqUnit.assertNotNull("Check '/health' error", response);
+        jqUnit.assertTrue("Check '/health' error code", response.toString().includes("ECONNREFUSED"));
+
+        // Start server, but not the database.
+        const serverInstance = await fluid.personalData.startServer(pdServerStartCmd, pdServerUrl);
+        jqUnit.assertEquals("Check server active", 200, serverInstance.status);
+
+        // "/health" request should now succeed ...
+        response = await fluid.tests.sendRequest(pdServerUrl, "/health");
+        fluid.tests.healthReady.testResult(response, 200, { isHealthy: true }, "/health (should succeed)");
+
+        //  ... but "/ready" should fail
+        response = await fluid.tests.sendRequest(pdServerUrl, "/ready");
+        fluid.tests.healthReady.testResult(response, 503, { isError: true, message: "Database is not ready" }, "/ready (should error)");
+
+        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.personalData.postgresContainer,
+            fluid.tests.personalData.postgresImage,
+            dbConfig);
+        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+
+        // "/ready" should now work.
+        response = await fluid.tests.sendRequest(pdServerUrl, "/ready");
+        fluid.tests.healthReady.testResult(response, 200, { isReady: true }, "/ready (should succeed)");
+
+        // Stop the docker container for the database
+        await fluid.personalData.dockerStopDatabase(fluid.tests.personalData.postgresContainer, dbStatus.wasPaused);
+
+        // Stop the server
+        await fluid.personalData.stopServer(serverInstance, pdServerUrl);
+    } catch (error) {
+        jqUnit.fail("Google SSO tests fails with this error: ", error);
     }
 });
-
-fluid.defaults("fluid.tests.healthReady.testCaseHolder", {
-    gradeNames: ["fluid.test.testCaseHolder"],
-    pdServerUrl: fluid.tests.personalData.serverUrl,
-    pdServerStartCmd: "node index.js",
-    dbConfig: require("../src/personalData/ssoDbOps.js").dbConfig,
-    members: {
-        // These are assigned during the test sequence
-        pdServerProcess: null,     // { status, process, wasRunning }
-        databaseStatus: null
-    },
-    modules: [{
-        name: "Health and Ready end point tests",
-        tests: [{
-            name: "/health and /ready end points",
-            sequence: [{
-                // Start with server off -- "/health" should fail
-                task: "fluid.tests.sendRequest",
-                args: ["{that}.options.pdServerUrl", "/health"],
-                resolve: "fluid.tests.healthReady.testHealthFail",
-                resolveArgs: ["{arguments}.0"] // error
-            }, {
-                // Start server, but not the database.
-                task: "fluid.personalData.startServer",
-                args: ["{that}.options.pdServerStartCmd", "{that}.options.pdServerUrl"],
-                resolve: "fluid.tests.healthReady.testProcessStarted",
-                resolveArgs: ["{arguments}.0", "{that}"]
-            }, {
-                // "/health" request should now succeed ...
-                task: "fluid.tests.sendRequest",
-                args: ["{that}.options.pdServerUrl", "/health"],
-                resolve: "fluid.tests.healthReady.testResult",
-                resolveArgs: ["{arguments}.0", 200, { isHealthy: true }, "/health (should succeed)"]
-            }, {
-                //  ... but "/ready" should fail
-                task: "fluid.tests.sendRequest",
-                args: ["{that}.options.pdServerUrl", "/ready"],
-                resolve: "fluid.tests.healthReady.testResult",
-                resolveArgs: [
-                    "{arguments}.0",
-                    503,
-                    { isError: true, message: "Database is not ready" },
-                    "/ready (should error)"
-                ]
-            }, {
-                // ... start the database
-                task: "fluid.personalData.dockerStartDatabase",
-                args: [
-                    fluid.tests.personalData.postgresContainer,
-                    fluid.tests.personalData.postgresImage,
-                    "{that}.options.dbConfig"
-                ],
-                resolve: "fluid.tests.healthReady.testDatabaseStarted",
-                resolveArgs: ["{that}", true, "{arguments}.0"]
-            }, {
-                // "/ready" should now work.
-                task: "fluid.tests.sendRequest",
-                args: ["{that}.options.pdServerUrl", "/ready"],
-                resolve: "fluid.tests.healthReady.testResult",
-                resolveArgs: ["{arguments}.0", 200, { isReady: true }, "/ready (should succeed)"]
-            }, {
-                funcName: "fluid.personalData.dockerStopDatabase",
-                args: [fluid.tests.personalData.postgresContainer, "{that}.databaseStatus.wasPaused"]
-            }, {
-                funcName: "fluid.personalData.stopServer",
-                args: ["{that}.pdServerProcess", "{that}.options.pdServerUrl"]
-            }]
-        }]
-    }]
-});
-
-fluid.tests.healthReady.testProcessStarted = function (result, testCase) {
-    console.debug("- Checking process started, ", testCase.options.pdServerStartCmd);
-    testCase.pdServerProcess = result;
-    jqUnit.assertNotNull("Check process exists", result.process);
-    jqUnit.assertEquals("Check server active", 200, result.status);
-};
-
-fluid.tests.healthReady.testHealthFail = function (error) {
-    jqUnit.assertNotNull("Check '/health' error", error);
-    jqUnit.assertTrue("Check '/health' error code", error.toString().includes("ECONNREFUSED"));
-};
-
-fluid.tests.healthReady.testDatabaseStarted = function (testCase, expected, actual) {
-    testCase.databaseStatus = actual;
-    jqUnit.assertEquals("Check that database started", expected, actual.pgReady);
-};
 
 fluid.tests.healthReady.testResult = async function (res, expectedStatus, expected, endPoint) {
     jqUnit.assertNotNull("Check '" + endPoint + "' non-null response", res);
     jqUnit.assertEquals("Check '" + endPoint + "' response status", expectedStatus, res.status);
     jqUnit.assertDeepEq("Check '" + endPoint + "' response", expected, res.data);
 };
-
-fluid.test.runTests("fluid.tests.healthReady.environment");
