@@ -12,7 +12,7 @@
 
 "use strict";
 
-const postgresdb = require("../database/src/js/index.js");
+const postgresdb = require("../dbOps/postgresOps.js");
 const generateToken = require("./generateRandomToken.js");
 
 // Database configuration and connection

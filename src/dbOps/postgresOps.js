@@ -12,9 +12,9 @@
 
 "use strict";
 
-var fs      = require("fs").promises,
-    pg      = require("pg"),
-    format  = require("pg-format");
+const fs = require("fs").promises;
+const pg = require("pg");
+const format  = require("pg-format");
 
 class PostgresRequest extends pg.Pool {
 

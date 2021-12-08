@@ -8,10 +8,12 @@
  * You may obtain a copy of the License at
  * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
  */
+
+// This data model is still in discussion and not used.
+
 "use strict";
 
 var fluid = require("infusion");
-require("../src/js/index.js");
 
 fluid.registerNamespace("fluid.postgresdb");
 

@@ -3,9 +3,9 @@ require("json5/lib/register");
 
 var fluid = require("infusion");
 
-fluid.registerNamespace("fluid.tests.postgresdb.testTableData");
+fluid.registerNamespace("fluid.tests.dbOps.testTableData");
 
-fluid.tests.postgresdb.testTableData = {
+fluid.tests.dbOps.testTableData = {
     users:                  require("./users.json"),
     rgb:                    require("./rgb.json"),
     "roster.preferenceset": require("./PrefsSets"),

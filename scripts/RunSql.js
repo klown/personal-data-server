@@ -48,7 +48,7 @@ function main() {
         console.log("File: ", sqlFile);
     }
 
-    var postgresReq = require("../src/js");
+    var postgresReq = require("../src/dbOps/postgresOps.js");
     var pgOps = new postgresReq.PostgresRequest(dbConfig);
 
     var runResult;

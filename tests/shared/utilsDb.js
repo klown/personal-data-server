@@ -15,13 +15,16 @@
 var fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
-fluid.registerNamespace("fluid.tests.postgresdb.utils");
+fluid.registerNamespace("fluid.tests.utils");
+
+fluid.tests.postgresContainer = "postgresdb";
+fluid.tests.postgresImage = "postgres:14.0-alpine";
 
 // Host, port, database name, etc. for testing
-fluid.tests.postgresdb.databaseConfig = {
+fluid.tests.dbConfig = {
     database: process.env.PGDATABASE        || "prefs_testdb",
     host: process.env.PGPHOST               || "localhost",
-    port: process.env.PGPORT                || 5432,
+    port: process.env.PGPORT                || 5433,
     user: process.env.PGUSER                || "admin",
     password: process.env.POSTGRES_PASSWORD || "asecretpassword"
 };
@@ -35,7 +38,7 @@ fluid.tests.postgresdb.databaseConfig = {
  * @param {String} ifExists - (Optional) additional IF EXISTS clause.
  * @return {Promise} The value of the drop operation.
  */
-fluid.tests.postgresdb.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
+fluid.tests.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
     ifExists = ifExists || "";
     var dropSQL = [];
     fluid.each(tableNames, function (aTableName) {
@@ -54,7 +57,7 @@ fluid.tests.postgresdb.utils.testSqlArray = function (postgresOps, tableNames, i
  * @param {Array} values - Optional values for any parameters in `sql`.
  * @return {Promise} Result of running the statment(s).
  */
-fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql, values) {
+fluid.tests.utils.runSQL = function (pgOps, sql, values) {
     return pgOps.runSql(sql, values);
 };
 
@@ -66,7 +69,7 @@ fluid.tests.postgresdb.utils.runSQL = function (pgOps, sql, values) {
  * @return {Promise} Result of running the statment(s).
  */
 
-fluid.tests.postgresdb.utils.runSQLfile = function (pgOps, sqlFile) {
+fluid.tests.utils.runSQLfile = function (pgOps, sqlFile) {
     fluid.log("SQLFILE: " + sqlFile);
     return pgOps.runSqlFile(sqlFile);
 };
@@ -84,7 +87,7 @@ fluid.tests.postgresdb.utils.runSQLfile = function (pgOps, sqlFile) {
  * @param {String} command - Optional: if present, it will be checked against
  *                           commands returned in the results.
  */
-fluid.tests.postgresdb.utils.testResults = function (results, numStatements, command) {
+fluid.tests.utils.testResults = function (results, numStatements, command) {
     jqUnit.assertNotNull("Check for null result", results);
     jqUnit.assertEquals("Check number of commands", numStatements, results.length);
     if (command) {
@@ -107,7 +110,7 @@ fluid.tests.postgresdb.utils.testResults = function (results, numStatements, com
  * @param {Object} expectedPairs - Expected JSON object.
  * @param {String} msg - Message for the comparison tests.
  */
-fluid.tests.postgresdb.utils.checkKeyValuePairs = function (keys, actualPairs, expectedPairs, msg) {
+fluid.tests.utils.checkKeyValuePairs = function (keys, actualPairs, expectedPairs, msg) {
     fluid.each(keys, function (aKey) {
         var actualValue = actualPairs[aKey];
         var expectedValue = expectedPairs[aKey];
@@ -124,25 +127,7 @@ fluid.tests.postgresdb.utils.checkKeyValuePairs = function (keys, actualPairs, e
     });
 };
 
-fluid.tests.postgresdb.utils.testFailureCreateTable = function (error, tableName) {
-    jqUnit.assertNotNull("Check for null error", error);
-    jqUnit.assertEquals("Check error message",
-        "relation \"" + tableName + "\" already exists",
-        error.message
-    );
-};
-
-fluid.tests.postgresdb.utils.testLoadTables = function (results, allTablesData) {
-    jqUnit.assertNotNull("Check for null result", results);
-    fluid.each(results, function (aResult, index) {
-        var tableName = fluid.tests.postgresdb.tableNames[index];
-        fluid.tests.postgresdb.utils.testResults(
-            aResult, allTablesData[tableName].length, "INSERT"
-        );
-    });
-};
-
-fluid.tests.postgresdb.utils.finish = function (pgOps) {
+fluid.tests.utils.finish = function (pgOps) {
     return pgOps.end().then(() => {
         fluid.log("Postgres operations done");
     });

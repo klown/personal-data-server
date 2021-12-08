@@ -9,32 +9,32 @@
 
 var fluid = require("infusion");
 
-fluid.registerNamespace("fluid.tests.postgresdb");
+fluid.registerNamespace("fluid.tests.dbOps");
 
-fluid.tests.postgresdb.tableNames = [
+fluid.tests.dbOps.tableNames = [
     "rgb",
     "roster.preferenceset",
     "massive",
     "users"
 ];
 
-fluid.tests.postgresdb.tableDefinitions = `
-    CREATE TABLE "${fluid.tests.postgresdb.tableNames[0]}" (
+fluid.tests.dbOps.tableDefinitions = `
+    CREATE TABLE "${fluid.tests.dbOps.tableNames[0]}" (
         id VARCHAR(36) PRIMARY KEY,
         color VARCHAR(36),
         "colourMap" JSONB,
         "timeStampCreated" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         "timeStampModified" TIMESTAMPTZ
     );
-    CREATE TABLE "${fluid.tests.postgresdb.tableNames[1]}" (
+    CREATE TABLE "${fluid.tests.dbOps.tableNames[1]}" (
         name VARCHAR(64) PRIMARY KEY,
         description VARCHAR(64),
         prefs_json JSONB
     );
-    CREATE TABLE "${fluid.tests.postgresdb.tableNames[2]}" (
+    CREATE TABLE "${fluid.tests.dbOps.tableNames[2]}" (
         text TEXT
     );
-    CREATE TABLE "${fluid.tests.postgresdb.tableNames[3]}" (
+    CREATE TABLE "${fluid.tests.dbOps.tableNames[3]}" (
         "userId" VARCHAR(64) PRIMARY KEY NOT NULL,
         name VARCHAR(64) NOT NULL,
         username VARCHAR(64) NOT NULL,
@@ -48,11 +48,11 @@ fluid.tests.postgresdb.tableDefinitions = `
     );
 `;
 
-fluid.tests.postgresdb.tableUpdates = `
-    ALTER TABLE "${fluid.tests.postgresdb.tableNames[0]}"
+fluid.tests.dbOps.tableUpdates = `
+    ALTER TABLE "${fluid.tests.dbOps.tableNames[0]}"
         RENAME COLUMN color TO colour;
-    ALTER TABLE "${fluid.tests.postgresdb.tableNames[0]}"
+    ALTER TABLE "${fluid.tests.dbOps.tableNames[0]}"
         ADD "timeStampExpired" TIMESTAMPTZ;
 `;
 
-fluid.tests.postgresdb.numTableUpdates = 2;
+fluid.tests.dbOps.numTableUpdates = 2;

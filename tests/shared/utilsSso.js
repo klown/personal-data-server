@@ -13,14 +13,14 @@
 const fluid = require("infusion"),
     axios = require("axios");
 
-fluid.registerNamespace("fluid.tests.personalData");
+fluid.registerNamespace("fluid.tests.utils");
 
 // Personal data server port (used by express's startup script `node index.js`)
 process.env.PORT = 3001;
 
-fluid.tests.personalData.serverUrl = "http://localhost:" + process.env.PORT;
-fluid.tests.personalData.postgresContainer = "postgresdb";
-fluid.tests.personalData.postgresImage = "postgres:14.0-alpine";
+fluid.tests.serverUrl = "http://localhost:" + process.env.PORT;
+fluid.tests.postgresContainer = "postgresdb";
+fluid.tests.postgresImage = "postgres:14.0-alpine";
 
 /**
  * Initialize a test database and set up its tables, if it/they do not already
@@ -30,7 +30,7 @@ fluid.tests.personalData.postgresImage = "postgres:14.0-alpine";
  * @param {String} endpoint - The end point supported by the server.
  * @return {Object} The response object containing the response code and message.
  */
-fluid.tests.sendRequest = async function (serverDomain, endpoint) {
+fluid.tests.utils.sendRequest = async function (serverDomain, endpoint) {
     console.debug("- Sending '%s' request", endpoint);
     try {
         return await axios.get(serverDomain + endpoint);

@@ -17,8 +17,8 @@ const fluid = require("infusion"),
     path = require("path"),
     jqUnit = require("node-jqunit");
 
-require("../src/shared/initDbUtils.js");
-require("./utilsSso.js");
+require("../src/shared/driverUtils.js");
+require("./shared/utilsSso.js");
 
 const googleSso = require("../src/personalData/routes/ssoProviders/googleSso.js");
 const dbRequest = require("../src/personalData/ssoDbOps.js");
@@ -59,7 +59,7 @@ fluid.tests.googleSso.mockUserInfo = {
     verified_email: true
 };
 
-const pdServerUrl = fluid.tests.personalData.serverUrl;
+const pdServerUrl = fluid.tests.serverUrl;
 const pdServerStartCmd = "node index.js";
 const sqlFiles = {
     flush: __dirname + "/../dataModel/dropTables.sql",
@@ -74,8 +74,8 @@ jqUnit.test("Google SSO tests", async function () {
     jqUnit.expect(36);
     try {
         // Start the database
-        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.personalData.postgresContainer,
-            fluid.tests.personalData.postgresImage,
+        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer,
+            fluid.tests.postgresImage,
             dbRequest.dbConfig);
         jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
@@ -88,7 +88,7 @@ jqUnit.test("Google SSO tests", async function () {
         jqUnit.assertTrue("The database has been initiated", loadDataStatus);
 
         // Test "/ready" to ensure the server is up and running
-        let response = await fluid.tests.sendRequest(pdServerUrl, "/ready");
+        let response = await fluid.tests.utils.sendRequest(pdServerUrl, "/ready");
         fluid.tests.googleSso.testResponse(response, 200, { isReady: true }, "/ready (should succeed)");
 
         // Test "/sso/google"
@@ -116,20 +116,20 @@ jqUnit.test("Google SSO tests", async function () {
         fluid.tests.googleSso.testStoreUserAndAccessToken(response, "googleSso.storeUserAndAccessToken()", googleSso.options);
 
         // Test failure of "/sso/google/login/callback" -- missing authorization code parameter
-        response = await fluid.tests.sendRequest(pdServerUrl, "/sso/google/login/callback");
+        response = await fluid.tests.utils.sendRequest(pdServerUrl, "/sso/google/login/callback");
         fluid.tests.googleSso.testResponse(response, 403, {"isError": true, "message": "Request missing authorization code"}, "/sso/google/login/callback");
 
         // Delete the test user -- this will cascade and delete the associated SsoAccount and AccessToken.
-        response = await fluid.tests.personalData.deleteTestUser(fluid.tests.googleSso.mockUserInfo.id, dbRequest);
+        response = await fluid.tests.deleteTestUser(fluid.tests.googleSso.mockUserInfo.id, dbRequest);
         jqUnit.assertNotNull(`Checking deletion of mock user ${fluid.tests.googleSso.mockUserInfo.id}`, response);
 
         // Stop the server
         await fluid.personalData.stopServer(serverInstance, pdServerUrl);
 
         // Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(fluid.tests.personalData.postgresContainer, dbStatus, dbRequest);
+        await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus, dbRequest);
     } catch (error) {
-        jqUnit.fail("Google SSO tests fails with this error: ", error);
+        jqUnit.fail("Google SSO tests fail with this error: ", error);
     }
 });
 
@@ -248,7 +248,7 @@ fluid.tests.googleSso.storeUserAndAccessToken = async function (googleSso, dbReq
     }
 };
 
-fluid.tests.personalData.deleteTestUser = async function (userId, dbRequest) {
+fluid.tests.deleteTestUser = async function (userId, dbRequest) {
     console.debug(`- Deleting user with id '${userId}'`);
     const deleteResult = await dbRequest.runSql(`DELETE FROM "User" WHERE "userId"='${userId}' RETURNING *`);
     return deleteResult;

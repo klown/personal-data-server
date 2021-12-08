@@ -11,9 +11,13 @@
 
 var testIncludes = [
     // Test DB operations
-    // "../src/database/src/test/all-tests.js",
+    "./postgresOpsTests.js",
+    "./postgresRequestTests.js",
+    "./tableModelDefTests.js",
+
     // Test Google single sign on
     "./googleSsoTests.js",
+
     // Test endpoints provided by personal data server
     "./healthReadyTests.js"
 
