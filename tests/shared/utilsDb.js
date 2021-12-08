@@ -52,26 +52,26 @@ fluid.tests.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
 /**
  * Run SQL statement(s).
  *
- * @param {Object} pgOps - Postgres operations instance.
+ * @param {Object} postgresHandler - Postgres operations instance.
  * @param {String} sql - SQL statement.
  * @param {Array} values - Optional values for any parameters in `sql`.
  * @return {Promise} Result of running the statment(s).
  */
-fluid.tests.utils.runSQL = function (pgOps, sql, values) {
-    return pgOps.runSql(sql, values);
+fluid.tests.utils.runSQL = function (postgresHandler, sql, values) {
+    return postgresHandler.runSql(sql, values);
 };
 
 /**
  * Run SQL statement(s) fetched from a file.
  *
- * @param {Object} pgOps - Postgres operations instance.
+ * @param {Object} postgresHandler - Postgres operations instance.
  * @param {String} sqlFile - Path to file containing SQL statements.
  * @return {Promise} Result of running the statment(s).
  */
 
-fluid.tests.utils.runSQLfile = function (pgOps, sqlFile) {
+fluid.tests.utils.runSQLfile = function (postgresHandler, sqlFile) {
     fluid.log("SQLFILE: " + sqlFile);
-    return pgOps.runSqlFile(sqlFile);
+    return postgresHandler.runSqlFile(sqlFile);
 };
 
 /**
@@ -127,8 +127,8 @@ fluid.tests.utils.checkKeyValuePairs = function (keys, actualPairs, expectedPair
     });
 };
 
-fluid.tests.utils.finish = function (pgOps) {
-    return pgOps.end().then(() => {
+fluid.tests.utils.finish = function (postgresHandler) {
+    return postgresHandler.end().then(() => {
         fluid.log("Postgres operations done");
     });
 };
