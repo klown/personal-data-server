@@ -1,7 +1,7 @@
 "use strict";
 require("json5/lib/register");
 
-var fluid = require("infusion");
+const fluid = require("infusion");
 
 fluid.registerNamespace("fluid.tests.dbOps.testTableData");
 

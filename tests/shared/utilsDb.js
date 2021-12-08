@@ -12,7 +12,7 @@
 
 "use strict";
 
-var fluid = require("infusion"),
+const fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
 fluid.registerNamespace("fluid.tests.utils");
@@ -40,7 +40,7 @@ fluid.tests.dbConfig = {
  */
 fluid.tests.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
     ifExists = ifExists || "";
-    var dropSQL = [];
+    let dropSQL = [];
     fluid.each(tableNames, function (aTableName) {
         dropSQL.push(
             `DROP TABLE ${ifExists} "${aTableName}" CASCADE;`
@@ -112,14 +112,14 @@ fluid.tests.utils.testResults = function (results, numStatements, command) {
  */
 fluid.tests.utils.checkKeyValuePairs = function (keys, actualPairs, expectedPairs, msg) {
     fluid.each(keys, function (aKey) {
-        var actualValue = actualPairs[aKey];
-        var expectedValue = expectedPairs[aKey];
-        var message = msg + " for key '" + aKey + "'";
+        const actualValue = actualPairs[aKey];
+        const expectedValue = expectedPairs[aKey];
+        const message = msg + " for key '" + aKey + "'";
         // Special case: time stamps -- convert the value to Date objects for
         // comparison
         if (actualValue instanceof Date) {
-            var actualDate = new Date(actualValue);
-            var expectedDate = new Date(expectedValue);
+            const actualDate = new Date(actualValue);
+            const expectedDate = new Date(expectedValue);
             jqUnit.assertDeepEq(message, expectedDate, actualDate);
         } else {
             jqUnit.assertDeepEq(message, expectedValue, actualValue);

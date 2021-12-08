@@ -9,7 +9,7 @@
 
 "use strict";
 
-var testIncludes = [
+const testIncludes = [
     // Test DB operations
     "./postgresOpsTests.js",
     "./postgresRequestTests.js",

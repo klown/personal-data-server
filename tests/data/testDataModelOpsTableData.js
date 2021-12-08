@@ -1,7 +1,7 @@
 /* eslint-env node */
 "use strict";
 
-var fluid = require("infusion");
+const fluid = require("infusion");
 
 fluid.registerNamespace("fluid.tests.dataModel.testTableData");
 

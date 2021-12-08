@@ -11,7 +11,7 @@
 
 const fluid = require("infusion");
 const jqUnit = require("node-jqunit");
-const postgresdb = require("../src/dbOps/postgresOps.js");
+const postgresOps = require("../src/dbOps/postgresOps.js");
 
 require("../src/shared/driverUtils.js");
 require("./shared/utilsDb.js");
@@ -30,7 +30,7 @@ jqUnit.test("Database table data models tests", async function () {
     const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
     jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
-    const postgresHandler = new postgresdb.PostgresRequest(fluid.tests.dbConfig);
+    const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
 
     // Start with a clean database: drop any existing test tables.
     let response = await fluid.tests.utils.testSqlArray(postgresHandler, fluid.tests.dbOps.tableNames, "IF EXISTS");

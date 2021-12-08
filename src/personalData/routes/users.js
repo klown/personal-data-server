@@ -17,13 +17,13 @@
 
 "use strict";
 
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
 const dbRequest = require("../ssoDbOps.js");
 
 /* GET users listing. */
 router.get("/", function (req, res) {
-    var pageHtml = "<html><head><title>Users:</title></head><body><h1>Users:</h1>";
+    const pageHtml = "<html><head><title>Users:</title></head><body><h1>Users:</h1>";
     appendUserList(pageHtml).then((thePage) => {
         thePage += "</body></html>";
         res.send(thePage);
@@ -48,7 +48,7 @@ async function appendUserList(content) {
 };
 
 async function getUsers() {
-    var users = await dbRequest.runSql("SELECT * FROM \"User\";");
+    const users = await dbRequest.runSql("SELECT * FROM \"User\";");
     console.log("Database users count: ", users.rowCount);
     return users;
 };

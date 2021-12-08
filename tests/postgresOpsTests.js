@@ -14,7 +14,7 @@
 
 const fluid = require("infusion");
 const jqUnit = require("node-jqunit");
-const postgresdb = require("../src/dbOps/postgresOps.js");
+const postgresOps = require("../src/dbOps/postgresOps.js");
 
 require("../src/shared/driverUtils.js");
 require("./shared/utilsDb.js");
@@ -101,7 +101,7 @@ jqUnit.test("Database operations tests", async function () {
     const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
     jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
-    const postgresHandler = new postgresdb.PostgresRequest(fluid.tests.dbConfig);
+    const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
 
     // Start with a clean database: drop any existing test tables.
     let response = await fluid.tests.utils.testSqlArray(postgresHandler, fluid.tests.dbOps.tableNames, "IF EXISTS");
@@ -134,7 +134,7 @@ jqUnit.test("Database operations tests", async function () {
     response = await fluid.tests.dbOps.loadJSON(postgresHandler, fluid.tests.dbOps.testTableData);
     jqUnit.assertNotNull("Check for null result", response);
     fluid.each(response, function (aResult, index) {
-        var tableName = fluid.tests.dbOps.tableNames[index];
+        const tableName = fluid.tests.dbOps.tableNames[index];
         fluid.tests.utils.testResults(
             aResult, fluid.tests.dbOps.testTableData[tableName].length, "INSERT"
         );
@@ -150,7 +150,7 @@ jqUnit.test("Database operations tests", async function () {
     fluid.each(response.rows, function (actualRecord) {
         fluid.each(fluid.tests.dbOps.testTableData.rgb, function (expectedRecord) {
             if (expectedRecord.id === actualRecord.id) {
-                var expectedFields = Object.keys(expectedRecord);
+                const expectedFields = Object.keys(expectedRecord);
                 fluid.tests.utils.checkKeyValuePairs(
                     expectedFields, actualRecord, expectedRecord,
                     "Check row values"
@@ -234,12 +234,12 @@ jqUnit.test("Database operations tests", async function () {
 /**
  * Load test data supplied for all of the test tables into those tables
  *
- * @param {Object} postgresHandler - PostgresRequest instance.
+ * @param {Object} postgresHandler - postgresHandler instance.
  * @param {Object} tableData - Where all of the input data is held.
  * @return {Promise} - results of the requests to load the test data.
  */
 fluid.tests.dbOps.loadJSON = function (postgresHandler, tableData) {
-    var loadSequence = [];
+    let loadSequence = [];
     fluid.each(fluid.tests.dbOps.tableNames, function (aTableName) {
         loadSequence.push(
             postgresHandler.loadFromJSON(aTableName, tableData[aTableName])

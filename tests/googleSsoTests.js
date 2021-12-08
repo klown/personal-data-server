@@ -74,9 +74,7 @@ jqUnit.test("Google SSO tests", async function () {
     jqUnit.expect(36);
     try {
         // Start the database
-        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer,
-            fluid.tests.postgresImage,
-            dbRequest.dbConfig);
+        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, dbRequest.dbConfig);
         jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
         // Start the server
@@ -188,7 +186,7 @@ fluid.tests.googleSso.sendAuthRequest = async function (pdServerUrl, endpoint) {
 };
 
 fluid.tests.googleSso.fetchAccessToken = function (googleSso, code, dbRequest, options, responseStatus) {
-    var mockResponse;
+    let mockResponse;
     switch (responseStatus) {
     case 200:
         mockResponse = {
@@ -212,7 +210,7 @@ fluid.tests.googleSso.fetchAccessToken = function (googleSso, code, dbRequest, o
 };
 
 fluid.tests.googleSso.fetchUserInfo = function (googleSso, accessToken, options, responseStatus) {
-    var mockResponse;
+    let mockResponse;
     switch (responseStatus) {
     case 200:
         mockResponse = {

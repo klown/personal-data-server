@@ -16,7 +16,7 @@ The library consists of a single JavaScript class that establishes a
 connection to the data base (host, port, etc.) and provides an interface to
 execute PostgresSQL commands.
 
-### `class PostgresRequest`
+### `class postgresOps`
 
 The request for initializing the connection with the database and provides
 a way to run SQL statements.  It extends the node-postgres [`Pool`](https://node-postgres.com/api/pool)
@@ -25,7 +25,7 @@ SQL statements.
 
 #### Configuration
 
-The following options are set by passing a `config` object to `PostgresRequest`'s
+The following options are set by passing a `config` object to `postgresOps`'s
 constructor.  Integrators need to define these as appropriate to their
 situation.
 

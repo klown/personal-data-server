@@ -16,8 +16,8 @@ const session = require("express-session");
 const path = require("path");
 const logger = require("morgan");
 
-var indexRouter = require("./routes/index");
-var ssoRouter = require("./routes/sso");
+const indexRouter = require("./routes/index");
+const ssoRouter = require("./routes/sso");
 
 const app = express();
 app.use(logger("dev"));
@@ -32,7 +32,7 @@ app.use("/", indexRouter);
 app.use("/sso", ssoRouter);
 
 // TODO:  Move to testing
-var usersRouter = require("./routes/users");
+const usersRouter = require("./routes/users");
 app.use("/users", usersRouter); // test getting and displaying a list of users
 app.use(express.static(path.join(__dirname, "public"))); // test serve static files under /public
 

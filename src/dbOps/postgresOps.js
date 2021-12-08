@@ -16,7 +16,7 @@ const fs = require("fs").promises;
 const pg = require("pg");
 const format  = require("pg-format");
 
-class PostgresRequest extends pg.Pool {
+class postgresOps extends pg.Pool {
 
     /**
      * Constructor: pass the configuration to the super class and add an
@@ -46,7 +46,7 @@ class PostgresRequest extends pg.Pool {
      *                   function to log any error is attached to the promise.
      */
     async runSql(sql, values) {
-        var promise = this.query(sql, values);
+        let promise = this.query(sql, values);
         promise.then(null, function (error) {
             console.error(error.message);
         });
@@ -68,8 +68,8 @@ class PostgresRequest extends pg.Pool {
      *                   sequence of SQL statements in the `sqlArray`.
      */
     async runSqlArray(sqlArray) {
-        var results = [];
-        for (var i = 0; i < sqlArray.length; i++) {
+        let results = [];
+        for (let i = 0; i < sqlArray.length; i++) {
             let aResult = await this.runSql(sqlArray[i]);
             results.push(aResult);
         };
@@ -86,7 +86,7 @@ class PostgresRequest extends pg.Pool {
      *                   sequence of SQL statements in the `sqlFile`.
      */
     async runSqlFile(sqlFile) {
-        var sql = await fs.readFile(sqlFile);
+        const sql = await fs.readFile(sqlFile);
         return this.runSql(sql.toString());
     };
 
@@ -108,14 +108,14 @@ class PostgresRequest extends pg.Pool {
      *                   or an error.
      */
     async loadFromJSON(tableName, jsonArray) {
-        var insertions = [];
+        let insertions = [];
         jsonArray.forEach(function (aRecord) {
             // Special case for array values: pg-format requires them to be
             // processed differently for INSERT vs IN.  The solution is to use
             // the ARRAY format string for both.  See github issue #22:
             // https://github.com/datalanche/node-pg-format/issues/22
-            var jsonValues = Object.values(aRecord);
-            var tableValues = [];
+            const jsonValues = Object.values(aRecord);
+            let tableValues = [];
             jsonValues.forEach(function (aJsonValue) {
                 if (Array.isArray(aJsonValue)) {
                     tableValues.push(format("ARRAY[%L]", aJsonValue));
@@ -123,7 +123,7 @@ class PostgresRequest extends pg.Pool {
                     tableValues.push(format("%L", aJsonValue));
                 }
             });
-            var insertSql = format(
+            const insertSql = format(
                 "INSERT INTO %I (%I) VALUES (%s) RETURNING *;",
                 tableName, Object.keys(aRecord), tableValues
             );
@@ -134,4 +134,4 @@ class PostgresRequest extends pg.Pool {
     };
 };
 
-module.exports = { PostgresRequest };
+module.exports = { postgresOps };

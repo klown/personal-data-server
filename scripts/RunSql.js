@@ -8,11 +8,11 @@
  *
  * The file version loads the sql commands from the given file path and executes
  * it:
- *   RunSql.js postgres localhost 5432 admin **** SQLfile
+ *   runSql.js postgres localhost 5432 admin **** SQLfile
  *
  * The command line form uses the SQL given on the command line, indicated by a
  * "--":
- *   RunSql.js postgres localhost 5432 admin **** -- "DROP TABLE foobar;"
+ *   runSql.js postgres localhost 5432 admin **** -- "DROP TABLE foobar;"
  *
  * Licensed under the New BSD license. You may not use this file except in
  * compliance with this License.
@@ -26,7 +26,7 @@
 
 function main() {
     if (process.argv.length < 7) {
-        console.log("Usage: node RunSql.js database host port user password [ SQLfile or -- SQL ]");
+        console.log("Usage: node runSql.js database host port user password [ SQLfile or -- SQL ]");
         process.exit(1);
     }
 
@@ -40,7 +40,7 @@ function main() {
     console.log("Configuration: ", JSON.stringify(dbConfig, null, 2));
 
     const sqlFile = process.argv[7];
-    var sql = null;
+    let sql = null;
     if (sqlFile === "--") {
         sql = process.argv[8];
         console.log("SQL: ", sql);
@@ -48,14 +48,14 @@ function main() {
         console.log("File: ", sqlFile);
     }
 
-    var postgresReq = require("../src/dbOps/postgresOps.js");
-    var pgOps = new postgresReq.PostgresRequest(dbConfig);
+    const postgresOps = require("../src/dbOps/postgresOps.js");
+    const postgresHandler = new postgresOps.postgresOps(dbConfig);
 
-    var runResult;
+    let runResult;
     if (sql) {
-        runResult = pgOps.runSql(sql);
+        runResult = postgresHandler.runSql(sql);
     } else {
-        runResult = pgOps.runSqlFile(sqlFile);
+        runResult = postgresHandler.runSqlFile(sqlFile);
     }
     runResult.then(
         function success(value) {

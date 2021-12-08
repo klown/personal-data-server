@@ -13,7 +13,7 @@
 
 "use strict";
 
-var fluid = require("infusion");
+const fluid = require("infusion");
 
 fluid.registerNamespace("fluid.postgresdb");
 
@@ -98,5 +98,3 @@ fluid.postgresdb.tableDefinitions = `
         "timestampRevoked" TIMESTAMPTZ
     );
 `;
-
-module.exports.tableDefinitions = fluid.postgresdb.tableDefinitions;

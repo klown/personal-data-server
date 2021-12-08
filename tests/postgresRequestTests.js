@@ -11,7 +11,7 @@
 
 const fluid = require("infusion");
 const jqUnit = require("node-jqunit");
-const postgresdb = require("../src/dbOps/postgresOps.js");
+const postgresOps = require("../src/dbOps/postgresOps.js");
 
 require("../src/shared/driverUtils.js");
 require("./shared/utilsDb.js");
@@ -28,7 +28,7 @@ jqUnit.test("Database request tests", async function () {
     jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
     // Initiate the postgres handler and valid
-    const postgresHandler = new postgresdb.PostgresRequest(fluid.tests.dbConfig);
+    const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
     jqUnit.assertNotNull(postgresHandler, "Check database request object is non-null");
     jqUnit.assertNotNull(postgresHandler.pool, "Check database connection is non-null");
 
@@ -57,7 +57,7 @@ jqUnit.test("Database request tests", async function () {
  * @return {Promise} Results returned by the request.
  */
 fluid.tests.dbOps.findAllDatabases = function (postgresHandler) {
-    var result = postgresHandler.runSql("SELECT datname FROM pg_database");
+    let result = postgresHandler.runSql("SELECT datname FROM pg_database");
     result.then(null, function (error) {
         fluid.log(JSON.stringify(error.message));
     });
@@ -71,7 +71,7 @@ fluid.tests.dbOps.findAllDatabases = function (postgresHandler) {
  * @return {Promise} Results returned by the request.
  */
 fluid.tests.dbOps.checkNoSuchDatabase = function (postgresHandler) {
-    var result = postgresHandler.runSql("SELECT datname FROM no_such_databasez");
+    let result = postgresHandler.runSql("SELECT datname FROM no_such_databasez");
     result.then(null, function (error) {
         fluid.log(JSON.stringify(error.message));
     });
@@ -88,8 +88,8 @@ fluid.tests.dbOps.testResults = function (results, postgresHandler) {
     jqUnit.assertNotNull("Check for null query result", results);
     jqUnit.assertNotEquals("Check for empty query result", results.rowCount, 0);
 
-    var ourDatabaseName = postgresHandler.options.database;
-    var ourDatabase = fluid.find(results.rows, function (aDatabase) {
+    const ourDatabaseName = postgresHandler.options.database;
+    const ourDatabase = fluid.find(results.rows, function (aDatabase) {
         if (aDatabase.datname === ourDatabaseName) {
             return aDatabase;
         }

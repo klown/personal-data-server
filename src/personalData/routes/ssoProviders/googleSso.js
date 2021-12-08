@@ -197,7 +197,7 @@ class GoogleSso {
         const userRecord = await dbRequest.addUser(
             userInfo, {name: "userId", value: userInfo.id}
         );
-        var accountInfo = await dbRequest.addSsoAccount(userRecord, userInfo, options.provider);
+        let accountInfo = await dbRequest.addSsoAccount(userRecord, userInfo, options.provider);
         console.log(`...adding access token for ${userInfo.id} to database`);
         accountInfo = await dbRequest.refreshAccessToken(accountInfo, accessToken);
         return accountInfo;

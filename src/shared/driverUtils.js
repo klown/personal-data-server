@@ -60,7 +60,7 @@ fluid.personalData.sleep = async function (delay) {
  *                  or `null` if it failed to start.
  */
 fluid.personalData.startServer = async function (execCmd, url) {
-    var resp = {};
+    let resp = {};
     console.debug(`- Checking if server is running using ${url}`);
     try {
         resp = await axios(url);
@@ -71,7 +71,7 @@ fluid.personalData.startServer = async function (execCmd, url) {
     // Server needs to be started
     console.debug(`- Starting server at ${url}`);
     const pdServerProcess = exec(execCmd);
-    for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
+    for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
             resp = await axios(url);
@@ -113,7 +113,7 @@ fluid.personalData.stopServer = async function (childProcessInfo, url) {
         childProcessInfo.process.kill();
     }
     // Wait for the childProcess to fully exit
-    for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
+    for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
             await axios(url);
@@ -143,8 +143,8 @@ fluid.personalData.stopServer = async function (childProcessInfo, url) {
  *                  if the database in the container is ready.
  */
 fluid.personalData.dockerStartDatabase = async function (container, image, dbConfig) {
-    var dbStatus = {};
-    var execOutput;
+    let dbStatus = {};
+    let execOutput;
 
     console.debug(`- Starting database container ${container}`);
     // Try starting a stopped container.  If no such container, the command
@@ -182,7 +182,7 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
     // Loop to check that PostgresDB is ready.
     console.debug("Checking that PostgresDB is ready...");
     dbStatus.pgReady = false;
-    for (var i = 0; i < NUM_CHECK_REQUESTS; i++) {
+    for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         console.debug(`... attempt ${i}`);
         try {
             execOutput = execSync(
@@ -272,7 +272,7 @@ fluid.personalData.dockerStopDatabase = async function (container, wasPaused, db
  * @return {Boolean} true if no error with initialization; false otherwise.
  */
 fluid.personalData.initDataBase = async function (dbRequest, sqlFiles) {
-    var togo;
+    let togo;
     try {
         console.debug("- Emptying test database...");
         await dbRequest.runSqlFile(sqlFiles.flush);

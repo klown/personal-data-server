@@ -12,7 +12,7 @@
 
 "use strict";
 
-const postgresdb = require("../dbOps/postgresOps.js");
+const postgresOps = require("../dbOps/postgresOps.js");
 const generateToken = require("./generateRandomToken.js");
 
 // Database configuration and connection
@@ -24,7 +24,7 @@ const dbConfig = {
     password: process.env.POSTGRES_PASSWORD || "asecretpassword"
 };
 
-class DataBaseRequest extends postgresdb.PostgresRequest {
+class DataBaseRequest extends postgresOps.postgresOps {
 
     get dbConfig() { return Object.assign({}, dbConfig); };
 
@@ -102,7 +102,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
             value: userInfo.email
         };
         // Check if user already exists and create one if none.
-        var userRecords = await this.runSql(
+        let userRecords = await this.runSql(
             `SELECT * FROM "User" WHERE "${filter.name}"='${filter.value}';`
         );
         // TODO: derived_key, verification_code, and salt are meaningless in
@@ -142,7 +142,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
      */
     async addSsoAccount(userRecord, userInfo, provider) {
         const clientInfo = await this.getSsoClientInfo(provider);
-        var ssoAccountRecords = await this.runSql(
+        let ssoAccountRecords = await this.runSql(
             `SELECT * FROM "SsoAccount" WHERE "user"='${userRecord.userId}';`
         );
         if (ssoAccountRecords.rowCount === 0) {
@@ -184,7 +184,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
      *                  records.
      */
     async refreshAccessToken(accountRecords, accessToken) {
-        var accessTokenRecords = await this.runSql(`
+        let accessTokenRecords = await this.runSql(`
             SELECT * FROM "AccessToken" WHERE
                 "ssoAccount"=${accountRecords.ssoAccount.ssoAccountId} AND
                 "ssoProvider"=${accountRecords.appSsoProvider.providerId};
@@ -192,13 +192,13 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
         // If there is an access token record in the database, update it with
         // the new incoming access token, expiry, and possible refresh token.
         const expiryTimestamp = new Date(Date.now() + (accessToken.expires_in * 1000));
-        var newTokenRecords;
+        let newTokenRecords;
         if (accessTokenRecords.rowCount > 0) {
             const accessTokenRecord = accessTokenRecords.rows[0];
 
             // If the value of the incoming access token is new, create a new
             // loginToken at the same time.
-            var loginToken;
+            let loginToken;
             if (accessTokenRecord.accessToken !== accessToken.access_token) {
                 loginToken = generateToken(128);
             } else {
@@ -229,7 +229,7 @@ class DataBaseRequest extends postgresdb.PostgresRequest {
         // No existing access token in the database for this user. Insert a new
         // one.
         } else {
-            var accessTokenJSON = {
+            let accessTokenJSON = {
                 ssoAccount: accountRecords.ssoAccount.ssoAccountId,
                 ssoProvider: accountRecords.appSsoProvider.providerId,
                 accessToken: accessToken.access_token,
