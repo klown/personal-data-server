@@ -8,6 +8,7 @@
         "ecmaVersion": 2019
     },
     "rules": {
-        "dot-notation": ["error", { "allowKeywords": true }]
+        "dot-notation": ["error", { "allowKeywords": true }],
+        "no-console": "off"
     }
 }

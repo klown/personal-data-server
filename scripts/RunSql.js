@@ -20,7 +20,6 @@
  * You may obtain a copy of the License at
  * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
  */
-/* eslint-disable no-console */
 
 "use strict";
 

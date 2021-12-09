@@ -5,8 +5,6 @@
  * Licensed under the New BSD license. You may not use this file except in
  * compliance with this License.
  */
-/* eslint-env node */
-/* eslint-disable no-console */
 
 "use strict";
 
