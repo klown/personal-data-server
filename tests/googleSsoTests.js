@@ -21,11 +21,6 @@ require("./shared/utilsSso.js");
 const googleSso = require("../src/personalData/routes/ssoProviders/googleSso.js");
 const dbRequest = require("../src/personalData/ssoDbOps.js");
 
-fluid.personalData.initEnvironmentVariables({
-    dbName: "prefs_testdb",
-    dbPort: 5433
-});
-
 jqUnit.module("Personal Data Server Google SSO Tests");
 
 fluid.registerNamespace("fluid.tests.googleSso");
@@ -72,7 +67,7 @@ jqUnit.test("Google SSO tests", async function () {
     jqUnit.expect(36);
     try {
         // Start the database
-        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, dbRequest.dbConfig);
+        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
         jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
         // Start the server

@@ -27,22 +27,6 @@ const DELAY = 2000; // msec
  * @param {String} dbPassword - The password for the default admin users created when initializing the database.
  */
 
-/**
- * Initialize environment variables required for setting up the the database.
- *
- * @param {Object} config - The server config
- */
-fluid.personalData.initEnvironmentVariables = function (config) {
-    console.debug("- Initializing shell environment variables");
-
-    // Database
-    process.env.PGDATABASE = config.dbName || "prefs_testdb";
-    process.env.PGHOST = config.dbHost || "localhost";
-    process.env.PGPORT = config.dbPort || 5433;
-    process.env.PGUSER = config.dbUser || "admin";
-    process.env.POSTGRES_PASSWORD = config.dbPassword || "asecretpassword";
-};
-
 fluid.personalData.sleep = async function (delay) {
     return new Promise((resolve) => setTimeout(resolve, delay));
 };
@@ -125,9 +109,7 @@ fluid.personalData.stopServer = async function (childProcessInfo, url) {
 
 /**
  * Start the database using Docker.  This checks whether the docker container
- * is already running, and if not, attempts to start it.  Note that this assumes
- * that the image/container is set up such that the environment variables are
- * as defined in `fluid.personalData.initEnvironmentVariables()`.
+ * is already running, and if not, attempts to start it.
  *
  * @param {String} container - Name of the docker container.
  * @param {String} image - Name of the associated docker image.
@@ -164,10 +146,10 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
         try {
             execSync(
                 `docker run -d --name="${container}" \
-                -e POSTGRES_USER=${process.env.PGUSER} \
-                -e POSTGRES_PASSWORD=${process.env.POSTGRES_PASSWORD} \
-                -p $PGPORT:${process.env.PGPORT} \
-                ${image} postgres -p ${process.env.PGPORT}`
+                -e POSTGRES_USER=${dbConfig.user} \
+                -e POSTGRES_PASSWORD=${dbConfig.password} \
+                -p $PGPORT:${dbConfig.port} \
+                ${image} postgres -p ${dbConfig.port}`
             ).toString().trim();
         }
         catch (error) {
