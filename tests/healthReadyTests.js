@@ -12,6 +12,7 @@ const fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
 require("../src/shared/driverUtils.js");
+require("./shared/utilsCommon.js");
 require("./shared/utilsSso.js");
 
 jqUnit.module("Personal Data Server /health and /ready tests.");

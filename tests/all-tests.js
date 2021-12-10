@@ -8,6 +8,15 @@
 
 "use strict";
 
+require("./shared/utilsCommon.js");
+
+// Set environment variables so that following tests can connect to the database docker container
+process.env.PGDATABASE = fluid.tests.dbConfig.database;
+process.env.PGHOST = fluid.tests.dbConfig.host;
+process.env.PGPORT = fluid.tests.dbConfig.port;
+process.env.PGUSER = fluid.tests.dbConfig.user;
+process.env.POSTGRES_PASSWORD = fluid.tests.dbConfig.password;
+
 const testIncludes = [
     // Test DB operations
     "./postgresOpsTests.js",

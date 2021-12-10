@@ -16,6 +16,7 @@ const fluid = require("infusion"),
     jqUnit = require("node-jqunit");
 
 require("../src/shared/driverUtils.js");
+require("./shared/utilsCommon.js");
 require("./shared/utilsSso.js");
 
 const googleSso = require("../src/personalData/routes/ssoProviders/googleSso.js");

@@ -17,16 +17,6 @@ fluid.registerNamespace("fluid.personalData");
 const NUM_CHECK_REQUESTS = 10;
 const DELAY = 2000; // msec
 
-/**
- * An object that contains configs for setting up the database.
- * @typedef {Object} config
- * @param {String} dbName - The database name.
- * @param {String} dbHost - The host of the database.
- * @param {Number} dbPort - The port number used for accessing the database.
- * @param {String} dbUser - The default admin user created when initializing the database.
- * @param {String} dbPassword - The password for the default admin users created when initializing the database.
- */
-
 fluid.personalData.sleep = async function (delay) {
     return new Promise((resolve) => setTimeout(resolve, delay));
 };

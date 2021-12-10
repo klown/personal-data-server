@@ -13,6 +13,7 @@ const jqUnit = require("node-jqunit");
 const postgresOps = require("../src/dbOps/postgresOps.js");
 
 require("../src/shared/driverUtils.js");
+require("./shared/utilsCommon.js");
 require("./shared/utilsDb.js");
 
 jqUnit.module("PostgresDB table definitions unit tests.");

@@ -16,18 +16,6 @@ const fluid = require("infusion"),
 
 fluid.registerNamespace("fluid.tests.utils");
 
-fluid.tests.postgresContainer = "postgresdb";
-fluid.tests.postgresImage = "postgres:14.0-alpine";
-
-// Host, port, database name, etc. for testing
-fluid.tests.dbConfig = {
-    database: process.env.PGDATABASE        || "prefs_testdb",
-    host: process.env.PGPHOST               || "localhost",
-    port: process.env.PGPORT                || 5433,
-    user: process.env.PGUSER                || "admin",
-    password: process.env.POSTGRES_PASSWORD || "asecretpassword"
-};
-
 /**
  * A test of the `runSqlArray()` method by a bulk deletion of the given tables
  * from the database.  The tables are dropped in bulk.
