@@ -28,7 +28,6 @@ const testIncludes = [
 
     // Test endpoints provided by personal data server
     "./healthReadyTests.js"
-
 ];
 
 testIncludes.forEach(function (path) {

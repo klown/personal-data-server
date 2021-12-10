@@ -48,12 +48,12 @@ jqUnit.test("Database table data models tests", async function () {
     }
 
     // Create the tables
-    response = await fluid.tests.utils.runSQL(postgresHandler, fluid.tests.dbOps.tableDefinitions);
+    response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "CREATE");
 
     // Test failure by trying to create the same tables again. It will fail on the first table.
     try {
-        await fluid.tests.utils.runSQL(postgresHandler, fluid.tests.dbOps.tableDefinitions);
+        await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
     } catch (alterError) {
         jqUnit.assertEquals("Check error message",
             "relation \"" + fluid.tests.dbOps.tableNames[0] + "\" already exists",
@@ -62,7 +62,7 @@ jqUnit.test("Database table data models tests", async function () {
     }
 
     // Test ALTER of a table.
-    response = await fluid.tests.utils.runSQL(postgresHandler, fluid.tests.dbOps.tableUpdates);
+    response = await postgresHandler.runSql(fluid.tests.dbOps.tableUpdates);
     // fluid.tests.utils.testTableUpdates(response, fluid.tests.dbOps.numTableUpdates);
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.numTableUpdates);
     fluid.each(response, function (aResult) {

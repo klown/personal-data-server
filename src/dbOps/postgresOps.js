@@ -126,7 +126,6 @@ class postgresOps extends pg.Pool {
                 "INSERT INTO %I (%I) VALUES (%s) RETURNING *;",
                 tableName, Object.keys(aRecord), tableValues
             );
-            console.log(insertSql);
             insertions.push(insertSql);
         });
         return this.runSqlArray(insertions);

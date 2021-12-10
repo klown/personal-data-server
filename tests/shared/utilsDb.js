@@ -37,31 +37,6 @@ fluid.tests.utils.testSqlArray = function (postgresOps, tableNames, ifExists) {
 };
 
 /**
- * Run SQL statement(s).
- *
- * @param {Object} postgresHandler - Postgres operations instance.
- * @param {String} sql - SQL statement.
- * @param {Array} values - Optional values for any parameters in `sql`.
- * @return {Promise} Result of running the statment(s).
- */
-fluid.tests.utils.runSQL = function (postgresHandler, sql, values) {
-    return postgresHandler.runSql(sql, values);
-};
-
-/**
- * Run SQL statement(s) fetched from a file.
- *
- * @param {Object} postgresHandler - Postgres operations instance.
- * @param {String} sqlFile - Path to file containing SQL statements.
- * @return {Promise} Result of running the statment(s).
- */
-
-fluid.tests.utils.runSQLfile = function (postgresHandler, sqlFile) {
-    fluid.log("SQLFILE: " + sqlFile);
-    return postgresHandler.runSqlFile(sqlFile);
-};
-
-/**
  * Check the results of running some SQL.  At least check that the
  * results from the query is non-null and there are an equal number of them as
  * there were statements.  Node-postgres returns a results array where each

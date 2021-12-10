@@ -108,7 +108,7 @@ jqUnit.test("Database operations tests", async function () {
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "DROP");
 
     // Create all of the test tables
-    response = await fluid.tests.utils.runSQL(postgresHandler, fluid.tests.dbOps.tableDefinitions);
+    response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "CREATE");
 
     // Load one test table based on JSON data
@@ -116,16 +116,16 @@ jqUnit.test("Database operations tests", async function () {
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.testTableData.rgb.length, "INSERT");
 
     // Delete all records from the rgb table loaded previously
-    response = await fluid.tests.utils.runSQL(postgresHandler, "DELETE FROM rgb;");
+    response = await postgresHandler.runSql("DELETE FROM rgb;");
     jqUnit.assertEquals("Check for number of rows deleted", fluid.tests.dbOps.testTableData.rgb.length, response.rowCount);
 
     // Check that rgb data is truly gone
-    response = await fluid.tests.utils.runSQL(postgresHandler, "SELECT * FROM rgb;");
+    response = await postgresHandler.runSql("SELECT * FROM rgb;");
     jqUnit.assertEquals("Check retrieve value when querying empty table 'rgb'", 0, response.rowCount);
 
     // Test failure of attempt to load into a non-existent table.
     try {
-        await fluid.tests.utils.runSQL(postgresHandler, "INSERT INTO noSuchTable (foo, bar) VALUES ('baz', 'snafu');");
+        await postgresHandler.runSql("INSERT INTO noSuchTable (foo, bar) VALUES ('baz', 'snafu');");
     } catch (error) {
         jqUnit.assertEquals("Check INSERT into non-existent table", error.message, "relation \"nosuchtable\" does not exist");
     }
@@ -141,12 +141,12 @@ jqUnit.test("Database operations tests", async function () {
     });
 
     // Add another rgb record using parameters
-    response = await fluid.tests.utils.runSQL(postgresHandler, parameterizedInsert, valueParameters);
+    response = await postgresHandler.runSql(parameterizedInsert, valueParameters);
     jqUnit.assertEquals("Check number of rows added", 1, response.rowCount);
     jqUnit.assertEquals("Check SQL command", "INSERT", response.command);
 
     // Select from existing table
-    response = await fluid.tests.utils.runSQL(postgresHandler, "SELECT * FROM rgb WHERE color='green';");
+    response = await postgresHandler.runSql("SELECT * FROM rgb WHERE color='green';");
     fluid.each(response.rows, function (actualRecord) {
         fluid.each(fluid.tests.dbOps.testTableData.rgb, function (expectedRecord) {
             if (expectedRecord.id === actualRecord.id) {
@@ -161,68 +161,68 @@ jqUnit.test("Database operations tests", async function () {
 
     // Select from non-existant table -- should fail
     try {
-        await fluid.tests.utils.runSQL(postgresHandler, "SELECT * FROM noSuchTable WHERE color='green';");
+        await postgresHandler.runSql("SELECT * FROM noSuchTable WHERE color='green';");
     } catch (error) {
         jqUnit.assertEquals("Check SELECT from non-existent table", error.message, "relation \"nosuchtable\" does not exist");
     }
 
     // Test retrieval of a JSONB value
-    response = await fluid.tests.utils.runSQL(postgresHandler, "SELECT \"colourMap\" FROM rgb WHERE id='chartreuse'");
+    response = await postgresHandler.runSql("SELECT \"colourMap\" FROM rgb WHERE id='chartreuse'");
     jqUnit.assertNotEquals("Check for empty result", 0, response.length);
     jqUnit.assertDeepEq("Check value retrieved", rgbChartreuse.colourMap, response.rows[0].colourMap);
 
     // Test failing case where column does not exist
     try {
-        await fluid.tests.utils.runSQL(postgresHandler, "SELECT \"noSuchColumn\" FROM rgb WHERE color='chartreuse';");
+        await postgresHandler.runSql("SELECT \"noSuchColumn\" FROM rgb WHERE color='chartreuse';");
     } catch (error) {
         jqUnit.assertEquals("Check SELECT from non-existent column", error.message, "column \"noSuchColumn\" does not exist");
     }
 
     // Insert new user record
-    response = await fluid.tests.utils.runSQL(postgresHandler, testData.userToInsert);
+    response = await postgresHandler.runSql(testData.userToInsert);
     const expectedKeys = Object.keys(testData.userToInsertJSON);
     fluid.tests.utils.checkKeyValuePairs(expectedKeys, response.rows[0], testData.userToInsertJSON, "Check added record");
 
     // Insert new record again -- should fail
     try {
-        await fluid.tests.utils.runSQL(postgresHandler, testData.userToInsert);
+        await postgresHandler.runSql(testData.userToInsert);
     } catch (error) {
         jqUnit.assertEquals("Check second INSERT of same record", error.message, "duplicate key value violates unique constraint \"users_pkey\"");
     }
 
     // Update a field with a proper identifier
-    response = await fluid.tests.utils.runSQL(postgresHandler, testData.userChanges);
+    response = await postgresHandler.runSql(testData.userChanges);
     fluid.tests.utils.checkKeyValuePairs(Object.keys(expected.userChanges), response.rows[0], expected.userChanges, "Check update results");
 
     // Update the primary key itself
-    response = await fluid.tests.utils.runSQL(postgresHandler, testData.primaryKeyChange);
+    response = await postgresHandler.runSql(testData.primaryKeyChange);
     fluid.tests.utils.checkKeyValuePairs(Object.keys(expected.primaryKeyChange), response.rows[0], expected.primaryKeyChange, "Check update results");
 
     // Update with non-existent primary key; should return zero results
-    response = await fluid.tests.utils.runSQL(postgresHandler, "UPDATE users SET iterations=55 WHERE \"userId\"='noSuchUser';");
+    response = await postgresHandler.runSql("UPDATE users SET iterations=55 WHERE \"userId\"='noSuchUser';");
     jqUnit.assertEquals("Check UPDATE with mismatched primaryKey", response.rowCount, 0);
 
     // Test successful deletion
-    response = await fluid.tests.utils.runSQL(postgresHandler, "DELETE FROM \"prefsSafes\" WHERE \"prefsSafesId\"='prefsSafe-1';");
+    response = await postgresHandler.runSql("DELETE FROM \"prefsSafes\" WHERE \"prefsSafesId\"='prefsSafe-1';");
     jqUnit.assertEquals("Check number of records deleted", response.rowCount, 1);
 
     // Run sql from a file.
-    response = await fluid.tests.utils.runSQLfile(postgresHandler, sqlFile);
+    response = await postgresHandler.runSqlFile(sqlFile);
     fluid.tests.utils.testResults(response, 3);
 
     // Run sql from a non-existent file -- should fail
     try {
-        await fluid.tests.utils.runSQLfile(postgresHandler, "/no/such/file.sql");
+        await postgresHandler.runSqlFile("/no/such/file.sql");
     } catch (error) {
         jqUnit.assertEquals("Check running sql when file access failure", error.message, "ENOENT: no such file or directory, open '/no/such/file.sql'");
     }
 
     // Delete all records from one table using TRUNCATE.  Note that TRUNCATE returns nothing so it either resolved or rejected.
     // The test that follows this TRUNCATE test checks that all of the records were deleted.
-    await fluid.tests.utils.runSQL(postgresHandler, "TRUNCATE massive;");
+    await postgresHandler.runSql("TRUNCATE massive;");
 
     // Check that massive data is truly gone
-    response = await fluid.tests.utils.runSQL(postgresHandler, "SELECT * FROM massive;");
+    response = await postgresHandler.runSql("SELECT * FROM massive;");
     jqUnit.assertEquals("Check retrieve value when querying empty table 'massive'", 0, response.rowCount);
 
     fluid.tests.utils.finish(postgresHandler);

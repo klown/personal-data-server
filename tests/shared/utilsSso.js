@@ -13,21 +13,9 @@ const fluid = require("infusion"),
 
 fluid.registerNamespace("fluid.tests.utils");
 
-// Host, port, database name, etc. for testing
-fluid.tests.dbConfig = {
-    database: process.env.PGDATABASE        || "prefs_testdb",
-    host: process.env.PGPHOST               || "localhost",
-    port: process.env.PGPORT                || 5433,
-    user: process.env.PGUSER                || "admin",
-    password: process.env.POSTGRES_PASSWORD || "asecretpassword"
-};
-
 // Personal data server port (used by express's startup script `node index.js`)
 process.env.PORT = 3001;
-
 fluid.tests.serverUrl = "http://localhost:" + process.env.PORT;
-fluid.tests.postgresContainer = "postgresdb";
-fluid.tests.postgresImage = "postgres:14.0-alpine";
 
 /**
  * Initialize a test database and set up its tables, if it/they do not already
