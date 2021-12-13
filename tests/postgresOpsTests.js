@@ -95,7 +95,7 @@ const rgbChartreuse = fluid.find(fluid.tests.dbOps.testTableData.rgb, function (
 });
 
 jqUnit.test("Database operations tests", async function () {
-    jqUnit.expect(240);
+    jqUnit.expect(234);
 
     // Start the database
     const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
@@ -103,12 +103,11 @@ jqUnit.test("Database operations tests", async function () {
 
     const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
 
-    // Start with a clean database: drop any existing test tables.
-    let response = await fluid.tests.utils.testSqlArray(postgresHandler, fluid.tests.dbOps.tableNames, "IF EXISTS");
-    fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "DROP");
+    // Start with a clean database
+    await fluid.tests.utils.cleanDb(postgresHandler);
 
     // Create all of the test tables
-    response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
+    let response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "CREATE");
 
     // Load one test table based on JSON data
@@ -203,7 +202,8 @@ jqUnit.test("Database operations tests", async function () {
     jqUnit.assertEquals("Check UPDATE with mismatched primaryKey", response.rowCount, 0);
 
     // Test successful deletion
-    response = await postgresHandler.runSql("DELETE FROM \"prefsSafes\" WHERE \"prefsSafesId\"='prefsSafe-1';");
+    response = await postgresHandler.runSql("DELETE FROM \"users\" WHERE \"userId\"='some.new.id';");
+    // response = await postgresHandler.runSql("DELETE FROM \"prefsSafes\" WHERE \"prefsSafesId\"='prefsSafe-1';");
     jqUnit.assertEquals("Check number of records deleted", response.rowCount, 1);
 
     // Run sql from a file.

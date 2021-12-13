@@ -24,7 +24,7 @@ fluid.registerNamespace("fluid.tests.dbOps");
 require("./data/testTableModels.js");
 
 jqUnit.test("Database table data models tests", async function () {
-    jqUnit.expect(19);
+    jqUnit.expect(13);
 
     // Start the database
     const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
@@ -32,9 +32,8 @@ jqUnit.test("Database table data models tests", async function () {
 
     const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
 
-    // Start with a clean database: drop any existing test tables.
-    let response = await fluid.tests.utils.testSqlArray(postgresHandler, fluid.tests.dbOps.tableNames, "IF EXISTS");
-    fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "DROP");
+    // Start with a clean database
+    await fluid.tests.utils.cleanDb(postgresHandler);
 
     // Drop the tables again -- should reject since there are no such tables any more.
     try {
@@ -48,7 +47,7 @@ jqUnit.test("Database table data models tests", async function () {
     }
 
     // Create the tables
-    response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
+    let response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "CREATE");
 
     // Test failure by trying to create the same tables again. It will fail on the first table.
