@@ -225,9 +225,11 @@ jqUnit.test("Database operations tests", async function () {
     response = await postgresHandler.runSql("SELECT * FROM massive;");
     jqUnit.assertEquals("Check retrieve value when querying empty table 'massive'", 0, response.rowCount);
 
+    // Final clean up
+    // 1. Disconnect the postgres client from its server. See https://node-postgres.com/api/client
     fluid.tests.utils.finish(postgresHandler);
 
-    // Stop the docker container for the database
+    // 2. Stop the docker container for the database
     await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus);
 });
 

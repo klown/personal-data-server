@@ -12,7 +12,6 @@ const fluid = require("infusion"),
     axios = require("axios"),
     nock = require("nock"),
     url = require("url"),
-    path = require("path"),
     jqUnit = require("node-jqunit");
 
 require("../src/shared/driverUtils.js");
@@ -53,14 +52,6 @@ fluid.tests.googleSso.mockUserInfo = {
     verified_email: true
 };
 
-const pdServerUrl = fluid.tests.serverUrl;
-const pdServerStartCmd = "node index.js";
-const sqlFiles = {
-    flush: __dirname + "/../dataModel/dropTables.sql",
-    tableDefs: path.join(__dirname, "/../dataModel/SsoTables.sql"),
-    loadTestData: __dirname + "/../dataModel/SsoProvidersData.sql"
-};
-
 // Keep track of the payload returned by the auth request for consequent tests
 let authPayload;
 
@@ -72,19 +63,19 @@ jqUnit.test("Google SSO tests", async function () {
         jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
         // Start the server
-        const serverInstance = await fluid.personalData.startServer(pdServerStartCmd, pdServerUrl);
+        const serverInstance = await fluid.personalData.startServer(fluid.tests.pdServerStartCmd, fluid.tests.serverUrl);
         jqUnit.assertEquals("Check server active", 200, serverInstance.status);
 
-        // Flush the database
-        const loadDataStatus = await fluid.personalData.initDataBase(dbRequest, sqlFiles);
+        // Initialize db: create tables and load data
+        const loadDataStatus = await fluid.personalData.initDataBase(dbRequest, fluid.tests.sqlFiles);
         jqUnit.assertTrue("The database has been initiated", loadDataStatus);
 
         // Test "/ready" to ensure the server is up and running
-        let response = await fluid.tests.utils.sendRequest(pdServerUrl, "/ready");
+        let response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/ready");
         fluid.tests.googleSso.testResponse(response, 200, { isReady: true }, "/ready (should succeed)");
 
         // Test "/sso/google"
-        response = await fluid.tests.googleSso.sendAuthRequest(pdServerUrl, "/sso/google");
+        response = await fluid.tests.googleSso.sendAuthRequest(fluid.tests.serverUrl, "/sso/google");
         fluid.tests.googleSso.testResponse(response, 200, {}, "/sso/google");
 
         // Test successful GoogleSso.fetchAccessToken() with mock /token endpoint
@@ -108,18 +99,18 @@ jqUnit.test("Google SSO tests", async function () {
         fluid.tests.googleSso.testStoreUserAndAccessToken(response, "googleSso.storeUserAndAccessToken()", googleSso.options);
 
         // Test failure of "/sso/google/login/callback" -- missing authorization code parameter
-        response = await fluid.tests.utils.sendRequest(pdServerUrl, "/sso/google/login/callback");
+        response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/sso/google/login/callback");
         fluid.tests.googleSso.testResponse(response, 403, {"isError": true, "message": "Request missing authorization code"}, "/sso/google/login/callback");
 
         // Delete the test user -- this will cascade and delete the associated SsoAccount and AccessToken.
         response = await fluid.tests.deleteTestUser(fluid.tests.googleSso.mockUserInfo.id, dbRequest);
         jqUnit.assertNotNull(`Checking deletion of mock user ${fluid.tests.googleSso.mockUserInfo.id}`, response);
 
-        // Stop the server
-        await fluid.personalData.stopServer(serverInstance, pdServerUrl);
-
         // Stop the docker container for the database
         await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus, dbRequest);
+
+        // Stop the server
+        await fluid.personalData.stopServer(serverInstance, fluid.tests.serverUrl);
     } catch (error) {
         jqUnit.fail("Google SSO tests fail with this error: ", error);
     }
@@ -161,7 +152,7 @@ fluid.tests.googleSso.testStoreUserAndAccessToken = function (accountInfo, testP
     jqUnit.assertNotNull(`${checkPrefix} AccessToken loginToken`, accountInfo.accessToken.loginToken);
 };
 
-fluid.tests.googleSso.sendAuthRequest = async function (pdServerUrl, endpoint) {
+fluid.tests.googleSso.sendAuthRequest = async function (serverUrl, endpoint) {
     // Mock Google's OAuth2 endpoint.  The request payload is stored in `authPayload` for subsequent tests.
     nock("https://accounts.google.com")
         .get("/o/oauth2/auth")
@@ -173,7 +164,7 @@ fluid.tests.googleSso.sendAuthRequest = async function (pdServerUrl, endpoint) {
 
     console.debug("- Sending '%s'", endpoint);
     try {
-        return await axios.get(pdServerUrl + endpoint);
+        return await axios.get(serverUrl + endpoint);
     } catch (e) {
         return e.response;
     }

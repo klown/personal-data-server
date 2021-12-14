@@ -9,7 +9,6 @@
 -- You may obtain a copy of the License at
 -- https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
 
-DROP TABLE IF EXISTS "AccessToken" CASCADE;
-DROP TABLE IF EXISTS "SsoAccount" CASCADE;
-DROP TABLE IF EXISTS "User" CASCADE;
-DROP TABLE IF EXISTS "AppSsoProvider" CASCADE;
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO public;

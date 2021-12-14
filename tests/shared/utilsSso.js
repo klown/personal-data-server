@@ -8,14 +8,22 @@
 
 "use strict";
 
-const fluid = require("infusion"),
-    axios = require("axios");
+const fluid = require("infusion");
+const axios = require("axios");
+const path = require("path");
 
 fluid.registerNamespace("fluid.tests.utils");
 
 // Personal data server port (used by express's startup script `node index.js`)
 process.env.PORT = 3001;
 fluid.tests.serverUrl = "http://localhost:" + process.env.PORT;
+fluid.tests.pdServerStartCmd = "node index.js";
+fluid.tests.sqlFiles = {
+    clearDB: __dirname + "/../../dataModel/ClearDB.sql",
+    createTables: path.join(__dirname, "/../../dataModel/SsoTables.sql"),
+    loadData: __dirname + "/../../dataModel/SsoProvidersData.sql"
+};
+
 
 /**
  * Initialize a test database and set up its tables, if it/they do not already

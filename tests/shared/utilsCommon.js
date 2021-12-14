@@ -26,3 +26,10 @@ fluid.tests.dbConfig = {
     user: "admin",
     password: "asecretpassword"
 };
+
+// Disconnect the postgres client from its server. See https://node-postgres.com/api/client
+fluid.tests.utils.finish = function (postgresHandler) {
+    return postgresHandler.end().then(() => {
+        fluid.log("Postgres operations done");
+    });
+};

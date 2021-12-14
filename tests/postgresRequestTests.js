@@ -44,9 +44,11 @@ jqUnit.test("Database request tests", async function () {
         jqUnit.assertEquals("An error should be returned when a SQL is executed on a non-existent table", error.message, "relation \"no_such_databasez\" does not exist");
     }
 
+    // Final clean up
+    // 1. Disconnect the postgres client from its server. See https://node-postgres.com/api/client
     fluid.tests.utils.finish(postgresHandler);
 
-    // Stop the docker container for the database
+    // 2. Stop the docker container for the database
     await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus);
 });
 

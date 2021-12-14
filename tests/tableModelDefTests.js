@@ -68,8 +68,10 @@ jqUnit.test("Database table data models tests", async function () {
         jqUnit.assertEquals("Check ALTER command", "ALTER", aResult.command);
     });
 
+    // Final clean up
+    // 1. Disconnect the postgres client from its server. See https://node-postgres.com/api/client
     fluid.tests.utils.finish(postgresHandler);
 
-    // Stop the docker container for the database
+    // 2. Stop the docker container for the database
     await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus);
 });

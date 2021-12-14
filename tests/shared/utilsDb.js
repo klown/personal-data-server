@@ -94,10 +94,3 @@ fluid.tests.utils.cleanDb = async function (postgresHandler) {
     // Remove all existing tables
     await postgresHandler.runSql("DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public;");
 };
-
-// Disconnect the postgres client from its server. See https://node-postgres.com/api/client
-fluid.tests.utils.finish = function (postgresHandler) {
-    return postgresHandler.end().then(() => {
-        fluid.log("Postgres operations done");
-    });
-};

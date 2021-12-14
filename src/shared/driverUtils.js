@@ -226,30 +226,27 @@ fluid.personalData.dockerStopDatabase = async function (container, wasPaused, db
 };
 
 /**
- * Initialize a test database and set up its tables, if it/they do not already
- * exist, and load some test data records.
+ * Clear a database, set up its tables and load some test data records.
  *
  * @param {Object} dbRequest - The PostGresOperations object to use to interact
  *                             with the database.
- * @param {Object} sqlFiles - SQL files to use to flush the database
- * @param {String} sqlFiles.flush - Path to file containing SQL to intialize the
- *                                  database to a state for starting the test
- *                                  sequence.
- * @param {String} sqlFiles.tableDefs - Path to SQL file with commands to create
+ * @param {Object} sqlFiles - SQL files to use to initiate the database
+ * @param {String} sqlFiles.clearDB - Path to file containing SQL to clear the
+ *                                  database.
+ * @param {String} sqlFiles.createTables - Path to SQL file with commands to create
  *                                      the database tables.
- * @param {String} sqlFiles.loadTestData - Path to SQL file to load records into
- *                                         the tables.
+ * @param {String} sqlFiles.loadData - Path to SQL file to load data into tables.
  * @return {Boolean} true if no error with initialization; false otherwise.
  */
 fluid.personalData.initDataBase = async function (dbRequest, sqlFiles) {
     let togo;
     try {
         console.debug("- Emptying test database...");
-        await dbRequest.runSqlFile(sqlFiles.flush);
+        await dbRequest.runSqlFile(sqlFiles.clearDB);
         console.debug("- ... defining the tables");
-        await dbRequest.runSqlFile(sqlFiles.tableDefs);
+        await dbRequest.runSqlFile(sqlFiles.createTables);
         console.debug("- ... adding initial test records");
-        await dbRequest.runSqlFile(sqlFiles.loadTestData);
+        await dbRequest.runSqlFile(sqlFiles.loadData);
         togo = true;
     }
     catch (error) {
