@@ -21,7 +21,7 @@ fluid.tests.pdServerStartCmd = "node index.js";
 fluid.tests.sqlFiles = {
     clearDB: __dirname + "/../../dataModel/ClearDB.sql",
     createTables: path.join(__dirname, "/../../dataModel/SsoTables.sql"),
-    loadData: __dirname + "/../../dataModel/SsoProvidersData.sql"
+    loadData: __dirname + "/../data/SsoProvidersData.sql"
 };
 
 
