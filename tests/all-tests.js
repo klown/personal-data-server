@@ -23,11 +23,11 @@ const testIncludes = [
     "./postgresRequestTests.js",
     "./tableModelDefTests.js",
 
-    // Test Google single sign on
-    "./googleSsoTests.js",
-
     // Test endpoints provided by personal data server
-    "./healthReadyTests.js"
+    "./healthReadyTests.js",
+
+    // Test Google single sign on
+    "./googleSsoTests.js"
 ];
 
 testIncludes.forEach(function (path) {
