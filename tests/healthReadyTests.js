@@ -8,8 +8,9 @@
 
 "use strict";
 
-const fluid = require("infusion"),
-    jqUnit = require("node-jqunit");
+require("json5/lib/register");
+const fluid = require("infusion");
+const jqUnit = require("node-jqunit");
 
 require("../src/shared/driverUtils.js");
 require("./shared/utilsCommon.js");
@@ -19,31 +20,35 @@ jqUnit.module("Personal Data Server /health and /ready tests.");
 
 fluid.registerNamespace("fluid.tests.healthReady");
 
+const config = require("./testConfig.json5");
+const serverUrl = "http://localhost:" + config.server.port;
+fluid.tests.utils.setDbEnvVars(config.db);
+
 const postgresOps = require("../src/dbOps/postgresOps.js");
-const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
+const postgresHandler = new postgresOps.postgresOps(config.db);
 
 jqUnit.test("Health and Ready end point tests", async function () {
     jqUnit.expect(14);
 
     // Start with server off -- "/health" should fail
-    let response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/health");
+    let response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
     jqUnit.assertNotNull("Check '/health' error", response);
     jqUnit.assertTrue("Check '/health' error code", response.toString().includes("ECONNREFUSED"));
 
     // Start server, but not the database.
-    const serverInstance = await fluid.personalData.startServer(fluid.tests.pdServerStartCmd, fluid.tests.serverUrl);
+    const serverInstance = await fluid.personalData.startServer(config.server.port);
     jqUnit.assertEquals("Check server active", 200, serverInstance.status);
 
     // "/health" request should now succeed ...
-    response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/health");
+    response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
     fluid.tests.healthReady.testResult(response, 200, { isHealthy: true }, "/health (should succeed)");
 
     //  ... but "/ready" should fail
-    response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/ready");
+    response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
     fluid.tests.healthReady.testResult(response, 503, { isError: true, message: "Database is not ready" }, "/ready (should error)");
 
     // Start the database docker container
-    const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
+    const dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
     jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
     // Initialize db: create tables and load data
@@ -51,7 +56,7 @@ jqUnit.test("Health and Ready end point tests", async function () {
     jqUnit.assertTrue("The database has been initiated", loadDataStatus);
 
     // "/ready" should now work.
-    response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/ready");
+    response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
     fluid.tests.healthReady.testResult(response, 200, { isReady: true }, "/ready (should succeed)");
 
     // Final clean up
@@ -59,10 +64,10 @@ jqUnit.test("Health and Ready end point tests", async function () {
     fluid.tests.utils.finish(postgresHandler);
 
     // 2. Stop the docker container for the database
-    await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus);
+    await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
 
     // 3. Stop the server
-    await fluid.personalData.stopServer(serverInstance, fluid.tests.serverUrl);
+    await fluid.personalData.stopServer(serverInstance, serverUrl);
 });
 
 fluid.tests.healthReady.testResult = async function (res, expectedStatus, expected, endPoint) {

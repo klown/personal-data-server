@@ -8,24 +8,29 @@
 
 "use strict";
 
-const fluid = require("infusion"),
-    axios = require("axios"),
-    nock = require("nock"),
-    url = require("url"),
-    jqUnit = require("node-jqunit");
+require("json5/lib/register");
+const fluid = require("infusion");
+const axios = require("axios");
+const nock = require("nock");
+const url = require("url");
+const jqUnit = require("node-jqunit");
 
 require("../src/shared/driverUtils.js");
 require("./shared/utilsCommon.js");
 require("./shared/utilsSso.js");
 
-const googleSso = require("../src/personalData/routes/ssoProviders/googleSso.js");
-const dbRequest = require("../src/personalData/ssoDbOps.js");
+const config = require("./testConfig.json5");
+const serverUrl = "http://localhost:" + config.server.port;
+fluid.tests.utils.setDbEnvVars(config.db);
+
+const googleSso = require("../src/server/routes/ssoProviders/googleSso.js");
+const dbRequest = require("../src/server/ssoDbOps.js");
 
 jqUnit.module("Personal Data Server Google SSO Tests");
 
 fluid.registerNamespace("fluid.tests.googleSso");
 
-fluid.tests.googleSso.mockAccessToken = {
+const mockAccessToken = {
     access_token: "PatAccessToken.someRandomeString",
     expires_in: 3600,
     refresh_token: "anotherRandomString"
@@ -36,12 +41,12 @@ fluid.tests.googleSso.mockAccessToken = {
 // However, the status code is "400 Bad Request" for all of them -- use same
 // mock in all cases.
 // https://www.rfc-editor.org/rfc/rfc6749#section-5.2
-fluid.tests.googleSso.mockErrorResponse = {
+const mockErrorResponse = {
     error: "invalid client",
     error_description: "The specified client is unknown"
 };
 
-fluid.tests.googleSso.mockUserInfo = {
+const mockUserInfo = {
     id: "PatId",
     name: "Pat Smith",
     email: "pat.smith@somewhere.com",
@@ -59,11 +64,11 @@ jqUnit.test("Google SSO tests", async function () {
     jqUnit.expect(36);
     try {
         // Start the database
-        const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
+        const dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
         jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
         // Start the server
-        const serverInstance = await fluid.personalData.startServer(fluid.tests.pdServerStartCmd, fluid.tests.serverUrl);
+        const serverInstance = await fluid.personalData.startServer(config.server.port);
         jqUnit.assertEquals("Check server active", 200, serverInstance.status);
 
         // Initialize db: create tables and load data
@@ -71,46 +76,46 @@ jqUnit.test("Google SSO tests", async function () {
         jqUnit.assertTrue("The database has been initiated", loadDataStatus);
 
         // Test "/ready" to ensure the server is up and running
-        let response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/ready");
+        let response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
         fluid.tests.googleSso.testResponse(response, 200, { isReady: true }, "/ready (should succeed)");
 
         // Test "/sso/google"
-        response = await fluid.tests.googleSso.sendAuthRequest(fluid.tests.serverUrl, "/sso/google");
+        response = await fluid.tests.googleSso.sendAuthRequest(serverUrl, "/sso/google");
         fluid.tests.googleSso.testResponse(response, 200, {}, "/sso/google");
 
         // Test successful GoogleSso.fetchAccessToken() with mock /token endpoint
         response = await fluid.tests.googleSso.fetchAccessToken(googleSso, authPayload.code, dbRequest, googleSso.options, 200);
-        fluid.tests.googleSso.testResponse(response, 200, fluid.tests.googleSso.mockAccessToken, "googleSso.fetchAccessToken(/token)");
+        fluid.tests.googleSso.testResponse(response, 200, mockAccessToken, "googleSso.fetchAccessToken(/token)");
 
         // Test failure of GoogleSso.fetchAccessToken()
         response = await fluid.tests.googleSso.fetchAccessToken(googleSso, authPayload.code, dbRequest, googleSso.options, 400);
-        fluid.tests.googleSso.testResponse(response, 400, fluid.tests.googleSso.mockErrorResponse, "googleSso.fetchAccessToken(/token)");
+        fluid.tests.googleSso.testResponse(response, 400, mockErrorResponse, "googleSso.fetchAccessToken(/token)");
 
         // Test successful GoogleSso.fetchUserInfo() with mock /userInfo endpoint
-        response = await fluid.tests.googleSso.fetchUserInfo(googleSso, fluid.tests.googleSso.mockAccessToken, googleSso.options, 200);
-        fluid.tests.googleSso.testResponse(response, 200, fluid.tests.googleSso.mockUserInfo, "googleSso.fetchUserInfo(/userInfo)");
+        response = await fluid.tests.googleSso.fetchUserInfo(googleSso, mockAccessToken, googleSso.options, 200);
+        fluid.tests.googleSso.testResponse(response, 200, mockUserInfo, "googleSso.fetchUserInfo(/userInfo)");
 
         // Test failure GoogleSso.fetchUserInfo() with mock /userInfo endpoint
-        response = await fluid.tests.googleSso.fetchUserInfo(googleSso, fluid.tests.googleSso.mockAccessToken, googleSso.options, 400);
-        fluid.tests.googleSso.testResponse(response, 400, fluid.tests.googleSso.mockErrorResponse, "googleSso.fetchUserInfo(/userInfo)");
+        response = await fluid.tests.googleSso.fetchUserInfo(googleSso, mockAccessToken, googleSso.options, 400);
+        fluid.tests.googleSso.testResponse(response, 400, mockErrorResponse, "googleSso.fetchUserInfo(/userInfo)");
 
         // Test googleSso.storeUserAndAccessToken()
-        response = await fluid.tests.googleSso.storeUserAndAccessToken(googleSso, dbRequest, fluid.tests.googleSso.mockUserInfo, fluid.tests.googleSso.mockAccessToken);
+        response = await fluid.tests.googleSso.storeUserAndAccessToken(googleSso, dbRequest, mockUserInfo, mockAccessToken);
         fluid.tests.googleSso.testStoreUserAndAccessToken(response, "googleSso.storeUserAndAccessToken()", googleSso.options);
 
         // Test failure of "/sso/google/login/callback" -- missing authorization code parameter
-        response = await fluid.tests.utils.sendRequest(fluid.tests.serverUrl, "/sso/google/login/callback");
+        response = await fluid.tests.utils.sendRequest(serverUrl, "/sso/google/login/callback");
         fluid.tests.googleSso.testResponse(response, 403, {"isError": true, "message": "Request missing authorization code"}, "/sso/google/login/callback");
 
         // Delete the test user -- this will cascade and delete the associated SsoAccount and AccessToken.
-        response = await fluid.tests.deleteTestUser(fluid.tests.googleSso.mockUserInfo.id, dbRequest);
-        jqUnit.assertNotNull(`Checking deletion of mock user ${fluid.tests.googleSso.mockUserInfo.id}`, response);
+        response = await fluid.tests.deleteTestUser(mockUserInfo.id, dbRequest);
+        jqUnit.assertNotNull(`Checking deletion of mock user ${mockUserInfo.id}`, response);
 
         // Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus, dbRequest);
+        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus, dbRequest);
 
         // Stop the server
-        await fluid.personalData.stopServer(serverInstance, fluid.tests.serverUrl);
+        await fluid.personalData.stopServer(serverInstance, serverUrl);
     } catch (error) {
         jqUnit.fail("Google SSO tests fail with this error: ", error);
     }
@@ -126,7 +131,6 @@ fluid.tests.googleSso.testStoreUserAndAccessToken = function (accountInfo, testP
     jqUnit.assertNotNull(`${checkPrefix} non-null result`, accountInfo);
 
     // Spot check parts of the User record that can be tested
-    const mockUserInfo = fluid.tests.googleSso.mockUserInfo;
     jqUnit.assertNotNull(`${checkPrefix} non-null User`, accountInfo.user);
     jqUnit.assertEquals(`${checkPrefix} User id`, mockUserInfo.id, accountInfo.user.userId);
     jqUnit.assertEquals(`${checkPrefix} User name`, mockUserInfo.name, accountInfo.user.name);
@@ -142,12 +146,12 @@ fluid.tests.googleSso.testStoreUserAndAccessToken = function (accountInfo, testP
     // Similarly, the SsoAccount record
     jqUnit.assertNotNull(`${checkPrefix} non-null SsoAccount`, accountInfo.ssoAccount);
     jqUnit.assertEquals(`${checkPrefix} SsoAccount user`, mockUserInfo.id, accountInfo.ssoAccount.user);
-    jqUnit.assertDeepEq(`${checkPrefix} SsoAccount userInfo`, fluid.tests.googleSso.mockUserInfo, accountInfo.ssoAccount.userInfo);
+    jqUnit.assertDeepEq(`${checkPrefix} SsoAccount userInfo`, mockUserInfo, accountInfo.ssoAccount.userInfo);
 
     // Similarly spot check aspects of the AccessToken record
     jqUnit.assertNotNull(`${checkPrefix} non-null AccessToken`, accountInfo.accessToken);
-    jqUnit.assertEquals(`${checkPrefix} AccessToken accessToken`, fluid.tests.googleSso.mockAccessToken.access_token, accountInfo.accessToken.accessToken);
-    jqUnit.assertEquals(`${checkPrefix} AccessToken refreshToken`, fluid.tests.googleSso.mockAccessToken.refresh_token, accountInfo.accessToken.refreshToken);
+    jqUnit.assertEquals(`${checkPrefix} AccessToken accessToken`, mockAccessToken.access_token, accountInfo.accessToken.accessToken);
+    jqUnit.assertEquals(`${checkPrefix} AccessToken refreshToken`, mockAccessToken.refresh_token, accountInfo.accessToken.refreshToken);
     jqUnit.assertNotNull(`${checkPrefix} AccessToken expiresAt`, accountInfo.accessToken.expiresAt);
     jqUnit.assertNotNull(`${checkPrefix} AccessToken loginToken`, accountInfo.accessToken.loginToken);
 };
@@ -176,13 +180,13 @@ fluid.tests.googleSso.fetchAccessToken = function (googleSso, code, dbRequest, o
     case 200:
         mockResponse = {
             status: responseStatus,
-            body: fluid.tests.googleSso.mockAccessToken
+            body: mockAccessToken
         };
         break;
     case 400:
         mockResponse = {
             status: 400,
-            body: fluid.tests.googleSso.mockErrorResponse
+            body: mockErrorResponse
         };
     }
     const accessTokenURL = new url.URL(options.accessTokenUri);
@@ -200,13 +204,13 @@ fluid.tests.googleSso.fetchUserInfo = function (googleSso, accessToken, options,
     case 200:
         mockResponse = {
             status: responseStatus,
-            body: fluid.tests.googleSso.mockUserInfo
+            body: mockUserInfo
         };
         break;
     case 400:
         mockResponse = {
             status: 400,
-            body: fluid.tests.googleSso.mockErrorResponse
+            body: mockErrorResponse
         };
     }
     const userInfoURL = new url.URL(options.userInfoUri);

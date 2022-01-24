@@ -19,7 +19,6 @@
     },
     "dependencies": {
         "axios": "0.24.0",
-        "debug": "4.3.2",
         "express": "4.17.1",
         "express-session": "1.17.2",
         "jade": "1.11.0",
@@ -41,13 +40,9 @@
     },
     "scripts": {
         "test": "node node_modules/nyc/bin/nyc.js node tests/all-tests.js",
-        "testNoDrop": "(export PGDATABASE=prefs_testdb PGPORT=5433; npm run startTestServer && node node_modules/nyc/bin/nyc.js node tests/all-tests.js)",
         "startTestServer": "./src/database/scripts/startDockerPostgres.sh",
         "dropTestDatabase": "./src/database/scripts/dropDockerTestDatabase.sh",
         "lint": "fluid-lint-all",
-        "startPersonalData": "node index.js",
-        "startDevPersonalData": "nodemon index.js",
-        "startDebugPersonalData": "DEBUG=personalData:* npm run startDevPersonalData",
-        "startDebuggerPersonalData": "DEBUG=personalData:* nodemon --inspect-brk index.js"
+        "start": "node index.js"
     }
 }

@@ -39,7 +39,7 @@ router.get("/ready", function (req, res) {
         (ready) => { res.json({ isReady: ready }); },
         () => {
             res.status(503);
-            res.json({ isError: true, message: "Database is not ready" });
+            res.json({ isError: true, message: "Database is not ready"});
         }
     );
 });

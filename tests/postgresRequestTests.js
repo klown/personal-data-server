@@ -8,6 +8,7 @@
 
 "use strict";
 
+require("json5/lib/register");
 const fluid = require("infusion");
 const jqUnit = require("node-jqunit");
 const postgresOps = require("../src/dbOps/postgresOps.js");
@@ -20,15 +21,17 @@ jqUnit.module("PostgresDB request unit tests.");
 
 fluid.registerNamespace("fluid.tests.dbOps");
 
+const config = require("./testConfig.json5");
+
 jqUnit.test("Database request tests", async function () {
     jqUnit.expect(7);
 
     // Start the database
-    const dbStatus = await fluid.personalData.dockerStartDatabase(fluid.tests.postgresContainer, fluid.tests.postgresImage, fluid.tests.dbConfig);
+    const dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
     jqUnit.assertTrue("The database has been started successfully", dbStatus);
 
     // Initiate the postgres handler and valid
-    const postgresHandler = new postgresOps.postgresOps(fluid.tests.dbConfig);
+    const postgresHandler = new postgresOps.postgresOps(config.db);
     jqUnit.assertNotNull(postgresHandler, "Check database request object is non-null");
     jqUnit.assertNotNull(postgresHandler.pool, "Check database connection is non-null");
 
@@ -49,7 +52,7 @@ jqUnit.test("Database request tests", async function () {
     fluid.tests.utils.finish(postgresHandler);
 
     // 2. Stop the docker container for the database
-    await fluid.personalData.dockerStopDatabase(fluid.tests.postgresContainer, dbStatus);
+    await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
 });
 
 /**

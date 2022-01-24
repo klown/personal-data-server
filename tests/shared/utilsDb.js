@@ -11,8 +11,8 @@
 
 "use strict";
 
-const fluid = require("infusion"),
-    jqUnit = require("node-jqunit");
+const fluid = require("infusion");
+const jqUnit = require("node-jqunit");
 
 fluid.registerNamespace("fluid.tests.utils");
 

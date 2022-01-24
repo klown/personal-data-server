@@ -10,20 +10,22 @@
 
 const fluid = require("infusion");
 const axios = require("axios");
-const path = require("path");
 
 fluid.registerNamespace("fluid.tests.utils");
 
-// Personal data server port (used by express's startup script `node index.js`)
-process.env.PORT = 3001;
-fluid.tests.serverUrl = "http://localhost:" + process.env.PORT;
-fluid.tests.pdServerStartCmd = "node index.js";
 fluid.tests.sqlFiles = {
     clearDB: __dirname + "/../../dataModel/ClearDB.sql",
-    createTables: path.join(__dirname, "/../../dataModel/SsoTables.sql"),
+    createTables: __dirname + "/../../dataModel/SsoTables.sql",
     loadData: __dirname + "/../data/SsoProvidersData.sql"
 };
 
+fluid.tests.utils.setDbEnvVars = function (dbConfig) {
+    process.env.DATABASE = dbConfig.database;
+    process.env.DBHOST = dbConfig.host;
+    process.env.DBPORT = dbConfig.port;
+    process.env.DBUSER = dbConfig.user;
+    process.env.DBPASSWORD = dbConfig.password;
+};
 
 /**
  * Initialize a test database and set up its tables, if it/they do not already

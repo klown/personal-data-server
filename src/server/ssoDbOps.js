@@ -11,16 +11,18 @@
 
 "use strict";
 
+require("json5/lib/register");
 const postgresOps = require("../dbOps/postgresOps.js");
 const generateToken = require("./generateRandomToken.js");
+const config = require("../../config.json5");
 
 // Database configuration and connection
 const dbConfig = {
-    database: process.env.PGDATABASE        || "prefs_testdb",
-    host: process.env.PGPHOST               || "localhost",
-    port: process.env.PGPORT                || 5433,
-    user: process.env.PGUSER                || "admin",
-    password: process.env.POSTGRES_PASSWORD || "asecretpassword"
+    database: process.env.DATABASE || config.db.database,
+    port: process.env.DBPORT || config.db.port,
+    host: process.env.DBHOST || config.db.host,
+    user: process.env.DBUSER || config.db.user,
+    password: process.env.DBPASSWORD || config.db.password
 };
 
 class DataBaseRequest extends postgresOps.postgresOps {

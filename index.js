@@ -1,88 +1,57 @@
 #!/usr/bin/env node
+/*
+ * Copyright 2021 Inclusive Design Research Centre, OCAD University
+ * All rights reserved.
+ *
+ * Licensed under the New BSD license. You may not use this file except in
+ * compliance with this License.
+ */
+
+// This script reads configs from config.js and starts the entire personal data server including the express server,
+// the database docker container. It also loads data into the database.
+// Usage: node index.js
+// Parameters:
+// port - Optional. The port that the personal data server will listen to. The default value is 3000.
+//
+// A sample command that runs this script in the universal root directory:
+// node startServer.js 3001
 
 "use strict";
 
-const app = require("./src/personalData/app.js");
-const debug = require("debug")("personaldata:server");
-const http = require("http");
+require("json5/lib/register");
+require("./src/shared/driverUtils.js");
+const postgresOps = require("./src/dbOps/postgresOps.js");
 
-/**
- * Get port from environment and store in Express.
- */
+const fluid = require("infusion");
+fluid.registerNamespace("fluid.personalData");
 
-const port = normalizePort(process.env.PORT || "3000");
-app.set("port", port);
+const sqlFiles = {
+    clearDB: __dirname + "/dataModel/ClearDB.sql",
+    createTables: __dirname + "/dataModel/SsoTables.sql",
+    loadData: __dirname + "/dataModel/SsoProvidersData.sql"
+};
 
-/**
- * Create HTTP server.
- */
+const config = require("./config.json5");
+const serverPort = process.env.SERVERPORT || config.server.port || 3000;
 
-const server = http.createServer(app);
+const dbConfig = {
+    database: process.env.DATABASE || config.db.database,
+    port: process.env.DBPORT || config.db.port,
+    host: process.env.DBHOST || config.db.host,
+    user: process.env.DBUSER || config.db.user,
+    password: process.env.DBPASSWORD || config.db.password
+};
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+async function main() {
+    // Start the database docker container
+    await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, dbConfig);
 
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
+    // Initialize db: create tables and load data
+    const postgresHandler = new postgresOps.postgresOps(dbConfig);
+    await fluid.personalData.initDataBase(postgresHandler, sqlFiles);
 
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort(val) {
-    const port = parseInt(val, 10);
-
-    if (isNaN(port)) {
-        // named pipe
-        return val;
-    }
-
-    if (port >= 0) {
-        // port number
-        return port;
-    }
-
-    return false;
+    // Start the personal data server
+    await fluid.personalData.startServer(serverPort);
 }
 
-/**
- * Event listener for HTTP server "error" event.
- */
-
-function onError(error) {
-    if (error.syscall !== "listen") {
-        throw error;
-    }
-
-    const bind = typeof port === "string"
-        ? "Pipe " + port
-        : "Port " + port;
-
-    // handle specific listen errors with friendly messages
-    switch (error.code) {
-    case "EACCES":
-        console.error(bind + " requires elevated privileges");
-        process.exit(1);
-        break;
-    case "EADDRINUSE":
-        console.error(bind + " is already in use");
-        process.exit(1);
-        break;
-    default:
-        throw error;
-    }
-}
-
-/**
- * Event listener for HTTP server "listening" event.
- */
-
-function onListening() {
-    const addr = server.address();
-    const bind = typeof addr === "string"
-        ? "pipe " + addr
-        : "port " + addr.port;
-    debug("Listening on " + bind);
-}
+main();

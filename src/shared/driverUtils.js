@@ -8,11 +8,12 @@
 
 "use strict";
 
-const fluid = require("infusion"),
-    axios = require("axios"),
-    { exec, execSync } = require("child_process");
+const fluid = require("infusion");
+const axios = require("axios");
+const { exec, execSync } = require("child_process");
 
 fluid.registerNamespace("fluid.personalData");
+fluid.personalData.startServerCmd = "node startServer.js";
 
 const NUM_CHECK_REQUESTS = 10;
 const DELAY = 2000; // msec
@@ -23,16 +24,17 @@ fluid.personalData.sleep = async function (delay) {
 
 /**
  * Check if the personal data server is running using the given url.  If not
- * running, start it.  If it does not start after ten attempts, give up.
+ * running, start it. If it does not start after ten attempts, give up.
  *
- * @param {String} execCmd - Command passed to `exec()` to start the server.
- * @param {String} url - The url to GET to test if the server is running.
+ * @param {Number} serverPort - The port that the server is listening to.
  * @return {Object} An object that has the status of the last request regardless
  *                  of success, and the node ChildProcess started by `exec()`
  *                  or `null` if it failed to start.
  */
-fluid.personalData.startServer = async function (execCmd, url) {
+fluid.personalData.startServer = async function (serverPort) {
+    const url = "http://localhost:" + serverPort;
     let resp = {};
+
     console.debug(`- Checking if server is running using ${url}`);
     try {
         resp = await axios(url);
@@ -42,7 +44,7 @@ fluid.personalData.startServer = async function (execCmd, url) {
 
     // Server needs to be started
     console.debug(`- Starting server at ${url}`);
-    const pdServerProcess = exec(execCmd);
+    const pdServerProcess = exec(fluid.personalData.startServerCmd + " " + serverPort);
     for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
@@ -117,8 +119,7 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
     let execOutput;
 
     console.debug(`- Starting database container ${container}`);
-    // Try starting a stopped container.  If no such container, the command
-    // will throw.
+    // Try starting a stopped container.  If no such container, the command will throw an error.
     try {
         execOutput = execSync(`docker start ${container}`).toString().trim();
     }
@@ -138,7 +139,7 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
                 `docker run -d --name="${container}" \
                 -e POSTGRES_USER=${dbConfig.user} \
                 -e POSTGRES_PASSWORD=${dbConfig.password} \
-                -p $PGPORT:${dbConfig.port} \
+                -p ${dbConfig.port}:${dbConfig.port} \
                 ${image} postgres -p ${dbConfig.port}`
             ).toString().trim();
         }
@@ -241,16 +242,16 @@ fluid.personalData.dockerStopDatabase = async function (container, wasPaused, db
 fluid.personalData.initDataBase = async function (dbRequest, sqlFiles) {
     let togo;
     try {
-        console.debug("- Emptying test database...");
+        console.debug("- Emptying database...");
         await dbRequest.runSqlFile(sqlFiles.clearDB);
         console.debug("- ... defining the tables");
         await dbRequest.runSqlFile(sqlFiles.createTables);
-        console.debug("- ... adding initial test records");
+        console.debug("- ... adding initial table records");
         await dbRequest.runSqlFile(sqlFiles.loadData);
         togo = true;
     }
     catch (error) {
-        console.debug(`Error iniitalizing test database: ${error.message}`);
+        console.debug(`Error iniitalizing database: ${error.message}`);
         togo = false;
     }
     return togo;
