@@ -1,4 +1,4 @@
--- Copyright 2021 Inclusive Design Research Centre, OCAD University
+-- Copyright 2021-2022 Inclusive Design Research Centre, OCAD University
 -- All rights reserved.
 --
 -- PostgreSQL to remove all data from a database.

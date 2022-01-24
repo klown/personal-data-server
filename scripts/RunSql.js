@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Inclusive Design Research Centre, OCAD University
+ * Copyright 2021-2022 Inclusive Design Research Centre, OCAD University
  * All rights reserved.
  *
  * Node script for running SQL statements either from a file or from the command

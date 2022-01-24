@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Copyright 2021 Inclusive Design Research Centre, OCAD University
+ * Copyright 2021-2022 Inclusive Design Research Centre, OCAD University
  * All rights reserved.
  *
  * Licensed under the New BSD license. You may not use this file except in

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2020-2021 OCAD University
+# Copyright 2020-2022 OCAD University
 #
 # Licensed under the New BSD license. You may not use this file except in
 # compliance with this License.  You may obtain a copy of the License at
