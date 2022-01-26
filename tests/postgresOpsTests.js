@@ -28,6 +28,7 @@ jqUnit.module("PostgresDB operations unit tests.");
 
 fluid.registerNamespace("fluid.tests.dbOps");
 
+const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
 const config = require("./testConfig.json5");
 
 const parameterizedInsert = `
@@ -98,11 +99,14 @@ const rgbChartreuse = fluid.find(fluid.tests.dbOps.testTableData.rgb, function (
 });
 
 jqUnit.test("Database operations tests", async function () {
-    jqUnit.expect(234);
+    jqUnit.expect(skipDocker ? 233 : 234);
 
-    // Start the database
-    const dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-    jqUnit.assertTrue("The database has been started successfully", dbStatus);
+    let dbStatus;
+    if (!skipDocker) {
+        // Start the database
+        dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+    }
 
     const postgresHandler = new postgresOps.postgresOps(config.db);
 
@@ -232,8 +236,10 @@ jqUnit.test("Database operations tests", async function () {
     // 1. Disconnect the postgres client from its server. See https://node-postgres.com/api/client
     fluid.tests.utils.finish(postgresHandler);
 
-    // 2. Stop the docker container for the database
-    await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+    if (!skipDocker) {
+        // 2. Stop the docker container for the database
+        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+    }
 });
 
 /**

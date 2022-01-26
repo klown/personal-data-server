@@ -38,6 +38,40 @@ npm start
 
 * Open `http://localhost:3000/` in a browser demonstrates a process of Google Single Sign-on
 
+### Skip Docker
+
+By default, running `npm start` or `npm test` will start a Postgres docker container to serve the backend database.
+However, as Docker is not supported by Windows OS, another option is to install Postgres locally and set the environment
+variable `SKIPDOCKER` to inform scripts to skip the auto-start of a Postgres docker container. Example:
+
+```bash
+export SKIPDOCKER=true; npm start
+```
+
+## Configuration
+
+Personal Data Server is configured by [`config.json5`](./config.json5) defined in the root folder.
+The configuration includes the server configuration and the database configuration. Every configuration
+can be overridden by a corresponding environment variable.
+
+* Server Configuration
+
+| Name        | Default Value | Description | Envionment Variable for Overriding |
+| ----------- | ----------- | ----------- | ----------- |
+| port | 3000 | The port that the server will listen on | SERVERPORT |
+
+* Database Configuration
+
+| Name        | Default Value | Description | Envionment Variable for Overriding |
+| ----------- | ----------- | ----------- | ----------- |
+| dbContainerName | PersonalDataPostgres | The name of the postgres docker container | |
+| dbDockerImage | postgres:14.1-alpine | The postgres docker image tag pulled from [the official docker image hub](https://hub.docker.com/_/postgres) | |
+| database | personalData | The database name | DATABASE |
+| host | localhost | The host that the personal data server starts on | DBHOST |
+| port | 5432 | The port that the personal data server listens on | DBPORT |
+| user | admin | The user created for creating the postgres database | DBUSER |
+| password | asecretpassword | The password for the user | DBPASSWORD |
+
 ## Development
 
 ### Lint

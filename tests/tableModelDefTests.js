@@ -21,17 +21,21 @@ jqUnit.module("PostgresDB table definitions unit tests.");
 
 fluid.registerNamespace("fluid.tests.dbOps");
 
+const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
 const config = require("./testConfig.json5");
 
 // Table names, SQL CREATE, and SQL ALTER statements
 require("./data/testTableModels.js");
 
 jqUnit.test("Database table data models tests", async function () {
-    jqUnit.expect(13);
+    jqUnit.expect(skipDocker ? 12 : 13);
 
-    // Start the database
-    const dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-    jqUnit.assertTrue("The database has been started successfully", dbStatus);
+    let dbStatus;
+    if (!skipDocker) {
+        // Start the database
+        dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+    }
 
     const postgresHandler = new postgresOps.postgresOps(config.db);
 
@@ -75,6 +79,8 @@ jqUnit.test("Database table data models tests", async function () {
     // 1. Disconnect the postgres client from its server. See https://node-postgres.com/api/client
     fluid.tests.utils.finish(postgresHandler);
 
-    // 2. Stop the docker container for the database
-    await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+    if (!skipDocker) {
+        // 2. Stop the docker container for the database
+        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+    }
 });

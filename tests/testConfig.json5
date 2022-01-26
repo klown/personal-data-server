@@ -11,7 +11,7 @@
         // The docker container name for personal server postgres db
         dbContainerName: "PostgresForTests",
         // The postgres docker image version
-        dbDockerImage: "postgres:14.0-alpine",
+        dbDockerImage: "postgres:14.1-alpine",
         // Database name
         // Can be overridden by the value defined in the environment variable DATABASE
         database: "personalDataTests",

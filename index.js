@@ -10,11 +10,6 @@
 // This script reads configs from config.js and starts the entire personal data server including the express server,
 // the database docker container. It also loads data into the database.
 // Usage: node index.js
-// Parameters:
-// port - Optional. The port that the personal data server will listen to. The default value is 3000.
-//
-// A sample command that runs this script in the universal root directory:
-// node startServer.js 3001
 
 "use strict";
 
@@ -42,9 +37,13 @@ const dbConfig = {
     password: process.env.DBPASSWORD || config.db.password
 };
 
+const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
+
 async function main() {
-    // Start the database docker container
-    await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, dbConfig);
+    if (!skipDocker) {
+        // Start the database docker container
+        await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, dbConfig);
+    }
 
     // Initialize db: create tables and load data
     const postgresHandler = new postgresOps.postgresOps(dbConfig);

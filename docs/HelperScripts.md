@@ -19,7 +19,7 @@ docker image and launch it with the following configuration:
 | `PGPORT`                   | `5432`                 | Postgres TCP port for accessing the database |
 | `PGUSER`                   | `admin`                | User that has admin privileges for all tables in the database |
 | `PGPASSWORD`               | `asecretpassword`      | User's password |
-| `POSTGRES_IMAGE`           | `postgres:14.0-alpine` | Postgres docker image name |
+| `POSTGRES_IMAGE`           | `postgres:14.1-alpine` | Postgres docker image name |
 
 ## Start Up: `./scripts/startDockerPostgres.sh`
 
@@ -52,32 +52,43 @@ is the main container name, `POSTGRES_MAIN_CONTAINER`.
 
 ## Load into Database: `./scripts/runSql.js`
 
-This script is to load a SQL file or execute a SQL statement against a database running in a Postgres docker container.
-It doesn't require any environment variables to be defined. All required database parameters should be passed in as
-command arguments.
+This script is to load a SQL file or execute a SQL statement against a database running locally or in a Postgres
+docker container. It assumes that an instance of the named PostgreSQL database is running on the given host, port,
+etc. This script doesn't require any environment variables.
 
-* The usage to load a SQL file is:
+This script requires either a SQL statement or a SQL file is provides. If both arguments are given, they will all
+be loaded into the database.
+
+* Usage:
 
 ```bash
-node ./scripts/runSql.js {database} {host} {port} {user} {password} {sql-file}
+node ./scripts/runSql.js --db {database} --host {host} --port {port} --user {user} --password {password} --sqlfile {sql-file} --sql {sql}
 ```
 
-Example:
+* Parameters
+
+| Name        | Default Value | Description |
+| ----------- | ----------- | ----------- |
+| db | personalData | Optional. The database name |
+| host | localhost | Optional. The host that the personal data server starts on |
+| port | 5432 | Optional. The port that the personal data server listens on |
+| user | admin | Optional. The user created for creating the postgres database |
+| password | asecretpassword | Optional. The password for the user |
+| sql | None | Optional. SQL statement to execute |
+| sqlfile | None | Optional. The location of the SQL file to load into the database |
+
+Note: either a SQL statement or a SQL file must be provided.
+
+* Example to load a SQL file:
 
 ```bash
-node ./scripts/runSql.js personalData localhost 5432 admin asecretpassword ./dataModel/SsoProvidersData.sql
+node ./scripts/runSql.js --db personalData --host localhost --port 5432 --user admin --password asecretpassword --sqlfile ./dataModel/SsoProvidersData.sql
 ```
 
-* The usage to execute a SQL statement is:
+* Example to execute a SQL statement:
 
 ```bash
-node ./scripts/runSql.js {database} {host} {port} {user} {password} -- {sql-statement}
-```
-
-Example:
-
-```bash
-node ./scripts/runSql.js personalData localhost 5432 admin asecretpassword -- "truncate table \"AppSsoProvider\" CASCADE"
+node ./scripts/runSql.js --db personalData --host localhost --port 5432 --user admin --password asecretpassword --sql "truncate table \"AppSsoProvider\" CASCADE"
 ```
 
 ## Drop Database

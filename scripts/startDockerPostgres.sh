@@ -15,7 +15,7 @@ PGPORT=${PGPORT:-5432}
 POSTGRES_USER=${PGUSER:-"admin"}
 POSTGRES_PASSWORD=${PGPASSWORD:-"asecretpassword"}
 PGDATABASE=${PGDATABASE:-"personalData"}
-POSTGRES_IMAGE=${POSTGRES_IMAGE:-"postgres:14.0-alpine"}
+POSTGRES_IMAGE=${POSTGRES_IMAGE:-"postgres:14.1-alpine"}
 
 log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"

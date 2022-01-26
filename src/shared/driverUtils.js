@@ -251,7 +251,7 @@ fluid.personalData.initDataBase = async function (dbRequest, sqlFiles) {
         togo = true;
     }
     catch (error) {
-        console.debug(`Error iniitalizing database: ${error.message}`);
+        console.debug(`Error initalizing database: ${error.message}`);
         togo = false;
     }
     return togo;

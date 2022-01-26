@@ -30,6 +30,8 @@ jqUnit.module("Personal Data Server Google SSO Tests");
 
 fluid.registerNamespace("fluid.tests.googleSso");
 
+const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
+
 const mockAccessToken = {
     access_token: "PatAccessToken.someRandomeString",
     expires_in: 3600,
@@ -61,11 +63,14 @@ const mockUserInfo = {
 let authPayload;
 
 jqUnit.test("Google SSO tests", async function () {
-    jqUnit.expect(36);
+    jqUnit.expect(skipDocker ? 35 : 36);
     try {
-        // Start the database
-        const dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+        let dbStatus;
+        if (!skipDocker) {
+            // Start the database
+            dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+            jqUnit.assertTrue("The database has been started successfully", dbStatus);
+        }
 
         // Start the server
         const serverInstance = await fluid.personalData.startServer(config.server.port);
@@ -111,8 +116,10 @@ jqUnit.test("Google SSO tests", async function () {
         response = await fluid.tests.deleteTestUser(mockUserInfo.id, dbRequest);
         jqUnit.assertNotNull(`Checking deletion of mock user ${mockUserInfo.id}`, response);
 
-        // Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus, dbRequest);
+        if (!skipDocker) {
+            // Stop the docker container for the database
+            await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus, dbRequest);
+        }
 
         // Stop the server
         await fluid.personalData.stopServer(serverInstance, serverUrl);
