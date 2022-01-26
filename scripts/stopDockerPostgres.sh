@@ -9,7 +9,7 @@
 # containers.
 
 # Default values
-POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"postgresdb"}
+POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"PersonalDataPostgres"}
 
 log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"

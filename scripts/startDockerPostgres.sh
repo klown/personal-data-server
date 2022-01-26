@@ -10,11 +10,11 @@
 # is downloaded (pulled) from dockerhub.
 
 # Default values
-POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"postgresdb"}
+POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"PersonalDataPostgres"}
 PGPORT=${PGPORT:-5432}
 POSTGRES_USER=${PGUSER:-"admin"}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-"asecretpassword"}
-PGDATABASE=${PGDATABASE:-"fluid_prefsdb"}
+POSTGRES_PASSWORD=${PGPASSWORD:-"asecretpassword"}
+PGDATABASE=${PGDATABASE:-"personalData"}
 POSTGRES_IMAGE=${POSTGRES_IMAGE:-"postgres:14.0-alpine"}
 
 log() {

@@ -1,9 +1,8 @@
 # Preferences Edge Proxy Workflow
 
-A workflow supported by the Personal Data Storage, or Preferences server, where
-the user makes save/retrieve requests for their preferences while on a static
-site. An example is where a user changes their UI Options (UIO) preferences and
-wants to save them.
+A workflow supported by the Personal Data Server, where the user makes save/retrieve
+requests for their preferences while on a static site. An example is where a user
+changes their UI Options (UIO) preferences and wants to save them.
 
 Included in this workflow is an OAuth2 authorization sequence where
 users are authenticated by a third party single sign on (SSO) provider, such as

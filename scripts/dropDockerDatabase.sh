@@ -9,10 +9,10 @@
 # containers.
 
 # Default values
-POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"postgresdb"}
+POSTGRES_MAIN_CONTAINER=${POSTGRES_MAIN_CONTAINER:-"PersonalDataPostgres"}
 PGPORT=${PGPORT:-5432}
 PGUSER=${PGUSER:-"admin"}
-PGDATABASE=${PGDATABASE:-"fluid_prefsdb"}
+PGDATABASE=${PGDATABASE:-"personalData"}
 
 log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
@@ -23,6 +23,6 @@ log "PGPORT: $PGPORT"
 log "PGUSER: $PGUSER"
 log "PGDATABASE: $PGDATABASE"
 
-log "Removing the test database from the server..."
+log "Removing the database from the Postgres docker container..."
 docker exec $POSTGRES_MAIN_CONTAINER \
     dropdb -p $PGPORT -U $PGUSER -f --echo $PGDATABASE

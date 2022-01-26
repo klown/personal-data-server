@@ -31,7 +31,7 @@ situation.
 
 | Option            | Type       | Description |
 | ----------------- | ---------- | ----------- |
-| `databaseName`    | String     | Required. Name of the database containing the tables, e.g., `"fluid_prefsdb"` |
+| `databaseName`    | String     | Required. Name of the database containing the tables, e.g., `"personalData"` |
 | `host`            | String     | Required. The host for the requests, e.g., `"localhost"` |
 | `port`            | Integer    | Required. The port for the requests, e.g., `5432` |
 | `user`            | String     | Required. User administrator's name, e.g., `"admin"`|

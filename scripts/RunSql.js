@@ -8,11 +8,11 @@
  *
  * The file version loads the sql commands from the given file path and executes
  * it:
- *   runSql.js postgres localhost 5432 admin **** SQLfile
+ *   runSql.js personalData localhost 5432 admin **** SQLfile
  *
  * The command line form uses the SQL given on the command line, indicated by a
  * "--":
- *   runSql.js postgres localhost 5432 admin **** -- "DROP TABLE foobar;"
+ *   runSql.js personalData localhost 5432 admin **** -- "DROP TABLE foobar;"
  *
  * Licensed under the New BSD license. You may not use this file except in
  * compliance with this License.

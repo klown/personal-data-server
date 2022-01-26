@@ -1,6 +1,6 @@
 {
     "name": "preferencesServer",
-    "description": "Provides an API for accessing user preferences",
+    "description": "Provides a backend server and API for saving and accessing personal data server",
     "version": "0.1.0",
     "author": "Fluid Project",
     "bugs": "https://github.com/fluid-project/preferencesServer/issues",
@@ -40,8 +40,6 @@
     },
     "scripts": {
         "test": "node node_modules/nyc/bin/nyc.js node tests/all-tests.js",
-        "startTestServer": "./src/database/scripts/startDockerPostgres.sh",
-        "dropTestDatabase": "./src/database/scripts/dropDockerTestDatabase.sh",
         "lint": "fluid-lint-all",
         "start": "node index.js"
     }
