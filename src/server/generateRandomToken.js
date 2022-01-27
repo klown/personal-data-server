@@ -18,6 +18,8 @@ const crypto = require("crypto");
  * to create nonce and other such tokens.  The tokens generated are URL safe
  * based on RFC 4648 (https://www.rfc-editor.org/rfc/rfc4648.html#section-5).
  *
+ * This code was copied from https://stackoverflow.com/questions/8855687/secure-random-token-in-node-js/36008760#36008760
+ *
  * @param {Integer} length - The length of the state string.
  * @return {String} a random set of characters.
  */
