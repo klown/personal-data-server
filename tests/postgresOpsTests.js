@@ -101,11 +101,10 @@ const rgbChartreuse = fluid.find(fluid.tests.dbOps.testTableData.rgb, function (
 jqUnit.test("Database operations tests", async function () {
     jqUnit.expect(skipDocker ? 233 : 234);
 
-    let dbStatus;
     if (!skipDocker) {
         // Start the database
-        dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+        const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", dbReady);
     }
 
     const postgresHandler = new postgresOps.postgresOps(config.db);
@@ -238,7 +237,7 @@ jqUnit.test("Database operations tests", async function () {
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
     }
 });
 

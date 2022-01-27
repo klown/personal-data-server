@@ -48,11 +48,10 @@ jqUnit.test("Health and Ready end point tests", async function () {
     response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
     fluid.tests.healthReady.testResult(response, 503, { isError: true, message: "Database is not ready" }, "/ready (should error)");
 
-    let dbStatus;
     if (!skipDocker) {
         // Start the database docker container
-        dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+        const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", dbReady);
     }
 
     // Initialize db: create tables and load data
@@ -69,7 +68,7 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
     }
 
     // 3. Stop the server

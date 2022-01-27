@@ -110,12 +110,10 @@ fluid.personalData.stopServer = async function (childProcessInfo, url) {
  * @param {String} dbConfig.user - Adminstrative user of the database.
  * @param {String} dbConfig.password - Adminstrator's password.
  * @param {String} dbConfig.port - Port for database requests.
- * @return {Object} An object containing two flags, `wasPaused` if the container
- *                  was restarted from a paused state and `pg_ready` to indicate
- *                  if the database in the container is ready.
+ * @return {Boolean} True if the database in the container is ready. Otherwise, return false.
  */
 fluid.personalData.dockerStartDatabase = async function (container, image, dbConfig) {
-    let dbStatus = {};
+    let dbReady = false;
     let execOutput;
 
     console.debug(`- Starting database container ${container}`);
@@ -127,13 +125,10 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
         execOutput = error.message;
     }
 
-    // If the above re-started a paused container, the output of `exectSync()`
-    // is the `container` name.
-    if (execOutput === container) {
-        dbStatus.wasPaused = true;
-    } else {
+    // If the above re-started the container that was stopped previously, the output of `exectSync()`
+    // is the `container` name. Otherwise, use `docker run` to start this container the first time.
+    if (execOutput !== container) {
         // Start a new container from the given image
-        dbStatus.wasPaused = false;
         try {
             execSync(
                 `docker run -d --name="${container}" \
@@ -145,14 +140,13 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
         }
         catch (error) {
             console.debug(`Error starting database container: ${error}.message`);
-            dbStatus.pgReady = false;
-            return dbStatus;
+            dbReady = false;
+            return dbReady;
         }
     }
 
     // Loop to check that PostgresDB is ready.
     console.debug("Checking that PostgresDB is ready...");
-    dbStatus.pgReady = false;
     for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         console.debug(`... attempt ${i}`);
         try {
@@ -165,15 +159,15 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
             console.debug(`... error ${execOutput}`);
         }
         if (execOutput.indexOf("accepting connections") !== -1) {
-            dbStatus.pgReady = true;
+            dbReady = true;
             break;
         } else {
             await fluid.personalData.sleep(DELAY);
         }
     }
-    console.debug(`- Attempt to start database, result:  ${dbStatus.pgReady}`);
-    if (dbStatus.pgReady === false) {
-        return dbStatus;    // bail
+    console.debug(`- Attempt to start database, result:  ${dbReady}`);
+    if (dbReady === false) {
+        return dbReady;    // bail
     }
 
     // Container and PostgresDB running, create the actual database to use for
@@ -187,38 +181,30 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
     catch (error) {
         // "Database already exists" not an error in this case.
         if (error.message.indexOf(`database "${dbConfig.database}" already exists`) !== -1) {
-            dbStatus.pgReady = true;
+            dbReady = true;
         } else {
             console.debug(`... error ${error.message}`);
         }
     }
-    return dbStatus;
+    return dbReady;
 };
 
 /**
  * Disconnect the database client from the database and stop the database docker
- * container.  If the container was simply paused at the beginning of testing,
- * leave it in a paused state, but, if the container was created for testing,
- * remove it from the container list.
+ * container.
  *
  * @param {String} container - Name of the docker container.
- * @param {Object} wasPaused - Whether the database docker container was paused
- *                            at the start of testing.
  * @param {Object} dbRequest - Optional: the PostGresOperations object to
  *                             disconnect from the database.
  * @return {Object} result of disconnecting `dbRequest` from the database.
  */
-fluid.personalData.dockerStopDatabase = async function (container, wasPaused, dbRequest) {
+fluid.personalData.dockerStopDatabase = async function (container, dbRequest) {
     console.debug(`- Stopping database container ${container}`);
     if (dbRequest) {
         await dbRequest.end();
     }
     try {
         execSync(`docker stop ${container}`);
-        if (!wasPaused) {
-            console.log("WOULD COMPLETELY DESTROY THE DATABASE");
-            // execSync(`docker rm ${container}`);
-        }
     }
     catch (error) {
         console.debug(`- Failed to stop/remove ${container}: ${error.message}`);

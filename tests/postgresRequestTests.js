@@ -27,11 +27,10 @@ const config = require("./testConfig.json5");
 jqUnit.test("Database request tests", async function () {
     jqUnit.expect(skipDocker ? 6 : 7);
 
-    let dbStatus;
     if (!skipDocker) {
         // Start the database
-        dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbStatus);
+        const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", dbReady);
     }
 
     // Initiate the postgres handler and valid
@@ -57,7 +56,7 @@ jqUnit.test("Database request tests", async function () {
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus);
+        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
     }
 });
 

@@ -65,11 +65,10 @@ let authPayload;
 jqUnit.test("Google SSO tests", async function () {
     jqUnit.expect(skipDocker ? 35 : 36);
     try {
-        let dbStatus;
         if (!skipDocker) {
             // Start the database
-            dbStatus = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-            jqUnit.assertTrue("The database has been started successfully", dbStatus);
+            const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+            jqUnit.assertTrue("The database has been started successfully", dbReady);
         }
 
         // Start the server
@@ -118,7 +117,7 @@ jqUnit.test("Google SSO tests", async function () {
 
         if (!skipDocker) {
             // Stop the docker container for the database
-            await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbStatus, dbRequest);
+            await fluid.personalData.dockerStopDatabase(config.db.dbContainerName, dbRequest);
         }
 
         // Stop the server
