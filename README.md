@@ -38,6 +38,16 @@ npm start
 
 * Open `http://localhost:3000/` in a browser demonstrates a process of Google Single Sign-on
 
+### Clear Database
+
+By default, running `npm start` will preserve the data in the database from previous runs. If a user wanted to
+have a fresh start without any historical data, set the environment variable `CLEARDB` informs scripts to remove
+the old database, re-create all tables and load initial data. Example:
+
+```bash
+export CLEARDB=true; npm start
+```
+
 ### Skip Docker
 
 By default, running `npm start` or `npm test` will start a Postgres docker container to serve the backend database.

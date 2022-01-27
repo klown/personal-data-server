@@ -38,6 +38,7 @@ const dbConfig = {
 };
 
 const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
+const clearDB = process.env.CLEARDB === "true" ? true : false;
 
 async function main() {
     if (!skipDocker) {
@@ -45,9 +46,11 @@ async function main() {
         await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, dbConfig);
     }
 
-    // Initialize db: create tables and load data
-    const postgresHandler = new postgresOps.postgresOps(dbConfig);
-    await fluid.personalData.initDataBase(postgresHandler, sqlFiles);
+    if (clearDB) {
+        // Initialize db: create tables and load data
+        const postgresHandler = new postgresOps.postgresOps(dbConfig);
+        await fluid.personalData.initDataBase(postgresHandler, sqlFiles);
+    }
 
     // Start the personal data server
     await fluid.personalData.startServer(serverPort);
