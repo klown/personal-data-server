@@ -25,6 +25,7 @@ fluid.tests.utils.setDbEnvVars(config.db);
 
 const googleSso = require("../src/server/routes/ssoProviders/googleSso.js");
 const dbRequest = require("../src/server/ssoDbOps.js");
+const server = require("../server.js");
 
 jqUnit.module("Personal Data Server Google SSO Tests");
 
@@ -63,7 +64,9 @@ const mockUserInfo = {
 let authPayload;
 
 jqUnit.test("Google SSO tests", async function () {
-    jqUnit.expect(skipDocker ? 35 : 36);
+    jqUnit.expect(skipDocker ? 36 : 37);
+    let serverStatus;
+
     try {
         if (!skipDocker) {
             // Start the database
@@ -72,8 +75,9 @@ jqUnit.test("Google SSO tests", async function () {
         }
 
         // Start the server
-        const serverInstance = await fluid.personalData.startServer(config.server.port);
-        jqUnit.assertEquals("Check server active", 200, serverInstance.status);
+        const serverInstance = server.startServer(config.server.port);
+        serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, true);
+        jqUnit.assertTrue("The server is up and running", serverStatus);
 
         // Initialize db: create tables and load data
         const loadDataStatus = await fluid.personalData.initDataBase(dbRequest, fluid.tests.sqlFiles);
@@ -121,7 +125,9 @@ jqUnit.test("Google SSO tests", async function () {
         }
 
         // Stop the server
-        await fluid.personalData.stopServer(serverInstance, serverUrl);
+        await server.stopServer(serverInstance);
+        serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, false);
+        jqUnit.assertFalse("The server has been stopped", serverStatus);
     } catch (error) {
         jqUnit.fail("Google SSO tests fail with this error: ", error);
     }

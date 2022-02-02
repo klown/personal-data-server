@@ -28,8 +28,11 @@ fluid.tests.utils.setDbEnvVars(config.db);
 const postgresOps = require("../src/dbOps/postgresOps.js");
 const postgresHandler = new postgresOps.postgresOps(config.db);
 
+const server = require("../server.js");
+
 jqUnit.test("Health and Ready end point tests", async function () {
-    jqUnit.expect(skipDocker ? 13 : 14);
+    jqUnit.expect(skipDocker ? 14 : 15);
+    let serverStatus;
 
     // Start with server off -- "/health" should fail
     let response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
@@ -37,8 +40,9 @@ jqUnit.test("Health and Ready end point tests", async function () {
     jqUnit.assertTrue("Check '/health' error code", response.toString().includes("ECONNREFUSED"));
 
     // Start server, but not the database.
-    const serverInstance = await fluid.personalData.startServer(config.server.port);
-    jqUnit.assertEquals("Check server active", 200, serverInstance.status);
+    const serverInstance = server.startServer(config.server.port);
+    serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, true);
+    jqUnit.assertTrue("The server is up and running", serverStatus);
 
     // "/health" request should now succeed ...
     response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
@@ -64,7 +68,7 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     // Final clean up
     // 1. Disconnect the postgres client from its server. See https://node-postgres.com/api/client
-    fluid.tests.utils.finish(postgresHandler);
+    await fluid.tests.utils.finish(postgresHandler);
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
@@ -72,7 +76,9 @@ jqUnit.test("Health and Ready end point tests", async function () {
     }
 
     // 3. Stop the server
-    await fluid.personalData.stopServer(serverInstance, serverUrl);
+    await server.stopServer(serverInstance);
+    serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, false);
+    jqUnit.assertFalse("The server has been stopped", serverStatus);
 });
 
 fluid.tests.healthReady.testResult = async function (res, expectedStatus, expected, endPoint) {

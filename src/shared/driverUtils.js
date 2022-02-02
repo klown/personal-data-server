@@ -10,41 +10,30 @@
 
 const fluid = require("infusion");
 const axios = require("axios");
-const { exec, execSync } = require("child_process");
+const { execSync } = require("child_process");
 
 fluid.registerNamespace("fluid.personalData");
-fluid.personalData.startServerCmd = "node startServer.js";
 
 const NUM_CHECK_REQUESTS = 10;
-const DELAY = 2000; // msec
+const DELAY = 2000; // milliseconds
 
 fluid.personalData.sleep = async function (delay) {
     return new Promise((resolve) => setTimeout(resolve, delay));
 };
 
 /**
- * Check if the personal data server is running using the given url.  If not
- * running, start it. If it does not start after ten attempts, give up.
+ * Check if the personal data server is running or not.
  *
  * @param {Number} serverPort - The port that the server is listening to.
- * @return {Object} An object that has the status of the last request regardless
- *                  of success, and the node ChildProcess started by `exec()`
- *                  or `null` if it failed to start.
+ * @param {Boolean} expectedRunning - The expected server running status.
+ * @return {Boolean} The actual server running status.
  */
-fluid.personalData.startServer = async function (serverPort) {
+fluid.personalData.verifyServerStatus = async function (serverPort, expectedRunning) {
     const url = "http://localhost:" + serverPort;
-    let resp = {};
+    let running;  // The actual running status
+    let resp;
 
-    console.debug(`- Checking if server is running using ${url}`);
-    try {
-        resp = await axios(url);
-        return { status: resp.status, process: null, wasRunning: true };
-    }
-    catch (error) { ; }
-
-    // Server needs to be started
-    console.debug(`- Starting server at ${url}`);
-    const pdServerProcess = exec(fluid.personalData.startServerCmd + " " + serverPort);
+    console.debug("Verifying the server at " + url + " with expected running status - " + running);
     for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
@@ -52,17 +41,21 @@ fluid.personalData.startServer = async function (serverPort) {
         }
         catch (error) {
             console.debug(`... attempt ${i} error: ${error.message}`);
-            resp.status = 503;
+            if (!expectedRunning) {
+                running = false;
+                break;
+            }
         }
-        if (resp.status === 200) {
+        if (resp.status === 200 && expectedRunning) {
+            running = true;
             break;
         } else {
-            console.debug(`... attempt ${i} going to sleep`);
+            console.debug(`... attempt ${i} going to sleep ${DELAY} milliseconds`);
             await fluid.personalData.sleep(DELAY);
         }
     }
-    console.debug(`- Attempt to start server, result:  ${resp.status}`);
-    return { status: resp.status, process: pdServerProcess, wasRunning: false };
+    console.debug(`- Attempt to check if the server is running, result:  ${running}`);
+    return running;
 };
 
 /**
@@ -208,7 +201,6 @@ fluid.personalData.dockerStopDatabase = async function (container, dbRequest) {
     }
     catch (error) {
         console.debug(`- Failed to stop/remove ${container}: ${error.message}`);
-
     }
 };
 

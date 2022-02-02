@@ -27,6 +27,7 @@ const sqlFiles = {
 };
 
 const config = require("./config.json5");
+const server = require("./server.js");
 const serverPort = process.env.SERVERPORT || config.server.port || 3000;
 
 const dbConfig = {
@@ -52,8 +53,7 @@ async function main() {
         await fluid.personalData.initDataBase(postgresHandler, sqlFiles);
     }
 
-    // Start the personal data server
-    await fluid.personalData.startServer(serverPort);
+    server.startServer(serverPort);
 }
 
 main();

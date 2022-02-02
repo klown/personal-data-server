@@ -16,8 +16,8 @@ const fluid = require("infusion");
 fluid.registerNamespace("fluid.tests.utils");
 
 // Disconnect the postgres client from its server. See https://node-postgres.com/api/client
-fluid.tests.utils.finish = function (postgresHandler) {
-    return postgresHandler.end().then(() => {
+fluid.tests.utils.finish = async function (postgresHandler) {
+    await postgresHandler.end().then(() => {
         fluid.log("Postgres operations done");
     });
 };
