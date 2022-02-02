@@ -17,7 +17,7 @@ with your GitHub account, then run the following in your command line (make sure
 your username):
 
 ```bash
-git clone https://github.com/your-username/preferencesServer
+git clone https://github.com/your-username/personal-data-server
 ```
 
 * Obtain Google OAuth 2.0 client credentials from the [Google API Console](https://console.developers.google.com/).
@@ -52,12 +52,16 @@ export CLEARDB=true; npm start
 ### Skip Docker
 
 By default, running `npm start` or `npm test` will start a Postgres docker container to serve the backend database.
-However, as Docker is not supported by Windows OS, another option is to install Postgres locally and set the environment
-variable `SKIPDOCKER` to inform scripts to skip the auto-start of a Postgres docker container. Example:
+However, as Docker is not supported by Windows OS, another option is to install Postgres locally and set the
+environment variable `SKIPDOCKER` to inform scripts to skip the auto-start of a Postgres docker container. Example:
 
 ```bash
 export SKIPDOCKER=true; npm start
 ```
+
+Note: In order for the script to access the local Postgres database, you need to add a superuser account to the
+Postgres with username `admin` and password `asecretpassword`. This account can be created using [the pgAdmin tool](https://www.pgadmin.org/)
+in the "Login/Group Roles" section, or else via direct commands via [the psql driver](https://www.postgresql.org/docs/9.3/app-psql.html).
 
 ## Configuration
 

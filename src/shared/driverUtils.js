@@ -25,15 +25,14 @@ fluid.personalData.sleep = async function (delay) {
  * Check if the personal data server is running or not.
  *
  * @param {Number} serverPort - The port that the server is listening to.
- * @param {Boolean} expectedRunning - The expected server running status.
  * @return {Boolean} The actual server running status.
  */
-fluid.personalData.verifyServerStatus = async function (serverPort, expectedRunning) {
+fluid.personalData.getServerStatus = async function (serverPort) {
     const url = "http://localhost:" + serverPort;
-    let running;  // The actual running status
+    let isRunning;  // The actual running status
     let resp;
 
-    console.debug("Verifying the server at " + url + " with expected running status - " + running);
+    console.debug("Finding the server running status at " + url);
     for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
             console.debug(`... attempt ${i}`);
@@ -41,55 +40,19 @@ fluid.personalData.verifyServerStatus = async function (serverPort, expectedRunn
         }
         catch (error) {
             console.debug(`... attempt ${i} error: ${error.message}`);
-            if (!expectedRunning) {
-                running = false;
-                break;
-            }
+            isRunning = false;
+            break;
         }
-        if (resp.status === 200 && expectedRunning) {
-            running = true;
+        if (resp.status === 200) {
+            isRunning = true;
             break;
         } else {
             console.debug(`... attempt ${i} going to sleep ${DELAY} milliseconds`);
             await fluid.personalData.sleep(DELAY);
         }
     }
-    console.debug(`- Attempt to check if the server is running, result:  ${running}`);
-    return running;
-};
-
-/**
- * Stop the personal data server, if it was started by this testing sequence.
- * If it was started in order to run the tests, the `childProcess` argument will
- * have a non-null ChildProcess instance and a `wasRunning` flag set to false.
- * If so, check the ChildProcess's exit status and, if it has not exited, invoke
- * its `kill()` method.
- *
- * @param {Object} childProcessInfo - Information about the server's process
- * @param {Object} childProcessInfo.wasRunning - True if the server was already
- *                                               running.
- * @param {Object} childProcessInfo.process - ChildProcess instance `wasRunning`
- *                                            created if the server was not
- *                                            running.
- * @param {String} url - Url to use to check if the ChildProcess has been killed.
- */
-fluid.personalData.stopServer = async function (childProcessInfo, url) {
-    console.debug(`- Stopping server at ${url}`);
-    if (childProcessInfo.wasRunning === false && childProcessInfo.process &&
-        childProcessInfo.process.exitCode === null) {
-        childProcessInfo.process.kill();
-    }
-    // Wait for the childProcess to fully exit
-    for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
-        try {
-            console.debug(`... attempt ${i}`);
-            await axios(url);
-        }
-        catch (error) {
-            break;
-        }
-        await fluid.personalData.sleep(DELAY);
-    }
+    console.debug(`- Attempt to find if the server is running, result:  ${isRunning}`);
+    return isRunning;
 };
 
 /**

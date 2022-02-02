@@ -1,10 +1,10 @@
 {
-    "name": "preferencesServer",
+    "name": "personal-data-server",
     "description": "Provides a backend server and API for saving and accessing personal data server",
     "version": "0.1.0",
     "author": "Fluid Project",
-    "bugs": "https://github.com/fluid-project/preferencesServer/issues",
-    "homepage": "https://github.com/fluid-project/preferencesServer",
+    "bugs": "https://github.com/fluid-project/personal-data-server/issues",
+    "homepage": "https://github.com/fluid-project/personal-data-server",
     "license": "BSD-3-Clause",
     "keywords": [
         "preferences",
@@ -12,7 +12,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/fluid-project/preferencesServer"
+        "url": "https://github.com/fluid-project/personal-data-server"
     },
     "engines": {
         "node": ">=10.15.0"

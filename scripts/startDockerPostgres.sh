@@ -4,7 +4,7 @@
 #
 # Licensed under the New BSD license. You may not use this file except in
 # compliance with this License.  You may obtain a copy of the License at
-# https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
+# https://github.com/fluid-project/personal-data-server/blob/main/LICENSE
 
 # Starts up a Postgres database using a docker image.  If it is not present, it
 # is downloaded (pulled) from dockerhub.

@@ -41,7 +41,7 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     // Start server, but not the database.
     const serverInstance = server.startServer(config.server.port);
-    serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, true);
+    serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertTrue("The server is up and running", serverStatus);
 
     // "/health" request should now succeed ...
@@ -77,7 +77,7 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     // 3. Stop the server
     await server.stopServer(serverInstance);
-    serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, false);
+    serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertFalse("The server has been stopped", serverStatus);
 });
 

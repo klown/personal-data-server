@@ -7,7 +7,7 @@
 -- compliance with this License.
 --
 -- You may obtain a copy of the License at
--- https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
+-- https://github.com/fluid-project/personal-data-server/blob/main/LICENSE
 
 -- SSO Provider
 CREATE TABLE "AppSsoProvider" (

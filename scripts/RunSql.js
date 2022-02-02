@@ -6,7 +6,7 @@
  * compliance with this License.
  *
  * You may obtain a copy of the License at
- * https://github.com/fluid-project/preferencesServer/blob/main/LICENSE
+ * https://github.com/fluid-project/personal-data-server/blob/main/LICENSE
  *
  * Node script for running SQL statements either from a file or from the command
  * line. This assumes that an instance of the named PostgreSQL database is

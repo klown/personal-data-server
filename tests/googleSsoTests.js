@@ -76,7 +76,7 @@ jqUnit.test("Google SSO tests", async function () {
 
         // Start the server
         const serverInstance = server.startServer(config.server.port);
-        serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, true);
+        serverStatus = await fluid.personalData.getServerStatus(config.server.port);
         jqUnit.assertTrue("The server is up and running", serverStatus);
 
         // Initialize db: create tables and load data
@@ -126,7 +126,7 @@ jqUnit.test("Google SSO tests", async function () {
 
         // Stop the server
         await server.stopServer(serverInstance);
-        serverStatus = await fluid.personalData.verifyServerStatus(config.server.port, false);
+        serverStatus = await fluid.personalData.getServerStatus(config.server.port);
         jqUnit.assertFalse("The server has been stopped", serverStatus);
     } catch (error) {
         jqUnit.fail("Google SSO tests fail with this error: ", error);
