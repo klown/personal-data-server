@@ -109,10 +109,10 @@ jqUnit.test("Database operations tests", async function () {
         jqUnit.assertTrue("The database has been started successfully", response.dbReady);
     }
 
-    const postgresHandler = new postgresOps.postgresOps(config.db);
-
     response = await fluid.personalData.createDB(config.db);
     jqUnit.assertTrue("The database " + config.db.database + " has been created successfully", response.isCreated);
+
+    const postgresHandler = new postgresOps.postgresOps(config.db);
 
     // Start with a clean database
     await fluid.tests.utils.cleanDb(postgresHandler);

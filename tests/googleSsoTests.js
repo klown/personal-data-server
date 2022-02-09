@@ -247,8 +247,7 @@ fluid.tests.googleSso.storeUserAndAccessToken = async function (googleSso, ssoDb
         return await googleSso.storeUserAndAccessToken(
             userInfo, accessToken, ssoDbOps, googleSso.options
         );
-    }
-    catch (error) {
+    } catch (error) {
         console.debug(error.message);
     }
 };

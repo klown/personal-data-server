@@ -106,9 +106,7 @@ class GoogleSso {
             const accountInfo = await this.storeUserAndAccessToken(userInfo, accessToken, ssoDbOps, options);
             console.debug(accountInfo);
             return accountInfo.accessToken.loginToken;
-        }
-        // TODO:  if all catch() does is re-throw, is the try/catch necessary?
-        catch (e) {
+        } catch (e) {
             throw e;
         }
     };

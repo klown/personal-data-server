@@ -37,8 +37,7 @@ fluid.personalData.getServerStatus = async function (serverPort) {
         try {
             console.log(`... attempt ${i}`);
             resp = await axios(url);
-        }
-        catch (error) {
+        } catch (error) {
             console.log(`... attempt ${i} error: ${error.message}`);
             isRunning = false;
             break;
@@ -75,8 +74,7 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
     // Try starting a stopped container.  If no such container, the command will throw an error.
     try {
         execOutput = execSync(`docker start ${container}`).toString().trim();
-    }
-    catch (error) {
+    } catch (error) {
         execOutput = error.message;
     }
 
@@ -92,8 +90,7 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
                 -p ${dbConfig.port}:${dbConfig.port} \
                 ${image} postgres -p ${dbConfig.port}`
             ).toString().trim();
-        }
-        catch (error) {
+        } catch (error) {
             console.log(`Error starting database docker container: ${error}.message`);
             throw {
                 isError: true,
@@ -110,9 +107,9 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
             execOutput = execSync(
                 `docker exec --user postgres ${container} pg_isready -p ${dbConfig.port}`
             ).toString().trim();
-        }
-        catch (error) {
+        } catch (error) {
             // Continue to wait until the number of attempts runs out
+            await fluid.personalData.sleep(DELAY);
             continue;
         }
         if (execOutput.indexOf("accepting connections") !== -1) {
@@ -223,8 +220,7 @@ fluid.personalData.clearDB = async function (postgresHandler, clearDbSqlFile) {
         return {
             isCleared: true
         };
-    }
-    catch (error) {
+    } catch (error) {
         console.log(`- Error at clearing database: ${error.message}`);
         throw {
             isError: true,
@@ -253,8 +249,7 @@ fluid.personalData.initDB = async function (postgresHandler, sqlFiles) {
         return {
             isInited: true
         };
-    }
-    catch (error) {
+    } catch (error) {
         if (error.message.indexOf("already exists") !== -1) {
             console.log("Tables already exist");
             return {

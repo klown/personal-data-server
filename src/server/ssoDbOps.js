@@ -36,8 +36,7 @@ class DataBaseRequest extends postgresOps.postgresOps {
             return tables.rows.some ((aTable) => {
                 return aTable.tablename === "AppSsoProvider";
             });
-        }
-        catch (error) {
+        } catch (error) {
             console.error("Error accessing database, ", error);
             throw error;
         }
