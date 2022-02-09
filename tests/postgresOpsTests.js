@@ -100,7 +100,7 @@ const rgbChartreuse = fluid.find(fluid.tests.dbOps.testTableData.rgb, function (
 });
 
 jqUnit.test("Database operations tests", async function () {
-    jqUnit.expect(skipDocker ? 233 : 235);
+    jqUnit.expect(skipDocker ? 234 : 236);
     let response;
 
     if (!skipDocker) {
@@ -110,6 +110,9 @@ jqUnit.test("Database operations tests", async function () {
     }
 
     const postgresHandler = new postgresOps.postgresOps(config.db);
+
+    response = await fluid.personalData.createDB(config.db);
+    jqUnit.assertTrue("The database " + config.db.database + " has been created successfully", response.isCreated);
 
     // Start with a clean database
     await fluid.tests.utils.cleanDb(postgresHandler);

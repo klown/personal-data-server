@@ -29,7 +29,7 @@ const config = require("../src/shared/utils.js").loadConfig(path.join(__dirname,
 require("./data/testTableModels.js");
 
 jqUnit.test("Database table data models tests", async function () {
-    jqUnit.expect(skipDocker ? 12 : 14);
+    jqUnit.expect(skipDocker ? 13 : 15);
     let response;
 
     if (!skipDocker) {
@@ -37,6 +37,9 @@ jqUnit.test("Database table data models tests", async function () {
         response = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
         jqUnit.assertTrue("The database has been started successfully", response.dbReady);
     }
+
+    response = await fluid.personalData.createDB(config.db);
+    jqUnit.assertTrue("The database " + config.db.database + " has been created successfully", response.isCreated);
 
     const postgresHandler = new postgresOps.postgresOps(config.db);
 

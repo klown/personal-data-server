@@ -26,7 +26,7 @@ const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
 const config = require("../src/shared/utils.js").loadConfig(path.join(__dirname, "testConfig.json5"));
 
 jqUnit.test("Database request tests", async function () {
-    jqUnit.expect(skipDocker ? 6 : 8);
+    jqUnit.expect(skipDocker ? 7 : 9);
     let response;
 
     if (!skipDocker) {
@@ -34,6 +34,9 @@ jqUnit.test("Database request tests", async function () {
         response = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
         jqUnit.assertTrue("The database has been started successfully", response.dbReady);
     }
+
+    response = await fluid.personalData.createDB(config.db);
+    jqUnit.assertTrue("The database " + config.db.database + " has been created successfully", response.isCreated);
 
     // Initiate the postgres handler and valid
     const postgresHandler = new postgresOps.postgresOps(config.db);
