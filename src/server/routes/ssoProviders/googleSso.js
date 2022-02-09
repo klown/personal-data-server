@@ -15,7 +15,7 @@
 "use strict";
 
 const axios = require("axios");
-const generateNonce = require("../../generateRandomToken.js");
+const generateNonce = require("../../../shared/utils.js").generateRandomToken;
 
 const REDIRECT_URI = "http://localhost:3000/sso/google/login/callback";
 
@@ -56,15 +56,15 @@ class GoogleSso {
      * @param {Object} req - The express request that triggered the workflow
      * @param {Object} req.session.secret - Anti-forgery token used in the SSO workflow
      * @param {Object} res - The express response used to redirect to Google
-     * @param {Object} dbRequest - Used to retrieve this client's id and secret
+     * @param {Object} ssoDbOps - Used to retrieve this client's id and secret
      * @param {Object} options - Other options specific to Google SSO
      * @param {String} options.authorizeUri - Google's authorization endpoint
      * @param {String} options.encodedRedirectUri - The endpoint that Google will call
      * @param {String} options.accessType - The type of access to Google needed for SSO
      *
      */
-    async authorize(req, res, dbRequest, options) {
-        const clientInfo = await dbRequest.getSsoClientInfo(this.options.provider);
+    async authorize(req, res, ssoDbOps, options) {
+        const clientInfo = await ssoDbOps.getSsoClientInfo(this.options.provider);
         req.session.secret = generateNonce(12);
         const authRequest = `${options.authorizeUri}?client_id=${clientInfo.client_id}&redirect_uri=${options.encodedRedirectUri}&scope=openid+profile+email&response_type=code&state=${req.session.secret}&access_type=${options.accessType}`;
         console.debug("Google /authorize request: ", authRequest);
@@ -81,17 +81,17 @@ class GoogleSso {
      *
      * @param {Object} req - The express request that triggered the workflow
      * @param {Object} req.query.code - Token from Google to use to request access token
-     * @param {Object} dbRequest - Used to update User, AccessToken, and SsoAccount
+     * @param {Object} ssoDbOps - Used to update User, AccessToken, and SsoAccount
      *                             records
      * @param {Object} options - Other options specific to Google SSO
      * @return {String} - The login token generated for static workflow clients.
      */
-    async handleCallback(req, dbRequest, options) {
+    async handleCallback(req, ssoDbOps, options) {
         try {
             if (!req.query.code) {
                 throw new Error("Request missing authorization code");
             }
-            const accessTokenResponse = await this.fetchAccessToken(req.query.code, dbRequest, options);
+            const accessTokenResponse = await this.fetchAccessToken(req.query.code, ssoDbOps, options);
             if (accessTokenResponse.status !== 200) {
                 return accessTokenResponse;
             }
@@ -103,7 +103,7 @@ class GoogleSso {
             }
             const userInfo = userInfoResponse.data;
             console.debug("USER INFO: ", JSON.stringify(userInfo, null, 2));
-            const accountInfo = await this.storeUserAndAccessToken(userInfo, accessToken, dbRequest, options);
+            const accountInfo = await this.storeUserAndAccessToken(userInfo, accessToken, ssoDbOps, options);
             console.debug(accountInfo);
             return accountInfo.accessToken.loginToken;
         }
@@ -118,7 +118,7 @@ class GoogleSso {
      *
      * @param {String} code - The code provided by Gogole to exchange for the
      *                        access token
-     * @param {Object} dbRequest - Database access for retrieving client id and
+     * @param {Object} ssoDbOps - Database access for retrieving client id and
      *                             secret.
      * @param {Object} options - Other options specific to Google SSO.
      * @param {Object} options.provider - Identifier to use to find this client's
@@ -129,9 +129,9 @@ class GoogleSso {
      (                  success with an access token (status 200), or an error
      *                  response.
      */
-    async fetchAccessToken(code, dbRequest, options) {
+    async fetchAccessToken(code, ssoDbOps, options) {
         try {
-            const clientInfo = await dbRequest.getSsoClientInfo(options.provider);
+            const clientInfo = await ssoDbOps.getSsoClientInfo(options.provider);
             const response = await axios({
                 method: "post",
                 url: options.accessTokenUri,
@@ -184,21 +184,21 @@ class GoogleSso {
      * @param {Object} userInfo - The informatino to use to create the user record.
      * @param {Object} accessToken - The access token provided by the provider for
      *                               the user's access.
-     * @param {Object} dbRequest - Database access for storing the user, access
+     * @param {Object} ssoDbOps - Database access for storing the user, access
      *                             token, and related records.
      * @param {Object} options - Other options specific to Google SSO.
      * @param {Object} options.provider - Google provider id.
      * @return {Object} Object that has the User, SsoAccount, AppSsoProvider,
      *                  and AccessToken records.
      */
-    async storeUserAndAccessToken(userInfo, accessToken, dbRequest, options) {
+    async storeUserAndAccessToken(userInfo, accessToken, ssoDbOps, options) {
         // Use Google's identifier as the userId field for the User record.
-        const userRecord = await dbRequest.addUser(
+        const userRecord = await ssoDbOps.addUser(
             userInfo, {name: "userId", value: userInfo.id}
         );
-        let accountInfo = await dbRequest.addSsoAccount(userRecord, userInfo, options.provider);
+        let accountInfo = await ssoDbOps.addSsoAccount(userRecord, userInfo, options.provider);
         console.log(`Adding access token for ${userInfo.id} to database`);
-        accountInfo = await dbRequest.refreshAccessToken(accountInfo, accessToken);
+        accountInfo = await ssoDbOps.refreshAccessToken(accountInfo, accessToken);
         return accountInfo;
     };
 };

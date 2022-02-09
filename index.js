@@ -13,12 +13,12 @@
 
 "use strict";
 
-require("json5/lib/register");
-require("./src/shared/driverUtils.js");
+const path = require("path");
+const config = require("./src/shared/utils.js").loadConfig(path.join(__dirname, "config.json5"));
 const postgresOps = require("./src/dbOps/postgresOps.js");
+const server = require("./server.js");
 
-const fluid = require("infusion");
-fluid.registerNamespace("fluid.personalData");
+require("./src/shared/driverUtils.js");
 
 const sqlFiles = {
     clearDB: __dirname + "/dataModel/ClearDB.sql",
@@ -26,33 +26,30 @@ const sqlFiles = {
     loadData: __dirname + "/dataModel/SsoProvidersData.sql"
 };
 
-const config = require("./config.json5");
-const server = require("./server.js");
-const serverPort = process.env.SERVERPORT || config.server.port || 3000;
-
-const dbConfig = {
-    database: process.env.DATABASE || config.db.database,
-    port: process.env.DBPORT || config.db.port,
-    host: process.env.DBHOST || config.db.host,
-    user: process.env.DBUSER || config.db.user,
-    password: process.env.DBPASSWORD || config.db.password
-};
-
 const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
 const clearDB = process.env.CLEARDB === "true" ? true : false;
+const serverPort = config.server.port || 3000;
 
 async function main() {
     if (!skipDocker) {
         // Start the database docker container
-        await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, dbConfig);
+        await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
     }
 
+    // Create database. Will complete successfully if the database already exists
+    await fluid.personalData.createDB(config.db);
+
+    const postgresHandler = new postgresOps.postgresOps(config.db);
+
+    // Clear the old data if CLEARDB flag is set to true
     if (clearDB) {
-        // Initialize db: create tables and load data
-        const postgresHandler = new postgresOps.postgresOps(dbConfig);
-        await fluid.personalData.initDataBase(postgresHandler, sqlFiles);
+        await fluid.personalData.clearDB(postgresHandler, sqlFiles.clearDB);
     }
 
+    // Initialize db: create tables and load data
+    await fluid.personalData.initDB(postgresHandler, sqlFiles);
+
+    // Start the personal data server
     server.startServer(serverPort);
 }
 

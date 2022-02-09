@@ -11,23 +11,14 @@
 
 "use strict";
 
-require("json5/lib/register");
+const path = require("path");
 const postgresOps = require("../dbOps/postgresOps.js");
-const generateToken = require("./generateRandomToken.js");
-const config = require("../../config.json5");
-
-// Database configuration and connection
-const dbConfig = {
-    database: process.env.DATABASE || config.db.database,
-    port: process.env.DBPORT || config.db.port,
-    host: process.env.DBHOST || config.db.host,
-    user: process.env.DBUSER || config.db.user,
-    password: process.env.DBPASSWORD || config.db.password
-};
+const generateToken = require("../shared/utils.js").generateRandomToken;
+const config = require("../shared/utils.js").loadConfig(path.join(__dirname, "../../config.json5"));
 
 class DataBaseRequest extends postgresOps.postgresOps {
 
-    get dbConfig() { return Object.assign({}, dbConfig); };
+    get dbConfig() { return config.db; };
 
     /**
      * Check that the database is ready to accept requests.  The check involves
@@ -248,4 +239,4 @@ class DataBaseRequest extends postgresOps.postgresOps {
     };
 };
 
-module.exports = new DataBaseRequest(dbConfig);
+module.exports = new DataBaseRequest(config.db);

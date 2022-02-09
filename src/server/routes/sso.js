@@ -17,7 +17,7 @@
 "use strict";
 
 const express = require("express");
-const dbRequest = require("../ssoDbOps.js");
+const ssoDbOps = require("../ssoDbOps.js");
 const googleSso = require("./ssoProviders/googleSso.js");
 
 const router = express.Router();
@@ -38,7 +38,7 @@ router.get("/", function (req, res) {
  */
 router.get("/google", function (req, res) {
     // Redirects to Google's `/authorize` endpoint
-    googleSso.authorize(req, res, dbRequest, googleSso.options)
+    googleSso.authorize(req, res, ssoDbOps, googleSso.options)
         .then(null, (error) => {
             console.log(error);
             res.status(403).json({"isError": true, "message": error.message});
@@ -55,7 +55,7 @@ router.get("/google/login/callback", function (req, res) {
         res.status(403).json({"isError": true, "message": msg});
     }
     // Anti-forgery check passed -- handle the callback from Google.
-    googleSso.handleCallback(req, dbRequest, googleSso.options)
+    googleSso.handleCallback(req, ssoDbOps, googleSso.options)
         .then((loginToken) => {
             // Finished SSO, forget state secret (needed?)
             req.query.state = "shhhh";

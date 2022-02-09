@@ -9,6 +9,7 @@
 "use strict";
 
 require("json5/lib/register");
+const path = require("path");
 const fluid = require("infusion");
 const jqUnit = require("node-jqunit");
 const postgresOps = require("../src/dbOps/postgresOps.js");
@@ -22,15 +23,16 @@ jqUnit.module("PostgresDB request unit tests.");
 fluid.registerNamespace("fluid.tests.dbOps");
 
 const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
-const config = require("./testConfig.json5");
+const config = require("../src/shared/utils.js").loadConfig(path.join(__dirname, "testConfig.json5"));
 
 jqUnit.test("Database request tests", async function () {
-    jqUnit.expect(skipDocker ? 6 : 7);
+    jqUnit.expect(skipDocker ? 6 : 8);
+    let response;
 
     if (!skipDocker) {
         // Start the database
-        const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbReady);
+        response = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", response.dbReady);
     }
 
     // Initiate the postgres handler and valid
@@ -56,7 +58,8 @@ jqUnit.test("Database request tests", async function () {
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
+        response = await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
+        jqUnit.assertTrue("The database docker container has been stopped", response.dbStopped);
     }
 });
 

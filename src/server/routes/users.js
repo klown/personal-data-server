@@ -18,7 +18,7 @@
 
 const express = require("express");
 const router = express.Router();
-const dbRequest = require("../ssoDbOps.js");
+const ssoDbOps = require("../ssoDbOps.js");
 
 /* GET users listing. */
 router.get("/", function (req, res) {
@@ -47,7 +47,7 @@ async function appendUserList(content) {
 };
 
 async function getUsers() {
-    const users = await dbRequest.runSql("SELECT * FROM \"User\";");
+    const users = await ssoDbOps.runSql("SELECT * FROM \"User\";");
     console.log("Database users count: ", users.rowCount);
     return users;
 };

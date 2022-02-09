@@ -12,6 +12,7 @@
 "use strict";
 
 require("json5/lib/register");
+const path = require("path");
 const fluid = require("infusion");
 const jqUnit = require("node-jqunit");
 const postgresOps = require("../src/dbOps/postgresOps.js");
@@ -29,7 +30,7 @@ jqUnit.module("PostgresDB operations unit tests.");
 fluid.registerNamespace("fluid.tests.dbOps");
 
 const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
-const config = require("./testConfig.json5");
+const config = require("../src/shared/utils.js").loadConfig(path.join(__dirname, "testConfig.json5"));
 
 const parameterizedInsert = `
     INSERT INTO rgb (id, color, "colourMap") VALUES($1, $2, $3);
@@ -99,12 +100,13 @@ const rgbChartreuse = fluid.find(fluid.tests.dbOps.testTableData.rgb, function (
 });
 
 jqUnit.test("Database operations tests", async function () {
-    jqUnit.expect(skipDocker ? 233 : 234);
+    jqUnit.expect(skipDocker ? 233 : 235);
+    let response;
 
     if (!skipDocker) {
         // Start the database
-        const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbReady);
+        response = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", response.dbReady);
     }
 
     const postgresHandler = new postgresOps.postgresOps(config.db);
@@ -113,7 +115,7 @@ jqUnit.test("Database operations tests", async function () {
     await fluid.tests.utils.cleanDb(postgresHandler);
 
     // Create all of the test tables
-    let response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
+    response = await postgresHandler.runSql(fluid.tests.dbOps.tableDefinitions);
     fluid.tests.utils.testResults(response, fluid.tests.dbOps.tableNames.length, "CREATE");
 
     // Load one test table based on JSON data
@@ -237,7 +239,8 @@ jqUnit.test("Database operations tests", async function () {
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
+        response = await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
+        jqUnit.assertTrue("The database docker container has been stopped", response.dbStopped);
     }
 });
 

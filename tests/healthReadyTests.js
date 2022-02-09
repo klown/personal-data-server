@@ -21,7 +21,8 @@ jqUnit.module("Personal Data Server /health and /ready tests.");
 fluid.registerNamespace("fluid.tests.healthReady");
 
 const skipDocker = process.env.SKIPDOCKER === "true" ? true : false;
-const config = require("./testConfig.json5");
+const path = require("path");
+const config = require("../src/shared/utils.js").loadConfig(path.join(__dirname, "testConfig.json5"));
 const serverUrl = "http://localhost:" + config.server.port;
 fluid.tests.utils.setDbEnvVars(config.db);
 
@@ -31,11 +32,11 @@ const postgresHandler = new postgresOps.postgresOps(config.db);
 const server = require("../server.js");
 
 jqUnit.test("Health and Ready end point tests", async function () {
-    jqUnit.expect(skipDocker ? 14 : 15);
-    let serverStatus;
+    jqUnit.expect(skipDocker ? 16 : 18);
+    let serverStatus, response;
 
     // Start with server off -- "/health" should fail
-    let response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
+    response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
     jqUnit.assertNotNull("Check '/health' error", response);
     jqUnit.assertTrue("Check '/health' error code", response.toString().includes("ECONNREFUSED"));
 
@@ -54,13 +55,21 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     if (!skipDocker) {
         // Start the database docker container
-        const dbReady = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
-        jqUnit.assertTrue("The database has been started successfully", dbReady);
+        response = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
+        jqUnit.assertTrue("The database has been started successfully", response.dbReady);
     }
 
+    // Create db
+    response = await fluid.personalData.createDB(config.db);
+    jqUnit.assertTrue("The database " + config.db.database + " has been created successfully", response.isCreated);
+
+    // Clear the database for a fresh start
+    response = await fluid.personalData.clearDB(postgresHandler, fluid.tests.sqlFiles.clearDB);
+    jqUnit.assertTrue("The database " + config.db.database + " has been cleared successfully", response.isCleared);
+
     // Initialize db: create tables and load data
-    const loadDataStatus = await fluid.personalData.initDataBase(postgresHandler, fluid.tests.sqlFiles);
-    jqUnit.assertTrue("The database has been initiated", loadDataStatus);
+    response = await fluid.personalData.initDB(postgresHandler, fluid.tests.sqlFiles);
+    jqUnit.assertTrue("The database " + config.db.database + " has been initialized successfully", response.isInited);
 
     // "/ready" should now work.
     response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
@@ -72,7 +81,8 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     if (!skipDocker) {
         // 2. Stop the docker container for the database
-        await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
+        response = await fluid.personalData.dockerStopDatabase(config.db.dbContainerName);
+        jqUnit.assertTrue("The database docker container has been stopped", response.dbStopped);
     }
 
     // 3. Stop the server

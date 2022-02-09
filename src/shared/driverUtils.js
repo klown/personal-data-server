@@ -25,21 +25,21 @@ fluid.personalData.sleep = async function (delay) {
  * Check if the personal data server is running or not.
  *
  * @param {Number} serverPort - The port that the server is listening to.
- * @return {Boolean} The actual server running status.
+ * @return {Boolean} The actual server running status. True if running, otherwise false.
  */
 fluid.personalData.getServerStatus = async function (serverPort) {
     const url = "http://localhost:" + serverPort;
     let isRunning;  // The actual running status
     let resp;
 
-    console.debug("Finding the server running status at " + url);
+    console.log("Finding the server running status at " + url);
     for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
         try {
-            console.debug(`... attempt ${i}`);
+            console.log(`... attempt ${i}`);
             resp = await axios(url);
         }
         catch (error) {
-            console.debug(`... attempt ${i} error: ${error.message}`);
+            console.log(`... attempt ${i} error: ${error.message}`);
             isRunning = false;
             break;
         }
@@ -47,11 +47,11 @@ fluid.personalData.getServerStatus = async function (serverPort) {
             isRunning = true;
             break;
         } else {
-            console.debug(`... attempt ${i} going to sleep ${DELAY} milliseconds`);
+            console.log(`... attempt ${i} going to sleep ${DELAY} milliseconds`);
             await fluid.personalData.sleep(DELAY);
         }
     }
-    console.debug(`- Attempt to find if the server is running, result:  ${isRunning}`);
+    console.log(`- Attempt to find if the server is running, result:  ${isRunning}`);
     return isRunning;
 };
 
@@ -62,17 +62,16 @@ fluid.personalData.getServerStatus = async function (serverPort) {
  * @param {String} container - Name of the docker container.
  * @param {String} image - Name of the associated docker image.
  * @param {String} dbConfig - Parameters for creating a database within the
- (*                           `container` or to check if one already exists.
+ *                           `container` or to check if one already exists.
  * @param {String} dbConfig.user - Adminstrative user of the database.
  * @param {String} dbConfig.password - Adminstrator's password.
  * @param {String} dbConfig.port - Port for database requests.
  * @return {Boolean} True if the database in the container is ready. Otherwise, return false.
  */
 fluid.personalData.dockerStartDatabase = async function (container, image, dbConfig) {
-    let dbReady = false;
     let execOutput;
 
-    console.debug(`- Starting database container ${container}`);
+    console.log(`- Starting database docker container ${container}`);
     // Try starting a stopped container.  If no such container, the command will throw an error.
     try {
         execOutput = execSync(`docker start ${container}`).toString().trim();
@@ -95,54 +94,40 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
             ).toString().trim();
         }
         catch (error) {
-            console.debug(`Error starting database container: ${error}.message`);
-            dbReady = false;
-            return dbReady;
+            console.log(`Error starting database docker container: ${error}.message`);
+            throw {
+                isError: true,
+                message: `Error starting database docker container: ${error}.message`
+            };
         }
     }
 
     // Loop to check that PostgresDB is ready.
-    console.debug("Checking that PostgresDB is ready...");
+    console.log("Checking if PostgresDB is ready...");
     for (let i = 0; i < NUM_CHECK_REQUESTS; i++) {
-        console.debug(`... attempt ${i}`);
+        console.log(`... attempt ${i}`);
         try {
             execOutput = execSync(
                 `docker exec --user postgres ${container} pg_isready -p ${dbConfig.port}`
             ).toString().trim();
         }
         catch (error) {
-            execOutput = error.message;
-            console.debug(`... error ${execOutput}`);
+            // Continue to wait until the number of attempts runs out
+            continue;
         }
         if (execOutput.indexOf("accepting connections") !== -1) {
-            dbReady = true;
-            break;
+            return {
+                dbReady: true
+            };
         } else {
             await fluid.personalData.sleep(DELAY);
         }
     }
-    console.debug(`- Attempt to start database, result:  ${dbReady}`);
-    if (dbReady === false) {
-        return dbReady;    // bail
-    }
 
-    // Container and PostgresDB running, create the actual database to use for
-    // the Postgres tables
-    console.debug(`Creating (or checking existence of) ${dbConfig.database} ...`);
-    try {
-        execOutput = execSync(
-            `docker exec ${container} createdb -p ${dbConfig.port} -U ${dbConfig.user} --echo ${dbConfig.database}`
-        ).toString().trim();
-    }
-    catch (error) {
-        // "Database already exists" not an error in this case.
-        if (error.message.indexOf(`database "${dbConfig.database}" already exists`) !== -1) {
-            dbReady = true;
-        } else {
-            console.debug(`... error ${error.message}`);
-        }
-    }
-    return dbReady;
+    throw {
+        isError: true,
+        message: "Failed at starting database docker container with unknown error"
+    };
 };
 
 /**
@@ -150,50 +135,137 @@ fluid.personalData.dockerStartDatabase = async function (container, image, dbCon
  * container.
  *
  * @param {String} container - Name of the docker container.
- * @param {Object} dbRequest - Optional: the PostGresOperations object to
+ * @param {Object} postgresHandler - Optional: the postgresOps object to
  *                             disconnect from the database.
- * @return {Object} result of disconnecting `dbRequest` from the database.
+ * @return {Object} result of disconnecting `postgresHandler` from the database.
+ *                  {dbStopped: true} if no error; {isError: true, message: error-message} otherwise.
  */
-fluid.personalData.dockerStopDatabase = async function (container, dbRequest) {
-    console.debug(`- Stopping database container ${container}`);
-    if (dbRequest) {
-        await dbRequest.end();
+fluid.personalData.dockerStopDatabase = async function (container, postgresHandler) {
+    console.log(`- Stopping database docker container ${container}`);
+    if (postgresHandler) {
+        await postgresHandler.end();
     }
     try {
         execSync(`docker stop ${container}`);
-    }
-    catch (error) {
-        console.debug(`- Failed to stop/remove ${container}: ${error.message}`);
+        return {
+            dbStopped: true
+        };
+    } catch (error) {
+        console.log(`- Failed to stop/remove ${container}: ${error.message}`);
+        throw {
+            isError: true,
+            message: `Failed to stop/remove ${container}: ${error.message}`
+        };
+    };
+};
+
+/**
+ * Create a database.
+ *
+ * @param {String} dbConfig - Parameters for creating a database within the
+ *                           `container` or to check if one already exists.
+ * @param {String} dbConfig.host - Host for database requests.
+ * @param {String} dbConfig.port - Port for database requests.
+ * @param {String} dbConfig.database - The database name.
+ * @param {String} dbConfig.user - Adminstrative user of the database.
+ * @param {String} dbConfig.password - Adminstrator's password.
+ * @return {Object} {created: true} if no error; {isError: true, message: error-message} otherwise.
+ */
+fluid.personalData.createDB = async function (dbConfig) {
+    // When using npm module "pg" to create a new database, "pg" requires its instance to connect to
+    // an existing database. The workaround is to connect to a system database "postgres", create
+    // the database, then connect to the new database.
+    // See https://stackoverflow.com/questions/20813154/node-postgres-create-database
+    const postgresOps = require("../dbOps/postgresOps.js");
+    const postgresHandler = new postgresOps.postgresOps({
+        database: "postgres",
+        port: dbConfig.port,
+        host: dbConfig.host,
+        user: dbConfig.user,
+        password: dbConfig.password
+    });
+    const dbName = dbConfig.database;
+
+    try {
+        console.log("- Creating database \"" + dbName + "\" ...");
+        await postgresHandler.runSql("CREATE DATABASE \"" + dbName + "\"");
+        return {
+            isCreated: true
+        };
+    } catch (error) {
+        if (error.message.indexOf("already exists") !== -1) {
+            console.log(`database "${dbName}" already exists`);
+            return {
+                isCreated: true
+            };
+        } else {
+            console.log(`Error at creating database: ${error.message}`);
+            throw {
+                isError: true,
+                message: `Error at creating database: ${error.message}`
+            };
+        }
     }
 };
 
 /**
- * Clear a database, set up its tables and load some test data records.
+ * Clear a database.
  *
- * @param {Object} dbRequest - The PostGresOperations object to use to interact
+ * @param {Object} postgresHandler - The postgresOps object to use to interact
+ *                             with the database.
+ * @param {String} clearDbSqlFile - Path to file containing SQL to clear the database.
+ * @return {Object} {isCleared: true} if no error; {isError: true, message: error-message} otherwise.
+ */
+fluid.personalData.clearDB = async function (postgresHandler, clearDbSqlFile) {
+    try {
+        console.log("- Clearing database...");
+        await postgresHandler.runSqlFile(clearDbSqlFile);
+        return {
+            isCleared: true
+        };
+    }
+    catch (error) {
+        console.log(`- Error at clearing database: ${error.message}`);
+        throw {
+            isError: true,
+            message: `Error at clearing database: ${error.message}`
+        };
+    }
+};
+
+/**
+ * Set up tables and load data records into tables.
+ *
+ * @param {Object} postgresHandler - The postgresOps object to use to interact
  *                             with the database.
  * @param {Object} sqlFiles - SQL files to use to initiate the database
- * @param {String} sqlFiles.clearDB - Path to file containing SQL to clear the
- *                                  database.
  * @param {String} sqlFiles.createTables - Path to SQL file with commands to create
  *                                      the database tables.
  * @param {String} sqlFiles.loadData - Path to SQL file to load data into tables.
- * @return {Boolean} true if no error with initialization; false otherwise.
+ * @return {Object} {isInited: true} if no error; {isError: true, message: error-message} otherwise.
  */
-fluid.personalData.initDataBase = async function (dbRequest, sqlFiles) {
-    let togo;
+fluid.personalData.initDB = async function (postgresHandler, sqlFiles) {
     try {
-        console.debug("- Emptying database...");
-        await dbRequest.runSqlFile(sqlFiles.clearDB);
-        console.debug("- ... defining the tables");
-        await dbRequest.runSqlFile(sqlFiles.createTables);
-        console.debug("- ... adding initial table records");
-        await dbRequest.runSqlFile(sqlFiles.loadData);
-        togo = true;
+        console.log("- Creating tables ...");
+        await postgresHandler.runSqlFile(sqlFiles.createTables);
+        console.log("- Loading initial data ...");
+        await postgresHandler.runSqlFile(sqlFiles.loadData);
+        return {
+            isInited: true
+        };
     }
     catch (error) {
-        console.debug(`Error initalizing database: ${error.message}`);
-        togo = false;
+        if (error.message.indexOf("already exists") !== -1) {
+            console.log("Tables already exist");
+            return {
+                isInited: true
+            };
+        } else {
+            console.log(`Error at initalizing database: ${error.message}`);
+            throw {
+                isError: true,
+                message: `Error at initalizing database: ${error.message}`
+            };
+        }
     }
-    return togo;
 };

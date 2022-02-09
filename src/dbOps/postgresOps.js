@@ -45,11 +45,7 @@ class postgresOps extends pg.Pool {
      *                   function to log any error is attached to the promise.
      */
     async runSql(sql, values) {
-        let promise = this.query(sql, values);
-        promise.then(null, function (error) {
-            console.error(error.message);
-        });
-        return promise;
+        return this.query(sql, values);
     };
 
     /**
