@@ -100,7 +100,7 @@ const rgbChartreuse = fluid.find(fluid.tests.dbOps.testTableData.rgb, function (
 });
 
 jqUnit.test("Database operations tests", async function () {
-    jqUnit.expect(skipDocker ? 234 : 236);
+    jqUnit.expect(skipDocker ? 235 : 237);
     let response;
 
     if (!skipDocker) {
@@ -137,7 +137,7 @@ jqUnit.test("Database operations tests", async function () {
     try {
         await postgresHandler.runSql("INSERT INTO noSuchTable (foo, bar) VALUES ('baz', 'snafu');");
     } catch (error) {
-        jqUnit.assertEquals("Check INSERT into non-existent table", error.message, "relation \"nosuchtable\" does not exist");
+        jqUnit.assertEquals("Check INSERT into non-existent table", "relation \"nosuchtable\" does not exist", error.message);
     }
 
     // Load all tables with data
@@ -173,7 +173,7 @@ jqUnit.test("Database operations tests", async function () {
     try {
         await postgresHandler.runSql("SELECT * FROM noSuchTable WHERE color='green';");
     } catch (error) {
-        jqUnit.assertEquals("Check SELECT from non-existent table", error.message, "relation \"nosuchtable\" does not exist");
+        jqUnit.assertEquals("Check SELECT from non-existent table", "relation \"nosuchtable\" does not exist", error.message);
     }
 
     // Test retrieval of a JSONB value
@@ -185,7 +185,7 @@ jqUnit.test("Database operations tests", async function () {
     try {
         await postgresHandler.runSql("SELECT \"noSuchColumn\" FROM rgb WHERE color='chartreuse';");
     } catch (error) {
-        jqUnit.assertEquals("Check SELECT from non-existent column", error.message, "column \"noSuchColumn\" does not exist");
+        jqUnit.assertEquals("Check SELECT from non-existent column", "column \"noSuchColumn\" does not exist", error.message);
     }
 
     // Insert new user record
@@ -197,7 +197,7 @@ jqUnit.test("Database operations tests", async function () {
     try {
         await postgresHandler.runSql(testData.userToInsert);
     } catch (error) {
-        jqUnit.assertEquals("Check second INSERT of same record", error.message, "duplicate key value violates unique constraint \"users_pkey\"");
+        jqUnit.assertEquals("Check second INSERT of same record", "duplicate key value violates unique constraint \"users_pkey\"", error.message);
     }
 
     // Update a field with a proper identifier
@@ -210,12 +210,12 @@ jqUnit.test("Database operations tests", async function () {
 
     // Update with non-existent primary key; should return zero results
     response = await postgresHandler.runSql("UPDATE users SET iterations=55 WHERE \"userId\"='noSuchUser';");
-    jqUnit.assertEquals("Check UPDATE with mismatched primaryKey", response.rowCount, 0);
+    jqUnit.assertEquals("Check UPDATE with mismatched primaryKey", 0, response.rowCount);
 
     // Test successful deletion
     response = await postgresHandler.runSql("DELETE FROM \"users\" WHERE \"userId\"='some.new.id';");
     // response = await postgresHandler.runSql("DELETE FROM \"prefsSafes\" WHERE \"prefsSafesId\"='prefsSafe-1';");
-    jqUnit.assertEquals("Check number of records deleted", response.rowCount, 1);
+    jqUnit.assertEquals("Check number of records deleted", 1, response.rowCount);
 
     // Run sql from a file.
     response = await postgresHandler.runSqlFile(sqlFile);
@@ -225,7 +225,8 @@ jqUnit.test("Database operations tests", async function () {
     try {
         await postgresHandler.runSqlFile("/no/such/file.sql");
     } catch (error) {
-        jqUnit.assertEquals("Check running sql when file access failure", error.message, "ENOENT: no such file or directory, open '/no/such/file.sql'");
+        jqUnit.assertTrue("Check the failure code ENOENT is presented", error.message.startsWith("ENOENT"));
+        jqUnit.assertTrue("Check the file name appears in the error message", error.message.includes("file.sql"));
     }
 
     // Delete all records from one table using TRUNCATE.  Note that TRUNCATE returns nothing so it either resolved or rejected.

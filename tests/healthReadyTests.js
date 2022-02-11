@@ -32,7 +32,7 @@ const postgresHandler = new postgresOps.postgresOps(config.db);
 const server = require("../server.js");
 
 jqUnit.test("Health and Ready end point tests", async function () {
-    jqUnit.expect(skipDocker ? 16 : 18);
+    jqUnit.expect(skipDocker ? 15 : 18);
     let serverStatus, response;
 
     // Start with server off -- "/health" should fail
@@ -49,11 +49,12 @@ jqUnit.test("Health and Ready end point tests", async function () {
     response = await fluid.tests.utils.sendRequest(serverUrl, "/health");
     fluid.tests.healthReady.testResult(response, 200, { isHealthy: true }, "/health (should succeed)");
 
-    //  ... but "/ready" should fail
-    response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
-    fluid.tests.healthReady.testResult(response, 503, { isError: true, message: "Database is not ready" }, "/ready (should error)");
-
     if (!skipDocker) {
+        // But "/ready" should fail if the local database is not running.
+        // In the case the local database is running with skipDocker set to true, the server will always be ready.
+        response = await fluid.tests.utils.sendRequest(serverUrl, "/ready");
+        fluid.tests.healthReady.testResult(response, 503, { isError: true, message: "Database is not ready" }, "/ready (should error)");
+
         // Start the database docker container
         response = await fluid.personalData.dockerStartDatabase(config.db.dbContainerName, config.db.dbDockerImage, config.db);
         jqUnit.assertTrue("The database has been started successfully", response.dbReady);
