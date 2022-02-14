@@ -28,7 +28,12 @@ class postgresOps extends pg.Pool {
     constructor(configuration) {
         super(configuration);
         this.on("error", (err, client) => {
-            console.error("Error with client %O: %O", client, err);
+            console.error("Error with client %O %s", {
+                user: client.user,
+                database: client.database,
+                host: client.host,
+                port: client.port
+            }, err.toString().split("\n")[0]);
         });
     };
 

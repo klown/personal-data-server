@@ -15,7 +15,17 @@
 const app = require("./src/server/app.js");
 const http = require("http");
 
-const startServer = function (port) {
+/**
+ * Start the personal data server. Note that it doesn't start the backend database server and load data.
+ *
+ * @param {Number} port - The port that the personal data server listens to.
+ * @return {Object} - In the structure of {server: {Object}, status: {Promise}}
+ *                  Two elements are:
+ *                  server: the server instance;
+ *                  status: a promise whose resolved value is a success message and rejected value is an error
+ *                  message of why the server failed to start.
+ */
+const startServer = async function (port) {
     port = port || 3000;
     app.set("port", port);
 
@@ -25,55 +35,61 @@ const startServer = function (port) {
     const server = http.createServer(app);
 
     /**
-     * Event listener for HTTP server "error" event.
-     */
-
-    const onError = function (error) {
-        if (error.syscall !== "listen") {
-            throw error;
-        }
-
-        const bind = typeof port === "string"
-            ? "Pipe " + port
-            : "Port " + port;
-
-        // handle specific listen errors with friendly messages
-        switch (error.code) {
-        case "EACCES":
-            console.error(bind + " requires elevated privileges");
-            process.exit(1);
-            break;
-        case "EADDRINUSE":
-            console.error(bind + " is already in use");
-            process.exit(1);
-            break;
-        default:
-            throw error;
-        }
-    };
-
-    /**
-     * Event listener for HTTP server "listening" event.
-     */
-
-    const onListening = function () {
-        const addr = server.address();
-        const bind = typeof addr === "string"
-            ? "pipe " + addr
-            : "port " + addr.port;
-        console.log("Listening on " + bind);
-    };
-
-    /**
      * Listen on provided port, on all network interfaces.
      */
     server.listen(port);
-    server.on("error", onError);
-    server.on("listening", onListening);
 
-    return server;
+    let status = new Promise((resolve, reject) => {
+        /**
+         * Event listener for HTTP server "listening" event.
+         */
+        server.on("listening", () => {
+            const addr = server.address();
+            const bind = typeof addr === "string"
+                ? "pipe " + addr
+                : "port " + addr.port;
+            resolve("Listening on " + bind);
+        });
+
+        /**
+         * Event listener for HTTP server "error" event.
+         */
+        server.on("error", (error) => {
+            let message;
+            if (error.syscall !== "listen") {
+                throw error;
+            }
+
+            const bind = typeof port === "string"
+                ? "Pipe " + port
+                : "Port " + port;
+
+            // handle specific listen errors with friendly messages
+            switch (error.code) {
+            case "EACCES":
+                message = bind + " requires elevated privileges";
+                break;
+            case "EADDRINUSE":
+                message = bind + " is already in use";
+                break;
+            default:
+                message = error;
+            }
+            reject(message);
+        });
+    });
+
+    return {
+        server,
+        status
+    };
 };
 
+/**
+ * Stop the personal data server.
+ *
+ * @param {Number} server - The `server` element returned by startServer() function.
+ */
 const stopServer = async function (server) {
     await server.close();
 };

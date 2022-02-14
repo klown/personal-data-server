@@ -87,7 +87,7 @@ jqUnit.test("Google SSO tests", async function () {
     jqUnit.assertTrue("The database " + config.db.database + " has been initialized successfully", response.isInited);
 
     // Start the server
-    const serverInstance = server.startServer(config.server.port);
+    const serverInstance = await server.startServer(config.server.port);
     serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertTrue("The server is up and running", serverStatus);
 
@@ -134,7 +134,7 @@ jqUnit.test("Google SSO tests", async function () {
     }
 
     // Stop the server
-    await server.stopServer(serverInstance);
+    await server.stopServer(serverInstance.server);
     serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertFalse("The server has been stopped", serverStatus);
 });

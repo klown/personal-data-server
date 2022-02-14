@@ -26,13 +26,10 @@ const config = require("../src/shared/utils.js").loadConfig(path.join(__dirname,
 const serverUrl = "http://localhost:" + config.server.port;
 fluid.tests.utils.setDbEnvVars(config.db);
 
-const postgresOps = require("../src/dbOps/postgresOps.js");
-const postgresHandler = new postgresOps.postgresOps(config.db);
-
 const server = require("../server.js");
 
 jqUnit.test("Health and Ready end point tests", async function () {
-    jqUnit.expect(skipDocker ? 15 : 18);
+    jqUnit.expect(skipDocker ? 13 : 18);
     let serverStatus, response;
 
     // Start with server off -- "/health" should fail
@@ -41,7 +38,7 @@ jqUnit.test("Health and Ready end point tests", async function () {
     jqUnit.assertTrue("Check '/health' error code", response.toString().includes("ECONNREFUSED"));
 
     // Start server, but not the database.
-    const serverInstance = server.startServer(config.server.port);
+    const serverInstance = await server.startServer(config.server.port);
     serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertTrue("The server is up and running", serverStatus);
 
@@ -63,6 +60,9 @@ jqUnit.test("Health and Ready end point tests", async function () {
     // Create db
     response = await fluid.personalData.createDB(config.db);
     jqUnit.assertTrue("The database " + config.db.database + " has been created successfully", response.isCreated);
+
+    const postgresOps = require("../src/dbOps/postgresOps.js");
+    const postgresHandler = new postgresOps.postgresOps(config.db);
 
     // Clear the database for a fresh start
     response = await fluid.personalData.clearDB(postgresHandler, fluid.tests.sqlFiles.clearDB);
@@ -87,7 +87,28 @@ jqUnit.test("Health and Ready end point tests", async function () {
     }
 
     // 3. Stop the server
-    await server.stopServer(serverInstance);
+    await server.stopServer(serverInstance.server);
+    serverStatus = await fluid.personalData.getServerStatus(config.server.port);
+    jqUnit.assertFalse("The server has been stopped", serverStatus);
+});
+
+jqUnit.test("Server start error tests", async function () {
+    jqUnit.expect(3);
+    let serverStatus;
+
+    // Start server
+    const serverInstance = await server.startServer(config.server.port);
+    serverStatus = await fluid.personalData.getServerStatus(config.server.port);
+    jqUnit.assertTrue("The server is up and running", serverStatus);
+
+    // Re-starting the server on the same port throws an error
+    const anotherServerInstance = await server.startServer(config.server.port);
+    anotherServerInstance.status.catch((error) => {
+        jqUnit.assertTrue("Re-starting the server on the same port throws \"port in use\" error", error.toString().includes("Port " + config.server.port + " is already in use"));
+    });
+
+    // Stop the server
+    await server.stopServer(serverInstance.server);
     serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertFalse("The server has been stopped", serverStatus);
 });

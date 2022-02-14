@@ -50,7 +50,12 @@ async function main() {
     await fluid.personalData.initDB(postgresHandler, sqlFiles);
 
     // Start the personal data server
-    server.startServer(serverPort);
+    const serverInstance = await server.startServer(serverPort);
+    serverInstance.status.then((success) => {
+        console.log("Server is up and running:", success);
+    }, (error) => {
+        console.log("Failed at starting server:", error);
+    });
 }
 
 main();
