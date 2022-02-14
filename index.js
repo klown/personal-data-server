@@ -54,7 +54,7 @@ async function main() {
     serverInstance.status.then((success) => {
         console.log("Server is up and running:", success);
     }, (error) => {
-        console.log("Failed at starting server:", error);
+        throw new Error("Failed at starting server:" + error);
     });
 }
 

@@ -88,6 +88,10 @@ jqUnit.test("Google SSO tests", async function () {
 
     // Start the server
     const serverInstance = await server.startServer(config.server.port);
+    // In case the server failed to start
+    serverInstance.status.catch((error) => {
+        throw new Error("Failed at starting server:" + error);
+    });
     serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertTrue("The server is up and running", serverStatus);
 

@@ -39,6 +39,10 @@ jqUnit.test("Health and Ready end point tests", async function () {
 
     // Start server, but not the database.
     const serverInstance = await server.startServer(config.server.port);
+    // In case the server failed to start
+    serverInstance.status.catch((error) => {
+        throw new Error("Failed at starting server:" + error);
+    });
     serverStatus = await fluid.personalData.getServerStatus(config.server.port);
     jqUnit.assertTrue("The server is up and running", serverStatus);
 
