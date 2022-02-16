@@ -1,26 +1,47 @@
 {
-    "name": "preferencesServer",
-    "description": "Provides an API for accessing user preferences",
+    "name": "personal-data-server",
+    "description": "Provides a backend server and API for saving and accessing personal data server",
     "version": "0.1.0",
     "author": "Fluid Project",
-    "bugs": "https://github.com/fluid-project/preferencesServer/issues",
-    "homepage": "https://github.com/fluid-project/preferencesServer",
+    "bugs": "https://github.com/fluid-project/personal-data-server/issues",
+    "homepage": "https://github.com/fluid-project/personal-data-server",
     "license": "BSD-3-Clause",
     "keywords": [
         "preferences",
-        "settings",
-        "infusion"
+        "settings"
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/fluid-project/preferencesServer"
+        "url": "https://github.com/fluid-project/personal-data-server"
     },
     "engines": {
         "node": ">=10.15.0"
     },
+    "dependencies": {
+        "axios": "0.24.0",
+        "express": "4.17.1",
+        "express-session": "1.17.2",
+        "jade": "1.11.0",
+        "json5": "2.2.0",
+        "minimist": "^1.2.5",
+        "morgan": "1.10.0",
+        "pg": "8.7.1",
+        "pg-format": "1.0.4",
+        "uuid": "8.3.2"
+    },
     "devDependencies": {
-        "fluid-grunt-lint-all": "^1.0.8",
-        "grunt": "^1.3.0",
-        "node-jqunit": "^1.1.8"
+        "eslint-config-fluid": "2.0.0",
+        "eslint-plugin-jsdoc": "37.0.3",
+        "fluid-lint-all": "1.1.5",
+        "infusion": "3.0.0",
+        "nock": "13.1.4",
+        "node-jqunit": "1.1.9",
+        "nodemon": "2.0.14",
+        "nyc": "15.1.0"
+    },
+    "scripts": {
+        "test": "node node_modules/nyc/bin/nyc.js node tests/all-tests.js",
+        "lint": "fluid-lint-all",
+        "start": "node index.js"
     }
 }

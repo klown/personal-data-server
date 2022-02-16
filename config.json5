@@ -1,0 +1,31 @@
+{
+    // Express app configs
+    server: {
+        // The port that the personal data server will listen to.
+        // Can be overridden by the value defined in the environment variable SERVERPORT
+        port: 3000
+    },
+
+    // Database configs
+    db: {
+        // The docker container name for personal server postgres db
+        dbContainerName: "PersonalDataPostgres",
+        // The postgres docker image version
+        dbDockerImage: "postgres:14.1-alpine",
+        // Database name
+        // Can be overridden by the value defined in the environment variable DATABASE
+        database: "personalData",
+        // The host to access the db
+        // Can be overridden by the value defined in the environment variable DBHOST
+        host: "localhost",
+        // The port to access the db
+        // Can be overridden by the value defined in the environment variable DBPORT
+        port: 5432,
+        // The initial admin account created for accessing the db
+        // Can be overridden by the value defined in the environment variable DBUSER
+        user: "admin",
+        // The password for the initial admin account
+        // Can be overridden by the value defined in the environment variable DBPASSWORD
+        password: "asecretpassword"
+    }
+}

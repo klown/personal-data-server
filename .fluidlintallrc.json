@@ -1,0 +1,13 @@
+{
+    "sources": {
+        "md": ["./*.md", "./doc/*.md", "./src/**/*.md"],
+        "js": ["./src/**/*.js", "./tests/**/*.js", "./*.js"],
+        "json": ["./src/**/*.json", "./tests/**/*.json", "./*.json"],
+        "json5": ["./src/**/*.json5","./tests/**/*.json5","./*.json5"]
+    },
+    "lintspaces": {
+        "newlines": {
+            "excludes": [".DS_Store"]
+        }
+    }
+}

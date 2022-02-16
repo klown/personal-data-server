@@ -1,9 +1,10 @@
+dataModel/SsoProvidersData.sql
+
 node_modules/
 /build/
 /instrumented/
 
 npm-debug.log
-package-lock.json
 *.bak
 
 Vagrantfile.local
