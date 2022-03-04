@@ -3,7 +3,7 @@
 In order to allow users to log into the Personal Data Server web application
 using their Google account, the Personal Data Server must to registered with
 Google.  The result of the registration process is that Google generates a
-client id and secret for the Personal Data Server to use that for its single
+client id and secret for the Personal Data Server to use for its single
 sign-on workflow.  The following provides information regarding the Google
 registration process.
 
@@ -20,7 +20,7 @@ the difference.
 3. For development, for "User Type", choose "External".  Submitting the form
    will start an "Edit app registration" step-by-step process for configuring
    the "OAuth consent screen".  At step one:
-    * For developement, fill in the "App information" with something
+    * For development, fill in the "App information" with something
       meaningful to you and other developers.
     * For development, under "App Domain", use a local host url with http
       for the "Application home page". The port is up to the developer.  An
@@ -28,10 +28,12 @@ the difference.
     * For development, under "Application privacy policy link", use the
       proposed privacy policy at the root of the project: `http://localhost:3000/PRIVACY_POLICY.md`.
       This file is located in the source code root directory.
-    * For development, Under "Application privacy policy link", use the
-      dummy service agreement at the root of the project: `http://localhost:3000/TERMS_OF_SERVICE.md`, also located in the root folder of
-      the source.
-    * For "Authorized domains" use `ocadu.ca`.
+    * For development, Under "Application terms of service link", use the
+      dummy service agreement at the root of the project: `http://localhost:3000/TERMS_OF_SERVICE.md`,
+      also located in the root folder of the source.
+    * For development, leave "Authorized domains" blank.  This is needed in a
+      production scenario and only after Google has authorized the access to
+      their users by the Personal Data Server.
     * For development, enter your email address in the "Developer contact
       information" field.
 4. Required scopes (step 2 of the "Edit app registration"):
@@ -48,9 +50,9 @@ the difference.
       client id and secret, but add only themself as a test user.
 6. Save this consent screen configuration.  A summary page is shown.
 7. Next, create an "OAuth client ID" using the "Credentials" link, which is
-also in the "APIs and Services" section on the left of the Console.
+   also in the "APIs and Services" section on the left of the Console.
 8. Click the "+ CREATE CREDENTIAL" menu button near the top of the page,
-slightly left of centre and choose "OAuth client ID".
+   slightly left of centre and choose "OAuth client ID".
      * Application type is "Web application".
      * For development, the "Name" can be set to anything meaningful.
      * Authorized JavaScript origins should be the URI set at step 3. above,
